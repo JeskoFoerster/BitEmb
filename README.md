@@ -13,11 +13,14 @@ bitemb/              Core library
 ├── config.py        Experiment parameters
 ├── engine.py        Embedding generation (BAAI/bge-large-en-v1.5)
 ├── quantization.py  Binary + TurboQuant (2-bit, 4-bit) + PCA reduction
-└── dataset.py       BEIR data loading (SciFact, FiQA, TREC-COVID)
+├── dataset.py       BEIR data loading (SciFact, FiQA, TREC-COVID)
+├── analysis.py      Phase 1: float space characterization
+└── plotting.py      Publication-quality figures (matplotlib)
 
-scripts/             Experiment runners (to be implemented)
+scripts/             Experiment runners
+└── phase1_characterization.py
+
 tests/               Unit tests
-docs/                LaTeX source of the thesis
 ```
 
 ## Setup
@@ -32,6 +35,11 @@ pip install -e ".[dev]"
 make test-fast   # unit tests (no model download)
 make test        # all tests including integration
 make lint        # ruff + mypy
+
+# Run Phase 1 (requires model download + dataset)
+python scripts/phase1_characterization.py --dataset scifact
+python scripts/phase1_characterization.py --all
+python scripts/phase1_characterization.py --all --max-docs 10000  # subsample large corpora
 ```
 
 ## Methods
