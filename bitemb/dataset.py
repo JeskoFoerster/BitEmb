@@ -27,7 +27,7 @@ _QUERY_DATASETS = {
     "trec-covid": ("BeIR/trec-covid", "queries", "queries"),
 }
 
-_QREL_DATASETS = {
+_QREL_DATASETS: dict[str, tuple[str, str | None, str]] = {
     "scifact": ("BeIR/scifact-qrels", None, "test"),
     "fiqa": ("BeIR/fiqa-qrels", None, "test"),
     "trec-covid": ("BeIR/trec-covid-qrels", None, "test"),
@@ -119,11 +119,11 @@ def load_beir(name: str) -> BeirDataset:
         queries.append(str(row.get("text", "")).strip())
 
     # Load qrels
-    repo, config, split = _QREL_DATASETS[name]
-    if config:
-        qrels_ds = hf_datasets.load_dataset(repo, config, split=split)
+    qrel_repo, qrel_config, qrel_split = _QREL_DATASETS[name]
+    if qrel_config:
+        qrels_ds = hf_datasets.load_dataset(qrel_repo, qrel_config, split=qrel_split)
     else:
-        qrels_ds = hf_datasets.load_dataset(repo, split=split)
+        qrels_ds = hf_datasets.load_dataset(qrel_repo, split=qrel_split)
 
     qrels: dict[int, dict[int, int]] = {}
     for row in qrels_ds:

@@ -39,7 +39,7 @@ _FIG_HEIGHT = 3.5
 
 
 def _apply_style() -> None:
-    plt.rcParams.update(_STYLE)
+    plt.rcParams.update(_STYLE)  # type: ignore[arg-type]
 
 
 # ---------- Figure 1: Cumulative PCA Variance ----------
