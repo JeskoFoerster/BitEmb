@@ -1,4 +1,4 @@
-"""Publication-quality figures for Phase 1 characterization.
+"""Publication-quality figures for experiment phases.
 
 Produces LaTeX-compatible PDF figures using matplotlib with a consistent
 scientific style (serif fonts, appropriate sizing for two-column layouts).
@@ -124,6 +124,121 @@ def plot_variance_spectrum(
     ax.set_xlim(1, n_components)
     ax.set_yscale("log")
     ax.legend(loc="upper right")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+# ---------- Phase 2: Distance Distortion ----------
+
+# Colors per bit depth (consistent across plots)
+_BIT_COLORS = {1: "#d62728", 2: "#ff7f0e", 4: "#2ca02c"}
+_BIT_LABELS = {1: "Binary (1-bit)", 2: "TurboQuant 2-bit", 4: "TurboQuant 4-bit"}
+
+
+def plot_distortion_pareto(
+    results: list[dict],
+    output_path: Path,
+    metric: str = "spearman_rho",
+    ylabel: str = "Spearman ρ",
+) -> Path:
+    """Pareto plot: distortion metric vs. total bits per vector.
+
+    Shows the compression–quality trade-off across all (bit_depth, dim)
+    combinations. Each dataset gets its own line style.
+
+    Args:
+        results: List of dataset result dicts from phase2 JSON.
+        output_path: Path for the output PDF.
+        metric: Key in result dict to plot on y-axis.
+        ylabel: Label for y-axis.
+    """
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    markers = ["o", "s", "^"]
+    linestyles = ["-", "--", ":"]
+
+    for ds_idx, ds in enumerate(results):
+        name = ds["dataset"]
+        for bit_depth in [4, 2, 1]:
+            entries = [r for r in ds["results"] if r["bit_depth"] == bit_depth]
+            entries.sort(key=lambda r: r["dim"])
+            bits_per_vec = [r["dim"] * bit_depth for r in entries]
+            values = [r[metric] for r in entries]
+            ax.plot(
+                bits_per_vec,
+                values,
+                color=_BIT_COLORS[bit_depth],
+                linestyle=linestyles[ds_idx],
+                marker=markers[ds_idx],
+                markersize=4,
+                label=f"{_BIT_LABELS[bit_depth]} ({name})" if ds_idx == 0 else None,
+            )
+
+    # Dataset legend (linestyle only)
+    for ds_idx, ds in enumerate(results):
+        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx], label=ds["dataset"])
+
+    ax.set_xlabel("Bits per vector")
+    ax.set_ylabel(ylabel)
+    ax.set_xscale("log", base=2)
+    ax.set_xlim(32, 4096)
+    ax.set_ylim(0.0, 1.05)
+    ax.legend(loc="lower right", ncol=2, fontsize=7)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def plot_distortion_heatmap(
+    results: dict,
+    output_path: Path,
+    metric: str = "spearman_rho",
+    title: str | None = None,
+) -> Path:
+    """Heatmap of distortion metric across (bit_depth × PCA_dim).
+
+    Args:
+        results: Single dataset result dict from phase2 JSON.
+        output_path: Path for the output PDF.
+        metric: Key to visualize.
+        title: Optional figure title (defaults to dataset name).
+    """
+    _apply_style()
+
+    dims = sorted({r["dim"] for r in results["results"]})
+    bits = [4, 2, 1]
+
+    matrix = np.zeros((len(bits), len(dims)))
+    for r in results["results"]:
+        row = bits.index(r["bit_depth"])
+        col = dims.index(r["dim"])
+        matrix[row, col] = r[metric]
+
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.2))
+    im = ax.imshow(matrix, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
+
+    # Labels
+    ax.set_xticks(range(len(dims)))
+    ax.set_xticklabels([str(d) for d in dims])
+    ax.set_yticks(range(len(bits)))
+    ax.set_yticklabels([_BIT_LABELS[b] for b in bits])
+    ax.set_xlabel("PCA dimensions")
+
+    # Annotate cells
+    for i in range(len(bits)):
+        for j in range(len(dims)):
+            val = matrix[i, j]
+            color = "white" if val < 0.5 else "black"
+            ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=8, color=color)
+
+    fig.colorbar(im, ax=ax, shrink=0.8, label=metric.replace("_", " ").title())
+    ax.set_title(title or results["dataset"])
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)

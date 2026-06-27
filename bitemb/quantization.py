@@ -29,15 +29,14 @@ def _random_rotation_matrix(dim: int = MODEL_DIM, seed: int = SEED) -> NDArray[n
     return special_ortho_group.rvs(dim, random_state=seed).astype(np.float64)
 
 
-# Module-level cached rotation matrix (computed once per process).
-_ROTATION: NDArray[np.float64] | None = None
+# Module-level cached rotation matrices (one per dimension, computed once).
+_ROTATIONS: dict[int, NDArray[np.float64]] = {}
 
 
 def _get_rotation(dim: int = MODEL_DIM) -> NDArray[np.float64]:
-    global _ROTATION
-    if _ROTATION is None or _ROTATION.shape[0] != dim:
-        _ROTATION = _random_rotation_matrix(dim)
-    return _ROTATION
+    if dim not in _ROTATIONS:
+        _ROTATIONS[dim] = _random_rotation_matrix(dim)
+    return _ROTATIONS[dim]
 
 
 # ---------- Binary quantization ----------

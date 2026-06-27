@@ -8,6 +8,20 @@ For bge-large-en-v1.5:
 Reference: https://huggingface.co/BAAI/bge-large-en-v1.5
 """
 
+import os as _os
+
+# Disable hf_transfer if the package is missing – must patch both the env var
+# AND the cached constant in huggingface_hub.constants (read at import time).
+try:
+    import hf_transfer  # noqa: F401
+except ModuleNotFoundError:
+    _os.environ.pop("HF_HUB_ENABLE_HF_TRANSFER", None)
+    try:
+        import huggingface_hub.constants
+        huggingface_hub.constants.HF_HUB_ENABLE_HF_TRANSFER = False
+    except ImportError:
+        pass
+
 import numpy as np
 from numpy.typing import NDArray
 from sentence_transformers import SentenceTransformer
