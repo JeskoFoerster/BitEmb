@@ -17,12 +17,8 @@ def sample_texts():
 
 @pytest.fixture
 def random_float_embs():
+    """10 normalized random 768-d vectors."""
     rng = np.random.default_rng(42)
     embs = rng.normal(size=(10, 768)).astype(np.float32)
     embs /= np.linalg.norm(embs, axis=1, keepdims=True)
     return embs
-
-
-@pytest.fixture
-def random_bit_embs(random_float_embs):
-    return np.packbits(random_float_embs >= 0, axis=1)
