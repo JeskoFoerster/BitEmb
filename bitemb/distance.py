@@ -69,7 +69,7 @@ def _sample_pairs(n_corpus: int, n_pairs: int = N_PAIRS, seed: int = SEED) -> ND
             f"(max possible: {max_pairs})"
         )
     rng = np.random.default_rng(seed)
-    pairs = set()
+    pairs: set[tuple[int, int]] = set()
     while len(pairs) < n_pairs:
         batch_size = (n_pairs - len(pairs)) * 2
         i = rng.integers(0, n_corpus, size=batch_size)
