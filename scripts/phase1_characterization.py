@@ -26,7 +26,12 @@ from bitemb.analysis import (
 from bitemb.config import DATASETS
 from bitemb.dataset import load_beir
 from bitemb.engine import EmbeddingEngine
-from bitemb.plotting import plot_cumulative_variance, plot_variance_spectrum
+from bitemb.plotting import (
+    generate_phase1_table,
+    plot_cumulative_variance,
+    plot_dimension_distribution,
+    plot_variance_spectrum,
+)
 
 OUTPUT_DIR = Path("results/phase1")
 
@@ -109,6 +114,7 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
             "pca_cumulative_variance_256": float(intdim.pca_cumulative_variance[255]),
         },
         "_pca_cumulative_variance": intdim.pca_cumulative_variance,
+        "_dimstats": {"skewness": dimstats.skewness, "kurtosis": dimstats.kurtosis},
     }
 
 
@@ -141,12 +147,20 @@ def main():
     p2 = plot_variance_spectrum(per_component, fig_dir / "pca_variance_spectrum.pdf")
     print(f"\n  Figures saved to {p1} and {p2}")
 
-    # Save JSON (without numpy arrays)
+    # Dimension distribution (skewness/kurtosis)
+    dim_data = {r["dataset"]: r["_dimstats"] for r in results}
+    p4 = plot_dimension_distribution(dim_data, fig_dir / "dimension_distribution.pdf")
+    print(f"  Dimension distribution saved to {p4}")
+
+    # Summary table (LaTeX)
     json_results = []
     for r in results:
         out = {k: v for k, v in r.items() if not k.startswith("_")}
         json_results.append(out)
+    table_path = generate_phase1_table(json_results, args.output / "phase1_summary.tex")
+    print(f"  Summary table saved to {table_path}")
 
+    # Save JSON (without numpy arrays)
     out_path = args.output / "characterization.json"
     out_path.write_text(json.dumps(json_results, indent=2), encoding="utf-8")
     print(f"\n  Results saved to {out_path}")
