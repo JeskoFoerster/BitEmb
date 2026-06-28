@@ -14,5 +14,4 @@ build/
 htmlcov/
 *.npy
 cache/
-docs/
 *.tex
