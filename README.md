@@ -16,11 +16,13 @@ bitemb/              Core library
 ├── dataset.py       BEIR data loading (SciFact, FiQA, TREC-COVID)
 ├── analysis.py      Phase 1: float space characterization
 ├── distance.py      Phase 2: pairwise distance & distortion analysis
+├── neighborhood.py  Phase 3: neighborhood overlap & trustworthiness
 └── plotting.py      Publication-quality figures (matplotlib)
 
 scripts/             Experiment runners
 ├── phase1_characterization.py
-└── phase2_distance_analysis.py
+├── phase2_distance_analysis.py
+└── phase3_neighborhood.py
 
 tests/               Unit tests
 ```
@@ -41,12 +43,17 @@ make lint        # ruff + mypy
 # Run Phase 1 (requires model download + dataset)
 python scripts/phase1_characterization.py --dataset scifact
 python scripts/phase1_characterization.py --all
-python scripts/phase1_characterization.py --all --max-docs 10000  # subsample large corpora
+python scripts/phase1_characterization.py --all --max-docs 10000
 
 # Run Phase 2 (requires model download + dataset)
 python scripts/phase2_distance_analysis.py --dataset scifact
 python scripts/phase2_distance_analysis.py --all
 python scripts/phase2_distance_analysis.py --all --max-docs 10000
+
+# Run Phase 3 (requires model download + dataset)
+python scripts/phase3_neighborhood.py --dataset scifact
+python scripts/phase3_neighborhood.py --all
+python scripts/phase3_neighborhood.py --all --max-docs 5000 # recommended
 ```
 
 ## Methods
