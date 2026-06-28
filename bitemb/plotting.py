@@ -418,3 +418,119 @@ def plot_distortion_heatmap(
     fig.savefig(output_path)
     plt.close(fig)
     return output_path
+
+
+# ---------- Phase 3: Neighborhood Preservation ----------
+
+
+def plot_neighborhood_heatmap(
+    results: dict,
+    output_path: Path,
+    metric: str = "overlap",
+    k: int = 10,
+    title: str | None = None,
+) -> Path:
+    """Heatmap of neighborhood metric across (bit_depth × PCA_dim).
+
+    Args:
+        results: Single dataset result dict from phase3 JSON.
+        output_path: Path for the output PDF.
+        metric: "overlap" or "trustworthiness".
+        k: Which k value to display.
+        title: Optional figure title.
+    """
+    _apply_style()
+
+    entries = [r for r in results["results"] if r["k"] == k]
+    dims = sorted({r["dim"] for r in entries})
+    bits = [4, 2, 1]
+
+    matrix = np.zeros((len(bits), len(dims)))
+    for r in entries:
+        row = bits.index(r["bit_depth"])
+        col = dims.index(r["dim"])
+        matrix[row, col] = r[metric]
+
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.2))
+    im = ax.imshow(matrix, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
+
+    ax.set_xticks(range(len(dims)))
+    ax.set_xticklabels([str(d) for d in dims])
+    ax.set_yticks(range(len(bits)))
+    ax.set_yticklabels([_BIT_LABELS[b] for b in bits])
+    ax.set_xlabel("PCA dimensions")
+
+    for i in range(len(bits)):
+        for j in range(len(dims)):
+            val = matrix[i, j]
+            color = "white" if val < 0.5 else "black"
+            ax.text(j, i, f"{val:.3f}", ha="center", va="center",
+                    fontsize=8, color=color)
+
+    label = metric.replace("_", " ").title()
+    fig.colorbar(im, ax=ax, shrink=0.8, label=label)
+    ax.set_title(title or f"{results['dataset']} — {label} (k={k})")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def plot_neighborhood_overlap_by_k(
+    results: list[dict],
+    output_path: Path,
+    dim: int = 768,
+    metric: str = "overlap",
+    ylabel: str | None = None,
+) -> Path:
+    """Line plot: neighborhood metric as function of k for each bit depth.
+
+    One line per (dataset, bit_depth) combination at fixed PCA dim.
+
+    Args:
+        results: List of dataset result dicts from phase3 JSON.
+        output_path: Path for the output PDF.
+        dim: PCA dimension to display.
+        metric: Key in result dict ("overlap" or "trustworthiness").
+        ylabel: Y-axis label (defaults based on metric).
+    """
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    linestyles = ["-", "--", ":"]
+
+    for ds_idx, ds in enumerate(results):
+        entries = [r for r in ds["results"] if r["dim"] == dim]
+        for bit_depth in [4, 2, 1]:
+            bit_entries = sorted(
+                [r for r in entries if r["bit_depth"] == bit_depth],
+                key=lambda r: r["k"],
+            )
+            ks = [r["k"] for r in bit_entries]
+            values = [r[metric] for r in bit_entries]
+            ax.plot(
+                ks, values,
+                color=_BIT_COLORS[bit_depth],
+                linestyle=linestyles[ds_idx],
+                marker="o", markersize=4,
+                label=f"{_BIT_LABELS[bit_depth]}" if ds_idx == 0 else None,
+            )
+
+    # Dataset legend
+    for ds_idx, ds in enumerate(results):
+        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx],
+                label=ds["dataset"])
+
+    label = ylabel or metric.replace("_", " ").title()
+    ax.set_xlabel("k (number of neighbors)")
+    ax.set_ylabel(label)
+    ax.set_ylim(0.0, 1.05)
+    ax.set_xticks([10, 50, 100])
+    ax.legend(loc="lower right", ncol=2, fontsize=7)
+    ax.set_title(f"{label} (d={dim})")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
