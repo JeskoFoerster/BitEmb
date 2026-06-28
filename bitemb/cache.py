@@ -13,11 +13,15 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy.typing import NDArray
 
 from bitemb.config import MODEL_NAME
+
+if TYPE_CHECKING:
+    from bitemb.engine import EmbeddingEngine
 
 CACHE_DIR = Path("cache/embeddings")
 
@@ -35,7 +39,7 @@ def _cache_path(dataset_name: str, model_name: str = MODEL_NAME) -> Path:
 def load_or_encode(
     dataset_name: str,
     texts: list[str],
-    engine: object,
+    engine: EmbeddingEngine,
     *,
     model_name: str = MODEL_NAME,
     show_progress: bool = False,
