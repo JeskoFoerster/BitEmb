@@ -226,6 +226,86 @@ _BIT_COLORS = {1: "#d62728", 2: "#ff7f0e", 4: "#2ca02c"}
 _BIT_LABELS = {1: "Binary (1-bit)", 2: "TurboQuant 2-bit", 4: "TurboQuant 4-bit"}
 
 
+# ---------- Phase 2: Scatter Plot (Float vs. Quantized Distance) ----------
+
+
+def plot_distance_scatter(
+    d_float: NDArray[np.float64],
+    d_quant: dict[int, NDArray[np.float64]],
+    output_path: Path,
+    dataset_name: str = "",
+    dim: int = 768,
+) -> Path:
+    """Scatter plot: float distance vs. quantized distance for each bit depth.
+
+    Args:
+        d_float: Normalized float distances (n_pairs,).
+        d_quant: {bit_depth: normalized quantized distances}.
+        output_path: Path for the output PDF.
+        dataset_name: Dataset label for title.
+        dim: PCA dimension used.
+    """
+    _apply_style()
+    fig, axes = plt.subplots(1, 3, figsize=(_FIG_WIDTH * 1.3, _FIG_HEIGHT), sharey=True)
+
+    for ax, bit_depth in zip(axes, [4, 2, 1]):
+        ax.scatter(d_float, d_quant[bit_depth], s=1, alpha=0.15, color=_BIT_COLORS[bit_depth])
+        ax.plot([0, 1], [0, 1], "k--", linewidth=0.8, alpha=0.6)
+        ax.set_xlabel("Float distance (norm.)")
+        ax.set_title(_BIT_LABELS[bit_depth])
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_aspect("equal")
+
+    axes[0].set_ylabel("Quantized distance (norm.)")
+    title = f"{dataset_name} (d={dim})" if dataset_name else f"d={dim}"
+    fig.suptitle(title, fontsize=10)
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+# ---------- Phase 2: Error Distribution Histogram ----------
+
+
+def plot_error_histogram(
+    d_float: NDArray[np.float64],
+    d_quant: dict[int, NDArray[np.float64]],
+    output_path: Path,
+    dataset_name: str = "",
+    dim: int = 768,
+) -> Path:
+    """Histogram of absolute errors |d_float - d_quant| per bit depth.
+
+    Args:
+        d_float: Normalized float distances (n_pairs,).
+        d_quant: {bit_depth: normalized quantized distances}.
+        output_path: Path for the output PDF.
+        dataset_name: Dataset label for title.
+        dim: PCA dimension used.
+    """
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    for bit_depth in [4, 2, 1]:
+        errors = np.abs(d_float - d_quant[bit_depth])
+        ax.hist(errors, bins=60, alpha=0.5, color=_BIT_COLORS[bit_depth],
+                label=_BIT_LABELS[bit_depth], density=True)
+
+    ax.set_xlabel("Absolute error |d_float − d_quant|")
+    ax.set_ylabel("Density")
+    title = f"{dataset_name} (d={dim})" if dataset_name else f"d={dim}"
+    ax.set_title(title)
+    ax.legend()
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
 def plot_distortion_pareto(
     results: list[dict],
     output_path: Path,
@@ -309,7 +389,13 @@ def plot_distortion_heatmap(
         matrix[row, col] = r[metric]
 
     fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.2))
-    im = ax.imshow(matrix, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
+
+    # For error metrics (lower is better), invert colormap and auto-scale
+    is_error_metric = metric in ("mae", "rmse")
+    cmap = "RdYlGn" if not is_error_metric else "RdYlGn_r"
+    vmin = matrix.min() * 0.9 if is_error_metric else 0.0
+    vmax = matrix.max() * 1.1 if is_error_metric else 1.0
+    im = ax.imshow(matrix, cmap=cmap, vmin=vmin, vmax=vmax, aspect="auto")
 
     # Labels
     ax.set_xticks(range(len(dims)))

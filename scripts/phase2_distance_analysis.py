@@ -20,9 +20,14 @@ import numpy as np
 
 from bitemb.config import DATASETS, PCA_DIMS, SEED
 from bitemb.dataset import load_beir
-from bitemb.distance import compute_distance_distortion
+from bitemb.distance import compute_distance_distortion, compute_raw_distances
 from bitemb.engine import EmbeddingEngine
-from bitemb.plotting import plot_distortion_heatmap, plot_distortion_pareto
+from bitemb.plotting import (
+    plot_distance_scatter,
+    plot_distortion_heatmap,
+    plot_distortion_pareto,
+    plot_error_histogram,
+)
 from bitemb.quantization import PCAReducer
 
 OUTPUT_DIR = Path("results/phase2")
@@ -48,6 +53,7 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
     corpus_embs = engine.encode_passages(texts, show_progress=True)
 
     all_results = []
+    raw_distances = {}  # {dim: RawDistances}
 
     for dim in PCA_DIMS:
         print(f"\n  --- PCA dim = {dim} ---")
@@ -59,6 +65,9 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
             pca = None
 
         results = compute_distance_distortion(
+            corpus_embs, dim=dim, pca_reducer=pca, seed=SEED,
+        )
+        raw_distances[dim] = compute_raw_distances(
             corpus_embs, dim=dim, pca_reducer=pca, seed=SEED,
         )
 
@@ -83,6 +92,7 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
         "n_pairs": 10_000,
         "seed": SEED,
         "results": all_results,
+        "_raw_distances": raw_distances,
     }
 
 
@@ -104,19 +114,56 @@ def main():
         result = run(name, engine, max_docs=args.max_docs)
         all_outputs.append(result)
 
-    # Save JSON
+    # Save JSON (exclude raw distances)
+    json_outputs = []
+    for o in all_outputs:
+        json_outputs.append({k: v for k, v in o.items() if not k.startswith("_")})
     out_path = args.output / "distance_distortion.json"
-    out_path.write_text(json.dumps(all_outputs, indent=2), encoding="utf-8")
+    out_path.write_text(json.dumps(json_outputs, indent=2), encoding="utf-8")
     print(f"\n  Results saved to {out_path}")
 
     # Generate figures
     fig_dir = args.output / "figures"
-    p1 = plot_distortion_pareto(all_outputs, fig_dir / "distortion_pareto.pdf")
+
+    # Pareto plot (Spearman)
+    p1 = plot_distortion_pareto(json_outputs, fig_dir / "distortion_pareto.pdf")
     print(f"  Pareto plot saved to {p1}")
-    for ds_result in all_outputs:
+
+    # Heatmaps: Spearman, Pearson, MAE, RMSE per dataset
+    heatmap_metrics = [
+        ("spearman_rho", "Spearman ρ"),
+        ("pearson_r", "Pearson r"),
+        ("mae", "MAE"),
+        ("rmse", "RMSE"),
+    ]
+    for ds_result in json_outputs:
         name = ds_result["dataset"]
-        p = plot_distortion_heatmap(ds_result, fig_dir / f"distortion_heatmap_{name}.pdf")
-        print(f"  Heatmap saved to {p}")
+        for metric, label in heatmap_metrics:
+            fname = f"distortion_heatmap_{metric}_{name}.pdf"
+            p = plot_distortion_heatmap(
+                ds_result, fig_dir / fname, metric=metric, title=f"{name} — {label}",
+            )
+            print(f"  Heatmap ({label}) saved to {p}")
+
+    # Scatter plots and error histograms (full dim=768 only)
+    for ds_out in all_outputs:
+        name = ds_out["dataset"]
+        raw = ds_out["_raw_distances"][768]
+        d_quant = {4: raw.d_4bit, 2: raw.d_2bit, 1: raw.d_1bit}
+
+        p = plot_distance_scatter(
+            raw.d_float, d_quant,
+            fig_dir / f"distance_scatter_{name}.pdf",
+            dataset_name=name, dim=768,
+        )
+        print(f"  Scatter plot saved to {p}")
+
+        p = plot_error_histogram(
+            raw.d_float, d_quant,
+            fig_dir / f"error_histogram_{name}.pdf",
+            dataset_name=name, dim=768,
+        )
+        print(f"  Error histogram saved to {p}")
 
 
 if __name__ == "__main__":
