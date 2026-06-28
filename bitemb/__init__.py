@@ -5,6 +5,7 @@ from bitemb.analysis import (
     compute_intrinsic_dimensionality,
     compute_norm_distribution,
 )
+from bitemb.cache import clear_cache, load_or_encode
 from bitemb.config import DATASETS, MODEL_DIM, MODEL_NAME
 from bitemb.dataset import BeirDataset, load_beir
 from bitemb.distance import (
@@ -32,6 +33,8 @@ __all__ = [
     "MODEL_DIM",
     "DATASETS",
     "EmbeddingEngine",
+    "load_or_encode",
+    "clear_cache",
     "binarize",
     "turboquant_encode",
     "TurboQuantIndex",

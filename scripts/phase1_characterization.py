@@ -23,6 +23,7 @@ from bitemb.analysis import (
     compute_intrinsic_dimensionality,
     compute_norm_distribution,
 )
+from bitemb.cache import load_or_encode
 from bitemb.config import DATASETS
 from bitemb.dataset import load_beir
 from bitemb.engine import EmbeddingEngine
@@ -42,17 +43,18 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
     print(f"  Phase 1: {dataset_name}")
     print(f"{'='*60}")
 
-    # Load & encode
+    # Load & encode (cached)
     print("\n  Loading dataset...")
     ds = load_beir(dataset_name)
     texts = ds.corpus_texts
+    print(f"  Encoding {len(texts)} documents...")
+    corpus_embs = load_or_encode(dataset_name, texts, engine, show_progress=True)
+
     if max_docs and max_docs < len(texts):
         rng = np.random.default_rng(42)
         idx = rng.choice(len(texts), size=max_docs, replace=False)
-        texts = [texts[i] for i in idx]
+        corpus_embs = corpus_embs[idx]
         print(f"  Sampled {max_docs}/{ds.n_corpus} documents for characterization")
-    print(f"  Encoding {len(texts)} documents...")
-    corpus_embs = engine.encode_passages(texts, show_progress=True)
 
     # 1. Norm distribution
     print("\n  [1/3] Norm distribution")
