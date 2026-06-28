@@ -7,7 +7,12 @@ from bitemb.analysis import (
 )
 from bitemb.config import DATASETS, MODEL_DIM, MODEL_NAME
 from bitemb.dataset import BeirDataset, load_beir
-from bitemb.distance import DistortionResult, RawDistances, compute_distance_distortion, compute_raw_distances
+from bitemb.distance import (
+    DistortionResult,
+    RawDistances,
+    compute_distance_distortion,
+    compute_raw_distances,
+)
 from bitemb.engine import EmbeddingEngine
 from bitemb.plotting import (
     plot_cumulative_variance,
