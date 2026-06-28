@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 
+from bitemb.cache import load_or_encode
 from bitemb.config import DATASETS, PCA_DIMS, SEED
 from bitemb.dataset import load_beir
 from bitemb.engine import EmbeddingEngine
@@ -38,14 +39,14 @@ def run(
     print("\n  Loading dataset...")
     ds = load_beir(dataset_name)
     texts = ds.corpus_texts
+    print(f"  Encoding {len(texts)} documents...")
+    corpus_embs = load_or_encode(dataset_name, texts, engine, show_progress=True)
+
     if max_docs and max_docs < len(texts):
         rng = np.random.default_rng(SEED)
         idx = rng.choice(len(texts), size=max_docs, replace=False)
-        texts = [texts[i] for i in idx]
+        corpus_embs = corpus_embs[idx]
         print(f"  Subsampled {max_docs}/{ds.n_corpus} documents")
-
-    print(f"  Encoding {len(texts)} documents...")
-    corpus_embs = engine.encode_passages(texts, show_progress=True)
 
     all_results = []
 

@@ -12,6 +12,7 @@ Which semantic properties of a float embedding space are preserved under quantiz
 bitemb/              Core library
 ├── config.py        Experiment parameters
 ├── engine.py        Embedding generation (BAAI/bge-large-en-v1.5)
+├── cache.py         Deterministic embedding cache (avoids re-encoding)
 ├── quantization.py  Binary + TurboQuant (2-bit, 4-bit) + PCA reduction
 ├── dataset.py       BEIR data loading (SciFact, FiQA, TREC-COVID)
 ├── analysis.py      Phase 1: float space characterization
@@ -55,6 +56,13 @@ python scripts/phase3_neighborhood.py --dataset scifact
 python scripts/phase3_neighborhood.py --all
 python scripts/phase3_neighborhood.py --all --max-docs 5000 # recommended
 ```
+
+## Embedding Cache
+
+Corpus embeddings are cached to `cache/embeddings/` on first run. Subsequent runs (including across phases) load from cache instead of re-encoding. 
+The cache always stores the **full** corpus — `--max-docs` subsamples from the cached matrix after loading. 
+This holds regardless of run order: even if the first run uses `--max-docs`, the full corpus is still encoded and cached. 
+Delete `cache/` to force re-encoding.
 
 ## Methods
 

@@ -13,5 +13,6 @@ build/
 .coverage
 htmlcov/
 *.npy
+cache/
 docs/
 *.tex
