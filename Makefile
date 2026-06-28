@@ -10,7 +10,7 @@ test-fast:
 	pytest -m "not slow"
 
 lint:
-	ruff check bitemb tests
+	ruff check bitemb tests scripts
 	mypy bitemb
 
 clean:

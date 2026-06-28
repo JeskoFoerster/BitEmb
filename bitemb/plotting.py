@@ -131,6 +131,94 @@ def plot_variance_spectrum(
     return output_path
 
 
+# ---------- Phase 1: Dimension Distribution (Skewness/Kurtosis) ----------
+
+
+def plot_dimension_distribution(
+    stats: dict[str, dict[str, NDArray[np.float64]]],
+    output_path: Path,
+) -> Path:
+    """Two-panel plot: |skewness| and kurtosis distributions across 768 dims.
+
+    Args:
+        stats: {dataset_name: {"skewness": array(768,), "kurtosis": array(768,)}}.
+        output_path: Path for the output PDF.
+    """
+    _apply_style()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    for name, s in stats.items():
+        ax1.hist(np.abs(s["skewness"]), bins=40, alpha=0.5, label=name, density=True)
+        ax2.hist(s["kurtosis"], bins=40, alpha=0.5, label=name, density=True)
+
+    ax1.set_xlabel("|Skewness|")
+    ax1.set_ylabel("Density")
+    ax1.axvline(1.0, color="black", linestyle=":", linewidth=0.8)
+    ax1.legend(fontsize=7)
+
+    ax2.set_xlabel("Excess kurtosis")
+    ax2.set_ylabel("Density")
+    ax2.axvline(3.0, color="black", linestyle=":", linewidth=0.8)
+    ax2.legend(fontsize=7)
+
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+# ---------- Phase 1: Summary Table (LaTeX) ----------
+
+
+def generate_phase1_table(results: list[dict], output_path: Path) -> Path:
+    """Generate a LaTeX table summarizing Phase 1 characterization.
+
+    Args:
+        results: List of dataset result dicts (from characterization.json).
+        output_path: Path for the output .tex file.
+    """
+    header = (
+        r"\begin{table}[ht]" "\n"
+        r"\centering" "\n"
+        r"\caption{Phase~1: Float-space characterization across datasets.}" "\n"
+        r"\label{tab:phase1}" "\n"
+        r"\begin{tabular}{l" + "r" * len(results) + "}\n"
+        r"\toprule" "\n"
+        r"Metric & " + " & ".join(r["dataset"] for r in results) + r" \\" "\n"
+        r"\midrule" "\n"
+    )
+
+    rows = []
+    rows.append("$N$ (corpus) & " + " & ".join(
+        f"{r['n_corpus']:,}" for r in results) + r" \\")
+    rows.append(r"Norm CV & " + " & ".join(
+        f"{r['norm_distribution']['cv']:.2e}" for r in results) + r" \\")
+    rows.append(r"Mean $|\text{skew}|$ & " + " & ".join(
+        f"{r['dimension_stats']['mean_abs_skewness']:.4f}" for r in results) + r" \\")
+    rows.append(r"Max $|\text{skew}|$ & " + " & ".join(
+        f"{r['dimension_stats']['max_abs_skewness']:.4f}" for r in results) + r" \\")
+    rows.append(r"Mean kurtosis & " + " & ".join(
+        f"{r['dimension_stats']['mean_kurtosis']:.4f}" for r in results) + r" \\")
+    rows.append(r"Max kurtosis & " + " & ".join(
+        f"{r['dimension_stats']['max_kurtosis']:.4f}" for r in results) + r" \\")
+    rows.append(r"TwoNN $\hat{d}$ & " + " & ".join(
+        f"{r['intrinsic_dimensionality']['twonn']:.1f}" for r in results) + r" \\")
+    rows.append(r"PCA (95\%) & " + " & ".join(
+        f"{r['intrinsic_dimensionality']['pca_95']}" for r in results) + r" \\")
+
+    footer = (
+        r"\bottomrule" "\n"
+        r"\end{tabular}" "\n"
+        r"\end{table}" "\n"
+    )
+
+    content = header + "\n".join(rows) + "\n" + footer
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content, encoding="utf-8")
+    return output_path
+
+
 # ---------- Phase 2: Distance Distortion ----------
 
 # Colors per bit depth (consistent across plots)
