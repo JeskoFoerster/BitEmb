@@ -22,7 +22,12 @@ from bitemb.config import DATASETS, PCA_DIMS, SEED
 from bitemb.dataset import load_beir
 from bitemb.engine import EmbeddingEngine
 from bitemb.neighborhood import compute_neighborhood_preservation
-from bitemb.plotting import plot_neighborhood_heatmap, plot_neighborhood_overlap_by_k
+from bitemb.plotting import (
+    plot_neighborhood_by_dim,
+    plot_neighborhood_heatmap,
+    plot_neighborhood_overlap_by_k,
+    plot_neighborhood_pareto,
+)
 from bitemb.quantization import PCAReducer
 
 OUTPUT_DIR = Path("results/phase3")
@@ -137,6 +142,24 @@ def main():
                     ds_result, fig_dir / fname, metric=metric, k=k,
                 )
                 print(f"  Heatmap ({metric}, k={k}) saved to {p}")
+
+    # Pareto plots (bits per vector vs. quality)
+    for metric in ("overlap", "trustworthiness"):
+        for k in (10, 100):
+            fname = f"neighborhood_pareto_{metric}_k{k}.pdf"
+            p = plot_neighborhood_pareto(
+                all_outputs, fig_dir / fname, metric=metric, k=k,
+            )
+            print(f"  Pareto ({metric}, k={k}) saved to {p}")
+
+    # Metric by PCA dimension
+    for metric in ("overlap", "trustworthiness"):
+        for k in (10, 100):
+            fname = f"neighborhood_{metric}_by_dim_k{k}.pdf"
+            p = plot_neighborhood_by_dim(
+                all_outputs, fig_dir / fname, metric=metric, k=k,
+            )
+            print(f"  By-dim ({metric}, k={k}) saved to {p}")
 
 
 if __name__ == "__main__":

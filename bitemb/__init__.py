@@ -22,8 +22,10 @@ from bitemb.plotting import (
     plot_distortion_heatmap,
     plot_distortion_pareto,
     plot_error_histogram,
+    plot_neighborhood_by_dim,
     plot_neighborhood_heatmap,
     plot_neighborhood_overlap_by_k,
+    plot_neighborhood_pareto,
     plot_variance_spectrum,
 )
 from bitemb.quantization import PCAReducer, TurboQuantIndex, binarize, turboquant_encode
@@ -58,4 +60,6 @@ __all__ = [
     "plot_distortion_pareto",
     "plot_neighborhood_heatmap",
     "plot_neighborhood_overlap_by_k",
+    "plot_neighborhood_pareto",
+    "plot_neighborhood_by_dim",
 ]
