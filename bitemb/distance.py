@@ -140,6 +140,49 @@ def _compute_metrics(
     return float(pr), float(pp), float(sr), float(sp), mae, rmse
 
 
+@dataclass
+class RawDistances:
+    """Raw normalized distance arrays for visualization (scatter/histogram)."""
+
+    dim: int
+    d_float: NDArray[np.float64]  # (n_pairs,) normalized [0,1]
+    d_4bit: NDArray[np.float64]
+    d_2bit: NDArray[np.float64]
+    d_1bit: NDArray[np.float64]
+
+
+def compute_raw_distances(
+    embeddings: NDArray[np.float32],
+    dim: int = 768,
+    pca_reducer: PCAReducer | None = None,
+    n_pairs: int = N_PAIRS,
+    seed: int = SEED,
+) -> RawDistances:
+    """Compute normalized pairwise distances for scatter/histogram plots.
+
+    Returns the [0,1]-normalized distance vectors for float and all quantized
+    representations, allowing direct visual comparison.
+    """
+    if pca_reducer is not None and dim < 768:
+        embs = pca_reducer.transform(embeddings)
+    else:
+        embs = embeddings
+
+    pairs = _sample_pairs(embs.shape[0], n_pairs, seed)
+    d_float = _cosine_distance_pairs(embs, pairs)
+    d_4bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=4), pairs)
+    d_2bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=2), pairs)
+    d_1bit = _hamming_distance_pairs(binarize(embs), pairs)
+
+    return RawDistances(
+        dim=dim,
+        d_float=_normalize_to_unit(d_float),
+        d_4bit=_normalize_to_unit(d_4bit),
+        d_2bit=_normalize_to_unit(d_2bit),
+        d_1bit=_normalize_to_unit(d_1bit),
+    )
+
+
 def compute_distance_distortion(
     embeddings: NDArray[np.float32],
     dim: int = 768,
