@@ -105,10 +105,6 @@ liegt niedriger, 1-bit deutlich darunter.
 Overlap misst nicht nur, ob die neuen Nachbarn plausibel sind, sondern ob es
 tatsaechlich dieselben Nachbarn bleiben.
 
-**Sprechtext:**  
-"Trustworthiness sagt, ob falsche Nachbarn problematisch sind. Overlap zeigt
-zusaetzlich, ob exakt dieselben Top-10-Nachbarn erhalten bleiben."
-
 ## Gesamtfazit
 
 Der aktuelle Projektstand zeigt: Der Float-Embedding-Raum enthaelt Redundanz,
