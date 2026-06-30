@@ -64,6 +64,17 @@ The cache always stores the **full** corpus — `--max-docs` subsamples from the
 This holds regardless of run order: even if the first run uses `--max-docs`, the full corpus is still encoded and cached. 
 Delete `cache/` to force re-encoding.
 
+## Documentation
+
+Detailed documentation for each phase is in `docs/`:
+
+| File | Description |
+|------|-------------|
+| [`docs/overview.md`](docs/overview.md) | Project overview, experiment structure, datasets |
+| [`docs/phase1.md`](docs/phase1.md) | Float space characterization: norms, skewness, kurtosis, intrinsic dimensionality |
+| [`docs/phase2.md`](docs/phase2.md) | Distance analysis: Pearson r, Spearman ρ, MAE, RMSE |
+| [`docs/phase3.md`](docs/phase3.md) | Neighborhood preservation: overlap, trustworthiness |
+
 ## Methods
 
 - **Model**: `BAAI/bge-large-en-v1.5` (768d, not Matryoshka-trained)
