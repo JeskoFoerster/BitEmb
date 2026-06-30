@@ -7,7 +7,9 @@ Bevor wir komprimieren, müssen wir den Ausgangszustand verstehen. Phase 1 beant
 - Welche Eigenschaften begünstigen oder erschweren Quantisierung?
 - Wie viel Redundanz steckt in den 768 Dimensionen?
 
-Die Ergebnisse erlauben es, **vorherzusagen**, wo Quantisierung gut funktionieren wird und wo nicht – bevor wir überhaupt komprimieren.
+Die Ergebnisse sind nicht Selbstzweck, sondern liefern konkrete **Vorhersagen** darüber, wo Quantisierung gut funktionieren wird und wo nicht. Diese Vorhersagen werden in den späteren Phasen empirisch überprüft.
+
+---
 
 ## Die drei Messungen
 
@@ -15,97 +17,112 @@ Die Ergebnisse erlauben es, **vorherzusagen**, wo Quantisierung gut funktioniere
 
 **Was wird gemessen:** Die Länge (L2-Norm) jedes Vektors.
 
-**Warum:** Unser Modell normalisiert alle Vektoren auf Länge 1 (Einheitskugel). Binarisierung behält nur das Vorzeichen jeder Dimension – wenn alle Vektoren gleich lang sind, geht durch das Weglassen der Länge keine Information verloren.
+Ein Embedding-Vektor ist eine Liste von 768 Zahlen, z.B. `[0.3, -0.1, 0.8, ...]`. Die "Länge" dieses Vektors ist der euklidische Abstand vom Nullpunkt – wie lang der Pfeil wäre, wenn man ihn im Raum einzeichnet.
 
-**Interpretation:**
-- **CV (Coefficient of Variation) ≈ 0**: Alle Vektoren haben gleiche Länge → gut für Binarisierung
-- **CV > 0.01**: Unterschiedliche Längen → Binarisierung verliert Magnitudeninformation
+**Warum könnten Vektoren unterschiedliche Längen haben?** Ohne Normalisierung hängt die Länge davon ab, wie stark das Modell auf einen Text "reagiert" – ein langer, inhaltsreicher Text erzeugt möglicherweise stärkere Aktivierungen als ein kurzer. Das wäre für die Ähnlichkeitssuche problematisch, weil dann ein langer Text automatisch "ähnlicher" zu allem wirkt als ein kurzer, unabhängig vom Inhalt.
 
-> *Warum 0.01?* CV = Standardabweichung / Mittelwert. Bei normalisierten Vektoren (Norm = 1.0) bedeutet CV = 0.01, dass die Normen nur um ±0.01 schwanken. Das ist die Grenze, ab der Cosine-Similarity und Dot-Product nicht mehr äquivalent sind – und Binarisierung setzt diese Äquivalenz voraus.
+Deshalb normalisiert `bge-large-en-v1.5` alle Vektoren auf die Einheitskugel (Länge = 1). Damit hängen Ähnlichkeiten nur noch vom *Winkel* zwischen Vektoren ab, nicht von ihrer Länge.
+
+**Warum ist das für Binarisierung relevant?** Binarisierung behält nur das *Vorzeichen* jeder Dimension (positiv → 1, negativ → 0) und wirft die tatsächlichen Zahlenwerte – und damit auch die Länge – vollständig weg. Wenn alle Vektoren gleich lang sind, ist die Länge konstant und trägt keine Unterscheidungskraft zwischen Dokumenten – ihr Verlust ist also irrelevant. Hätten Vektoren dagegen sehr unterschiedliche Längen, würde Binarisierung echte Unterschiede zwischen Dokumenten unsichtbar machen.
+
+**Kennzahl:** CV (Coefficient of Variation) = Standardabweichung / Mittelwert. Misst, wie stark die Längen streuen, relativ zu ihrer durchschnittlichen Größe.
+
+| CV | Bedeutung |
+|----|-----------|
+| ≈ 0 | Alle Vektoren gleich lang → Länge ist konstant, kein Informationsverlust durch Binarisierung |
+| > 0.01 | Nennenswerte Längenunterschiede → Länge trägt Unterscheidungskraft, die Binarisierung verwirft |
+
+> **Warum 0.01?** Wenn alle Normen nahezu identisch sind, ist die Länge praktisch keine Variable mehr – sie trägt nichts zur Unterscheidung von Dokumenten bei. Ab CV = 0.01 beginnen die Längenunterschiede groß genug zu werden, dass Cosine-Similarity und Dot-Product spürbar auseinanderlaufen. Binarisierung approximiert Cosine-Similarity über Hamming-Distanz – diese Approximation setzt voraus, dass die Normen vernachlässigbar variieren.
+
+---
 
 ### 2. Dimensionsstatistiken (Skewness & Kurtosis)
 
-**Was wird gemessen:** Für jede der 768 Dimensionen wird die Verteilung der Werte über alle Dokumente analysiert.
+**Was wird gemessen:** Jeder Vektor hat 768 Dimensionen. Für jede dieser Dimensionen schaut man sich an, welche Werte die verschiedenen Dokumente dort annehmen – also: "Was ist der Wertebereich von Dimension 42 über alle 5.000 Dokumente hinweg?"
 
-**Warum:** Quantisierung teilt den Wertebereich in gleichmäßige Stufen ein. Das funktioniert am besten, wenn die Werte symmetrisch und gleichmäßig verteilt sind.
+Das ergibt für jede Dimension eine Verteilung von Zahlen. Diese Verteilungen werden auf zwei Eigenschaften untersucht: Schiefe und Wölbung.
+
+**Warum ist die Form dieser Verteilungen wichtig?** Naive Quantisierung teilt den Wertebereich einer Dimension in gleichmäßige Stufen ein (uniform quantization). Bei 2-Bit gibt es 4 Stufen, bei 4-Bit gibt es 16. Diese Stufen sind gleichmäßig über den Wertebereich verteilt. Das funktioniert gut, wenn die Werte ebenfalls gleichmäßig verteilt sind – dann nutzt jede Stufe einen ähnlichen Anteil der Dokumente. Ist die Verteilung ungleichmäßig, fallen viele Dokumente in dieselbe Stufe und werden danach ununterscheidbar. TurboQuant geht einen Schritt weiter und wendet vor der Quantisierung eine zufällige orthogonale Rotation an (Hadamard-Transformation + zufällige Vorzeichenflips). Diese Rotation verteilt Ausreißer und ungleichmäßige Varianz gleichmäßiger über alle Dimensionen – ohne die Daten dafür zu kennen. Auch dort gilt: je günstiger die Ausgangsverteilung, desto weniger Arbeit muss die Rotation leisten.
 
 #### Skewness (Schiefe)
 
-Misst, ob die Verteilung symmetrisch ist oder nach einer Seite "kippt".
+Schiefe beschreibt, ob eine Verteilung symmetrisch ist oder nach einer Seite "zieht".
+
+Stell dir vor, du schaust dir die Werte einer Dimension über alle Dokumente an und zeichnest ein Histogramm. Eine symmetrische Verteilung sieht wie eine Glocke aus – die meisten Werte liegen in der Mitte, nach links und rechts fällt die Häufigkeit gleichmäßig ab. Eine schiefe Verteilung hat dagegen einen langen Schwanz auf einer Seite: die meisten Werte sind klein, aber ein paar wenige sind sehr groß (oder umgekehrt).
 
 ```
-Symmetrisch (gut):     Schief (schlecht):
-    ╱╲                      ╱╲
-   ╱  ╲                    ╱  ╲___
-  ╱    ╲                  ╱
- ╱      ╲                ╱
+Symmetrisch (günstig):          Schief (ungünstig, Masse auf einer Seite):
+      ╱╲                                ╱╲
+     ╱  ╲                             ╱╲  ╲
+    ╱    ╲                           ╱  ╲  ╲___
+───╱──────╲───                  ───╱────╲──────────
+  -1   0   1                      -1   0   1   2
+          ↑                               ↑
+     Schwelle 0                      Schwelle 0
+    ~50% | ~50%                      ~80% | ~20%
+                                    (→ 0) (→ 1)
 ```
 
-**Interpretation:**
-- **|Skewness| < 1**: Annähernd symmetrisch → Binarisierung bei Schwelle 0 funktioniert gut
-- **|Skewness| > 1**: Stark schief → der Nullpunkt ist keine gute Trennlinie, viele Dokumente landen auf der gleichen Seite
+**Warum ist das schlecht für naive Binarisierung?** Die Binarisierung setzt den Schwellenwert bei 0: alles über 0 wird zu 1, alles darunter zu 0. Das ergibt nur dann sinnvolle Bits, wenn die Verteilung symmetrisch um 0 liegt – dann landen ~50% der Dokumente auf jeder Seite, das Bit trennt die Dokumente in zwei gleich große Gruppen und trägt maximale Information.
 
-> *Warum 1?* Binarisierung setzt den Schwellenwert bei 0: positive Werte → 1, negative → 0. Bei einer symmetrischen Verteilung fallen ~50% der Dokumente auf jede Seite – maximaler Informationsgehalt pro Bit. Ab |Skew| > 1 verschiebt sich dieses Verhältnis deutlich (z.B. 70/30), und das eine Bit unterscheidet kaum noch zwischen Dokumenten. In der Statistik gilt |Skew| > 1 als Grenze für "deutlich asymmetrisch".
+Ist die Verteilung schief – d.h. die meisten Werte liegen auf einer Seite der 0 – dann werden z.B. 80% der Dokumente zu 0 und nur 20% zu 1 (oder umgekehrt, je nach Richtung der Schiefe). Das Bit sagt damit kaum noch etwas aus: fast alle Dokumente sind "gleich", egal was der genaue Wert war.
+
+| \|Skewness\| | Bedeutung |
+|-------------|-----------|
+| < 1 | Annähernd symmetrisch → Binarisierung bei Schwelle 0 funktioniert gut |
+| > 1 | Stark schief → der Nullpunkt ist keine gute Trennlinie |
+
+> **Warum 1?** Ab |Skew| > 1 verschiebt sich das 50/50-Verhältnis deutlich (auf ca. 70/30 oder mehr). In der Statistik gilt |Skew| > 1 als Grenze für "deutlich asymmetrisch".
 
 #### Kurtosis (Wölbung)
 
-Misst, ob es viele Ausreißer gibt (schwere Ränder). Verwendet wird die "Excess-Kurtosis" – die Normalverteilung hat den Wert 0.
+Wölbung beschreibt, ob eine Verteilung viele Ausreißer hat – also ob es oft Werte gibt, die weit vom Durchschnitt entfernt liegen.
 
-**Interpretation:**
-- **Kurtosis ≈ 0**: Normalverteilungsähnlich → Quantisierungsstufen werden gleichmäßig genutzt
-- **Kurtosis > 3**: Deutlich schwere Ränder mit vielen Extremwerten → bei wenigen Stufen (2-Bit, 4-Bit) werden Ausreißer schlecht erfasst
+Eine Verteilung mit niedriger Kurtosis ist "flach": die Werte streuen gleichmäßig und es gibt kaum extreme Ausreißer. Eine Verteilung mit hoher Kurtosis hat eine sehr spitze Mitte und gleichzeitig lange, schwere Ränder: die meisten Werte liegen sehr dicht beieinander, aber es gibt regelmäßig einzelne extreme Ausreißer weit weg vom Zentrum.
 
-> *Warum 3?* Excess-Kurtosis misst den Unterschied zur Normalverteilung (= 0). Bei Kurtosis = 3 hat die Verteilung so schwere Ränder wie eine Laplace-Verteilung – dort liegen ~5% der Werte in den äußeren 1% des Wertebereichs. Bei nur 4 Quantisierungsstufen (2-Bit) werden diese Ausreißer alle in denselben Bucket gequetscht und sind danach ununterscheidbar.
+```
+Niedrige Kurtosis (günstig):   Hohe Kurtosis (ungünstig):
+                                          │
+    ████████████                          █
+   ██████████████                        ███
+  ████████████████                   ▄▄▄█████▄▄▄
+ ██████████████████       ▄▄▄▄▄▄▄▄▄▄▄           ▄▄▄▄▄▄▄▄▄▄▄
+```
+
+**Warum sind Ausreißer für Quantisierung ein Problem?** Bei 2-Bit gibt es nur 4 Stufen, gleichmäßig über den gesamten Wertebereich verteilt. Der Wertebereich wird von den Extremwerten bestimmt. Wenn also ein paar Ausreißer den Bereich auf z.B. [-5, +5] ausdehnen, aber 95% der Dokumente zwischen [-0.5, +0.5] liegen, dann quetschen sich fast alle Dokumente in die mittleren zwei Stufen – und sind danach kaum noch unterscheidbar. Die Ausreißer "verschwenden" die Auflösung, ohne selbst viele Dokumente zu sein.
+
+| Kurtosis | Bedeutung |
+|----------|-----------|
+| ≈ 0 | Normalverteilungsähnlich → Stufen werden gleichmäßig genutzt |
+| > 3 | Viele Ausreißer → bei wenigen Stufen (2-Bit) verlieren die meisten Dokumente ihre Unterscheidbarkeit |
+
+> **Warum 3?** Die Normalverteilung hat Excess-Kurtosis = 0. Ab einem Wert von ~3 sind die Ränder so schwer, dass bei grober Quantisierung ein spürbarer Anteil der Werte in den äußersten Bucket fällt und dort ununterscheidbar wird. Die Grenze ist nicht scharf – sie markiert den Bereich, ab dem Ausreißer bei 4 Stufen (2-Bit) praktisch relevant werden.
+
+> **Grafik `dimension_distribution.pdf`:** Zwei Histogramme nebeneinander – links |Skewness|, rechts Kurtosis – über alle 768 Dimensionen, alle drei Datasets überlagert. Jeder Balken steht für eine Gruppe von Dimensionen mit ähnlichem Wert. Die gestrichelten Linien markieren die Warnschwellen (|Skew| = 1, Kurtosis = 3). Je mehr Masse rechts der Schwelle liegt, desto mehr Dimensionen sind problematisch für die jeweilige Quantisierungsmethode.
+
+---
 
 ### 3. Intrinsische Dimensionalität
 
-**Was wird gemessen:** Wie viele Dimensionen tragen wirklich Information bei?
+**Was wird gemessen:** Wie viele Dimensionen tragen wirklich unabhängige Information?
 
-Obwohl der Raum 768 Dimensionen hat, ist die tatsächliche Informationsmenge oft viel geringer – viele Dimensionen sind redundant oder korreliert.
+768 Dimensionen klingt nach viel – aber viele davon könnten redundant sein. Stell dir vor, Dimension 42 misst irgendwie "wie medizinisch der Text ist", und Dimension 137 misst "wie viele Fachbegriffe aus der Medizin vorkommen". Diese beiden Dimensionen werden für medizinische Texte immer gleichzeitig hoch sein – sie sind korreliert. Wenn man die eine kennt, weiß man schon viel über die andere. Solche Korrelationen bedeuten, dass der Raum weniger echte Freiheitsgrade hat als seine 768 Dimensionen suggerieren.
 
-**Zwei Methoden:**
-- **PCA (95% Varianz):** Wie viele Hauptkomponenten braucht man, um 95% der Gesamtvariation zu erklären?
-- **TwoNN:** Lokale Schätzung der Mannigfaltigkeitsdimension (wie viele "echte" Freiheitsgrade hat der Raum?)
+Das ist wichtig für die **Dimensionsreduktion via PCA**: PCA findet die Richtungen im Raum, die die meiste Variation erklären, und wirft die unwichtigsten weg. Je mehr Redundanz im Original steckt, desto verlustloser kann man reduzieren. Steckt dagegen in jeder Dimension echte, unabhängige Information, kostet jede weggeworfene Dimension wirklich etwas.
+
+**Zwei komplementäre Methoden:**
+
+- **PCA (95% Varianz):** Wie viele Hauptkomponenten braucht man, um 95% der Gesamtvariation zu erklären? Gibt an, wie viel lineare Redundanz es gibt. Wenn 200 Komponenten bereits 95% erklären, dann "steckt" die Information praktisch in 200 Richtungen, nicht 768.
+
+- **TwoNN:** Ein anderer Ansatz: Für jedes Dokument schaut man sich an, wie weit der erste und der zweite Nachbar entfernt sind. Aus dem Verhältnis dieser Abstände lässt sich schätzen, wie viele Dimensionen der Raum *lokal* wirklich hat – also wie viele Richtungen es gibt, in die man sich von einem Punkt aus "sinnvoll" bewegen kann. Dieser Schätzer erfasst auch nichtlineare Strukturen, die PCA nicht sieht.
+
+Wenn PCA sagt "150 Dimensionen reichen", TwoNN aber "der Raum hat lokal nur 15 echte Freiheitsgrade" – dann hat der Raum nichtlineare Struktur. Die 150 PCA-Komponenten beschreiben diese Struktur zwar linear korrekt, aber eine PCA-Reduktion auf z.B. 64d schneidet dann echte nichtlineare Zusammenhänge ab, die in den verworfenen Komponenten stecken. Der tatsächliche Qualitätsverlust bei Dimensionsreduktion ist in diesem Fall größer, als die erklärte Varianz allein vermuten lässt.
 
 **Interpretation:**
-- **PCA_95 = 200 bei 768 Dimensionen**: Nur ~200 Dimensionen tragen wesentliche Information → PCA-Reduktion auf 256d sollte kaum Qualität kosten
-- **Hohe Redundanz (PCA_95 << 768)**: Dimensionsreduktion ist vielversprechend
-- **TwoNN << PCA_95**: Der Raum hat nichtlineare Struktur, die PCA nicht vollständig erfasst
+- **PCA_95 << 768:** Viel lineare Redundanz → PCA-Reduktion auf z.B. 128d oder 256d verlustarm möglich
+- **PCA_95 nahe 768:** Information gleichmäßig verteilt → jede weggeworfene Dimension kostet etwas
+- **TwoNN << PCA_95:** Der Raum hat nichtlineare Struktur – PCA unterschätzt den tatsächlichen Verlust bei Dimensionsreduktion
 
-## Grafiken
+> **Grafik `pca_cumulative_variance.pdf`:** X-Achse = Anzahl Hauptkomponenten, Y-Achse = wie viel Prozent der Gesamtvarianz diese Komponenten zusammen erklären (0–100%). Man liest ab: "Mit 256 Komponenten erkläre ich X% der Varianz." Die horizontale Linie bei 95% zeigt, wie früh oder spät dieser Schwellenwert erreicht wird. Vertikale Linien markieren die Reduktionsziele 64, 128, 256, 384. Ein steiler Anstieg am Anfang wäre günstig (wenige Dimensionen erklären fast alles); ein flacher Anstieg bedeutet, dass die Information gleichmäßig über viele Dimensionen verteilt ist und Reduktion teuer wird.
 
-### Cumulative PCA Variance (`pca_cumulative_variance.pdf`)
-
-**Was zeigt sie:** X-Achse = Anzahl Hauptkomponenten, Y-Achse = kumulativ erklärte Varianz (0–100%).
-
-**Wie lesen:**
-- Je steiler die Kurve am Anfang ansteigt, desto konzentrierter ist die Information in wenigen Dimensionen
-- Die horizontale Linie bei 95% zeigt, ab wie vielen Komponenten "genug" Information erhalten bleibt
-- Vertikale Linien markieren die PCA-Reduktionsziele (64, 128, 256, 384)
-
-**Beispiel:** Wenn die Kurve bei 128 Komponenten schon 90% erreicht, dann enthält ein 128d-Vektor fast die gleiche Information wie der 768d-Originalvektor.
-
-### Variance Spectrum (`pca_variance_spectrum.pdf`)
-
-**Was zeigt sie:** Wie viel Varianz jede einzelne Hauptkomponente erklärt (log-Skala, erste 100 Komponenten).
-
-**Wie lesen:**
-- Steiler Abfall = wenige dominante Dimensionen → gut komprimierbar
-- Flacher Abfall = Information gleichmäßig verteilt → Dimensionsreduktion kostet mehr
-- Die gestrichelte Linie "uniform (1/768)" zeigt den Idealfall nach TurboQuant-Rotation: alle Dimensionen gleich wichtig → optimale Nutzung der Quantisierungsstufen
-
-**Warum relevant:** TurboQuant rotiert den Raum VOR der Quantisierung, damit die Varianz gleichmäßiger verteilt ist. Diese Grafik zeigt, wie ungleichmäßig der Originalraum ist und damit wie viel die Rotation bringt.
-
-### Dimension Distribution (`dimension_distribution.pdf`)
-
-**Was zeigt sie:** Zwei Histogramme – links |Skewness|, rechts Kurtosis – über alle 768 Dimensionen.
-
-**Wie lesen:**
-- **Links (Skewness):** Je mehr Masse rechts von der gestrichelten Linie (|Skew| > 1), desto mehr Dimensionen sind problematisch für naive Binarisierung
-- **Rechts (Kurtosis):** Je mehr Masse rechts von der gestrichelten Linie (Kurtosis > 3), desto mehr Dimensionen haben Ausreißer-Probleme bei grober Quantisierung
-
-**Vergleich zwischen Datasets:** Wenn ein Dataset (z.B. FiQA) mehr schiefe Dimensionen hat als ein anderes (z.B. SciFact), erwarten wir dort schlechtere Binarisierungsergebnisse in den folgenden Phasen.
-
-### Summary Table (`phase1_summary.tex`)
-
-LaTeX-Tabelle mit allen Kennzahlen pro Dataset. Dient der schnellen Übersicht und dem Einbau in die Arbeit.
+> **Grafik `pca_variance_spectrum.pdf`:** Zeigt für jede der ersten 100 Hauptkomponenten einzeln, wie viel Varianz sie jeweils erklärt (log-Skala). Eine dominante erste Komponente mit steilem Abfall danach wäre gut komprimierbar. Ein gleichmäßig flacher Verlauf bedeutet: alle Komponenten sind gleich wichtig, keine kann ohne Verlust weggeworfen werden. Die gestrichelte Linie "uniform (1/768)" ist der Zielzustand nach TurboQuant-Rotation: TurboQuant dreht den Raum so, dass alle Dimensionen gleich viel Varianz tragen – damit werden die Quantisierungsstufen gleichmäßig ausgenutzt. Je ungleichmäßiger das Spektrum vor der Rotation, desto stärker hilft TurboQuant.
