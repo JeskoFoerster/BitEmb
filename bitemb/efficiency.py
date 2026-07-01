@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from time import perf_counter
-from typing import Callable, Literal, Sequence
+from typing import Any, Callable, Literal, Sequence, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -232,7 +232,9 @@ def pack_codes(codes: NDArray[np.uint8], bits: Literal[2, 4]) -> NDArray[np.uint
     clean = codes.astype(np.uint8, copy=False)
     for offset in range(per_byte):
         src = clean[:, offset::per_byte]
-        packed[:, : src.shape[1]] |= src << (offset * bits)
+        shifted = np.left_shift(src, offset * bits).astype(np.uint8, copy=False)
+        target = packed[:, : src.shape[1]]
+        packed[:, : src.shape[1]] = np.bitwise_or(target, shifted)
     return packed
 
 
@@ -255,7 +257,7 @@ def pack_turboquant_index(index: TurboQuantIndex) -> PackedTurboQuantIndex:
     """Convert the current uint8 TurboQuant codes into packed native layout."""
     if index.bits not in (2, 4):
         raise ValueError("Packed TurboQuant supports only 2-bit and 4-bit indexes")
-    bits = 2 if index.bits == 2 else 4
+    bits: Literal[2, 4] = 2 if index.bits == 2 else 4
     packed = pack_codes(index.codes, bits=bits)
     return PackedTurboQuantIndex(
         packed_codes=packed,
@@ -451,7 +453,7 @@ def unavailable_runtime(
     )
 
 
-def dataclasses_to_dicts(items: Sequence[object]) -> list[dict]:
+def dataclasses_to_dicts(items: Sequence[object]) -> list[dict[str, Any]]:
     """Convert dataclass result objects into JSON-serializable dictionaries."""
-    return [asdict(item) for item in items]
+    return [asdict(cast(Any, item)) for item in items]
 
