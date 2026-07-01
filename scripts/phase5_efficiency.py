@@ -17,11 +17,18 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# Work around a multiprocess shutdown bug on Python 3.12 that can be triggered
+# by transitive scientific/ML imports. Phase 5 does not use multiprocess.
+try:
+    import multiprocess.resource_tracker as _mp_resource_tracker
+
+    _mp_resource_tracker.ResourceTracker.__del__ = lambda self: None
+except Exception:
+    pass
+
 import numpy as np  # noqa: E402
 
-from bitemb.cache import load_or_encode  # noqa: E402
 from bitemb.config import DATASETS, PCA_DIMS, SEED  # noqa: E402
-from bitemb.dataset import load_beir  # noqa: E402
 from bitemb.distance import _sample_pairs  # noqa: E402
 from bitemb.efficiency import (  # noqa: E402
     REPRESENTATIONS,
@@ -34,7 +41,6 @@ from bitemb.efficiency import (  # noqa: E402
     theoretical_work,
     unavailable_runtime,
 )
-from bitemb.engine import EmbeddingEngine  # noqa: E402
 from bitemb.native import (  # noqa: E402
     NativeBackendUnavailableError,
     NativePackedBackend,
@@ -57,6 +63,10 @@ def _load_embeddings(dataset_name: str, max_docs: int | None, synthetic: bool) -
     if synthetic:
         n = max_docs or 1000
         return _synthetic_embeddings(n)
+
+    from bitemb.cache import load_or_encode
+    from bitemb.dataset import load_beir
+    from bitemb.engine import EmbeddingEngine
 
     ds = load_beir(dataset_name)
     engine = EmbeddingEngine()
