@@ -19,7 +19,12 @@ from bitemb.quantization import TurboQuantIndex, binarize, turboquant_encode
 
 Representation = Literal["float32", "4bit", "2bit", "1bit"]
 Operation = Literal["memory", "pairwise_distance", "top_k", "index_build"]
-Implementation = Literal["theoretical", "native_packed", "python_numpy_reference", "dequantized_baseline"]
+Implementation = Literal[
+    "theoretical",
+    "native_packed",
+    "python_numpy_reference",
+    "dequantized_baseline",
+]
 
 REPRESENTATIONS: tuple[Representation, ...] = ("float32", "4bit", "2bit", "1bit")
 
@@ -280,7 +285,12 @@ def practical_memory_for_layouts(layouts: NativeLayouts) -> list[PracticalMemory
     n, dim = layouts.float32.shape
     baseline_bytes = n * 768 * 4
 
-    def row(rep: Representation, index_bytes: int, metadata_bytes: int, notes: str) -> PracticalMemory:
+    def row(
+        rep: Representation,
+        index_bytes: int,
+        metadata_bytes: int,
+        notes: str,
+    ) -> PracticalMemory:
         total = int(index_bytes + metadata_bytes)
         return PracticalMemory(
             representation=rep,
@@ -298,8 +308,18 @@ def practical_memory_for_layouts(layouts: NativeLayouts) -> list[PracticalMemory
     return [
         row("float32", int(layouts.float32.nbytes), 0, "contiguous float32 matrix"),
         row("1bit", int(layouts.binary1.nbytes), 0, "np.packbits-compatible packed binary codes"),
-        row("2bit", int(layouts.tq2.packed_codes.nbytes), layouts.tq2.metadata_bytes, "packed 2-bit codes plus min/max metadata"),
-        row("4bit", int(layouts.tq4.packed_codes.nbytes), layouts.tq4.metadata_bytes, "packed 4-bit codes plus min/max metadata"),
+        row(
+            "2bit",
+            int(layouts.tq2.packed_codes.nbytes),
+            layouts.tq2.metadata_bytes,
+            "packed 2-bit codes plus min/max metadata",
+        ),
+        row(
+            "4bit",
+            int(layouts.tq4.packed_codes.nbytes),
+            layouts.tq4.metadata_bytes,
+            "packed 4-bit codes plus min/max metadata",
+        ),
     ]
 
 
@@ -315,8 +335,18 @@ def numpy_payload_memory(embeddings: NDArray[np.float32]) -> list[PracticalMemor
     rows: list[tuple[Representation, int, int, str]] = [
         ("float32", int(embs.nbytes), 0, "NumPy float32 matrix"),
         ("1bit", int(binary.nbytes), 0, "NumPy packed bits"),
-        ("2bit", int(tq2.codes.nbytes), int(tq2.col_min.nbytes + tq2.col_max.nbytes), "uint8 TurboQuant codes plus metadata"),
-        ("4bit", int(tq4.codes.nbytes), int(tq4.col_min.nbytes + tq4.col_max.nbytes), "uint8 TurboQuant codes plus metadata"),
+        (
+            "2bit",
+            int(tq2.codes.nbytes),
+            int(tq2.col_min.nbytes + tq2.col_max.nbytes),
+            "uint8 TurboQuant codes plus metadata",
+        ),
+        (
+            "4bit",
+            int(tq4.codes.nbytes),
+            int(tq4.col_min.nbytes + tq4.col_max.nbytes),
+            "uint8 TurboQuant codes plus metadata",
+        ),
     ]
     out: list[PracticalMemory] = []
     for rep, payload, metadata, notes in rows:
@@ -424,3 +454,4 @@ def unavailable_runtime(
 def dataclasses_to_dicts(items: Sequence[object]) -> list[dict]:
     """Convert dataclass result objects into JSON-serializable dictionaries."""
     return [asdict(item) for item in items]
+

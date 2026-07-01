@@ -17,13 +17,13 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import numpy as np
+import numpy as np  # noqa: E402
 
-from bitemb.cache import load_or_encode
-from bitemb.config import DATASETS, PCA_DIMS, SEED
-from bitemb.dataset import load_beir
-from bitemb.distance import _sample_pairs
-from bitemb.efficiency import (
+from bitemb.cache import load_or_encode  # noqa: E402
+from bitemb.config import DATASETS, PCA_DIMS, SEED  # noqa: E402
+from bitemb.dataset import load_beir  # noqa: E402
+from bitemb.distance import _sample_pairs  # noqa: E402
+from bitemb.efficiency import (  # noqa: E402
     REPRESENTATIONS,
     build_native_layouts,
     dataclasses_to_dicts,
@@ -34,9 +34,13 @@ from bitemb.efficiency import (
     theoretical_work,
     unavailable_runtime,
 )
-from bitemb.engine import EmbeddingEngine
-from bitemb.native import NativeBackendUnavailable, NativePackedBackend, native_backend_available
-from bitemb.quantization import PCAReducer
+from bitemb.engine import EmbeddingEngine  # noqa: E402
+from bitemb.native import (  # noqa: E402
+    NativeBackendUnavailableError,
+    NativePackedBackend,
+    native_backend_available,
+)
+from bitemb.quantization import PCAReducer  # noqa: E402
 
 OUTPUT_DIR = Path("results/phase5")
 
@@ -88,7 +92,10 @@ def _native_runtime_records(
     layouts = build_native_layouts(embeddings)
 
     if not native_backend_available():
-        note = "Native backend unavailable. Run `python -m bitemb.native.build_native` after installing a C compiler."
+        note = (
+            "Native backend unavailable. Run `python -m bitemb.native.build_native` "
+            "after installing a C compiler."
+        )
         records = []
         for rep in REPRESENTATIONS:
             records.append(unavailable_runtime(
@@ -113,7 +120,7 @@ def _native_runtime_records(
 
     try:
         backend = NativePackedBackend()
-    except NativeBackendUnavailable as exc:
+    except NativeBackendUnavailableError as exc:
         note = str(exc)
         return dataclasses_to_dicts([
             unavailable_runtime(
@@ -230,7 +237,12 @@ def _native_runtime_records(
 
 
 def run(args: argparse.Namespace) -> tuple[list[dict], list[dict]]:
-    datasets = ["synthetic"] if args.synthetic else ([args.dataset] if not args.all else list(DATASETS))
+    if args.synthetic:
+        datasets = ["synthetic"]
+    elif args.all:
+        datasets = list(DATASETS)
+    else:
+        datasets = [args.dataset]
     memory_outputs: list[dict] = []
     runtime_outputs: list[dict] = []
 
@@ -294,7 +306,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Phase 5: native runtime and memory efficiency")
     parser.add_argument("--dataset", choices=list(DATASETS), default="scifact")
     parser.add_argument("--all", action="store_true")
-    parser.add_argument("--synthetic", action="store_true", help="Use synthetic normalized embeddings")
+    parser.add_argument("--synthetic", action="store_true", help="Use synthetic " \
+    "normalized embeddings")
     parser.add_argument("--max-docs", type=int, default=1000)
     parser.add_argument("--dims", type=int, nargs="+", default=list(PCA_DIMS))
     parser.add_argument("--n-pairs", type=int, default=10_000)
@@ -315,10 +328,12 @@ def main() -> None:
     print(f"Saved runtime results to {runtime_path}")
 
     if not native_backend_available():
-        print("\nNative backend is not built; runtime.json contains unavailable native runtime records.")
+        print("\nNative backend is not built; runtime.json contains unavailable " \
+        "native runtime records.")
         print("Build it with: python -m bitemb.native.build_native")
 
 
 if __name__ == "__main__":
     main()
+
 

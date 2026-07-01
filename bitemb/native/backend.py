@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from bitemb.efficiency import PackedTurboQuantIndex
 
 
-class NativeBackendUnavailable(RuntimeError):
+class NativeBackendUnavailableError(RuntimeError):
     """Raised when the optional native CFFI module is not built."""
 
 
@@ -19,7 +19,7 @@ def _load_native_module():
     try:
         return importlib.import_module("bitemb.native._bitemb_native")
     except ImportError as exc:
-        raise NativeBackendUnavailable(
+        raise NativeBackendUnavailableError(
             "Native backend is not built. Run `python -m bitemb.native.build_native` "
             "after installing a C compiler."
         ) from exc
@@ -28,7 +28,7 @@ def _load_native_module():
 def native_backend_available() -> bool:
     try:
         _load_native_module()
-    except NativeBackendUnavailable:
+    except NativeBackendUnavailableError:
         return False
     return True
 
@@ -149,4 +149,6 @@ class NativePackedBackend:
         if rc != 0:
             raise RuntimeError(f"native knn_turboquant failed with code {rc}")
         return out
+
+
 
