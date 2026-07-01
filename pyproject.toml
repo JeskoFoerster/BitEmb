@@ -14,6 +14,7 @@ dependencies = [
     "scikit-learn==1.5.2",
     "datasets>=3.0",
     "matplotlib>=3.8",
+    "cffi>=1.16",
 ]
 
 [project.optional-dependencies]
