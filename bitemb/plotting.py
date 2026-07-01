@@ -651,3 +651,190 @@ def plot_neighborhood_by_dim(
     fig.savefig(output_path)
     plt.close(fig)
     return output_path
+
+
+# ---------- Phase 5: Runtime and Memory Efficiency ----------
+
+_REP_ORDER = ["float32", "4bit", "2bit", "1bit"]
+_REP_COLORS = {
+    "float32": "#1f77b4",
+    "4bit": "#2ca02c",
+    "2bit": "#ff7f0e",
+    "1bit": "#d62728",
+}
+_REP_LABELS = {
+    "float32": "Float32",
+    "4bit": "4-bit",
+    "2bit": "2-bit",
+    "1bit": "1-bit",
+}
+
+
+def _phase5_entry_label(entry: dict) -> str:
+    return f"{entry['dataset']} (n={entry['n_vectors']}, d={entry['dim']})"
+
+
+def plot_phase5_memory_theoretical_vs_native(
+    results: list[dict],
+    output_path: Path,
+) -> Path:
+    """Bar plot comparing theoretical and native bytes per vector.
+
+    Args:
+        results: List of records from phase5 memory.json.
+        output_path: Path for the output PDF.
+    """
+    _apply_style()
+    entries = sorted(results, key=lambda r: (r["dataset"], r["dim"], r["n_vectors"]))
+    fig, axes = plt.subplots(
+        len(entries), 1,
+        figsize=(_FIG_WIDTH, max(2.4, 2.0 * len(entries))),
+        squeeze=False,
+    )
+
+    for ax, entry in zip(axes[:, 0], entries):
+        theoretical = {r["representation"]: r["bytes_per_vector"] for r in entry["theoretical"]}
+        native = {r["representation"]: r["bytes_per_vector"] for r in entry["native_packed"]}
+        x = np.arange(len(_REP_ORDER))
+        width = 0.36
+        ax.bar(
+            x - width / 2,
+            [theoretical[r] for r in _REP_ORDER],
+            width,
+            label="theoretical",
+            color="#9ecae1",
+        )
+        ax.bar(
+            x + width / 2,
+            [native[r] for r in _REP_ORDER],
+            width,
+            label="native index",
+            color="#3182bd",
+        )
+        ax.set_xticks(x)
+        ax.set_xticklabels([_REP_LABELS[r] for r in _REP_ORDER])
+        ax.set_ylabel("Bytes / vector")
+        ax.set_title(_phase5_entry_label(entry))
+        ax.set_yscale("log", base=2)
+        ax.legend(fontsize=7)
+
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def plot_phase5_memory_compression_by_dim(
+    results: list[dict],
+    output_path: Path,
+) -> Path:
+    """Line plot of native compression ratio by PCA dimension."""
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    datasets = sorted({r["dataset"] for r in results})
+    linestyles = ["-", "--", ":", "-."]
+    for ds_idx, dataset in enumerate(datasets):
+        ds_entries = sorted([r for r in results if r["dataset"] == dataset], key=lambda r: r["dim"])
+        for rep in _REP_ORDER:
+            dims = [r["dim"] for r in ds_entries]
+            ratios = []
+            for entry in ds_entries:
+                native = {r["representation"]: r for r in entry["native_packed"]}
+                ratios.append(native[rep]["compression_ratio_vs_float768"])
+            ax.plot(
+                dims,
+                ratios,
+                color=_REP_COLORS[rep],
+                linestyle=linestyles[ds_idx % len(linestyles)],
+                marker="o",
+                markersize=4,
+                label=_REP_LABELS[rep] if ds_idx == 0 else None,
+            )
+        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx % len(linestyles)], label=dataset)
+
+    ax.set_xlabel("PCA dimensions")
+    ax.set_ylabel("Compression vs. 768d Float32")
+    ax.set_yscale("log", base=2)
+    ax.set_xticks(sorted({r["dim"] for r in results}))
+    ax.legend(loc="best", ncol=2, fontsize=7)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def plot_phase5_runtime_by_dim(
+    results: list[dict],
+    output_path: Path,
+    operation: str = "pairwise_distance",
+    metric: str = "median_ms",
+) -> Path:
+    """Line plot of native runtime metric by dimension.
+
+    Missing native measurements are skipped, so the function is safe before the
+    optional C backend has been built.
+    """
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    datasets = sorted({r["dataset"] for r in results})
+    linestyles = ["-", "--", ":", "-."]
+    plotted = False
+    for ds_idx, dataset in enumerate(datasets):
+        ds_entries = sorted([r for r in results if r["dataset"] == dataset], key=lambda r: r["dim"])
+        for rep in _REP_ORDER:
+            dims = []
+            values = []
+            for entry in ds_entries:
+                matches = [
+                    r for r in entry["results"]
+                    if r.get("representation") == rep
+                    and r.get("operation") == operation
+                    and r.get("implementation") == "native_packed"
+                    and r.get("status") == "ok"
+                    and r.get(metric) is not None
+                ]
+                if matches:
+                    dims.append(entry["dim"])
+                    values.append(matches[0][metric])
+            if values:
+                plotted = True
+                ax.plot(
+                    dims,
+                    values,
+                    color=_REP_COLORS[rep],
+                    linestyle=linestyles[ds_idx % len(linestyles)],
+                    marker="o",
+                    markersize=4,
+                    label=_REP_LABELS[rep] if ds_idx == 0 else None,
+                )
+        if any(r["dataset"] == dataset for r in results):
+            ax.plot(
+                [], [],
+                color="gray",
+                linestyle=linestyles[ds_idx % len(linestyles)],
+                label=dataset,
+            )
+
+    ax.set_xlabel("PCA dimensions")
+    ax.set_ylabel(metric.replace("_", " ").title())
+    ax.set_title(f"Native {operation.replace('_', ' ')}")
+    if plotted:
+        ax.legend(loc="best", ncol=2, fontsize=7)
+    else:
+        ax.text(
+            0.5,
+            0.5,
+            "No native runtime measurements available",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path

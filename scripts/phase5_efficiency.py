@@ -46,6 +46,11 @@ from bitemb.native import (  # noqa: E402
     NativePackedBackend,
     native_backend_available,
 )
+from bitemb.plotting import (  # noqa: E402
+    plot_phase5_memory_compression_by_dim,
+    plot_phase5_memory_theoretical_vs_native,
+    plot_phase5_runtime_by_dim,
+)
 from bitemb.quantization import PCAReducer  # noqa: E402
 
 OUTPUT_DIR = Path("results/phase5")
@@ -336,6 +341,24 @@ def main() -> None:
     runtime_path.write_text(json.dumps(runtime_outputs, indent=2), encoding="utf-8")
     print(f"\nSaved memory results to {memory_path}")
     print(f"Saved runtime results to {runtime_path}")
+
+    fig_dir = args.output / "figures"
+    p = plot_phase5_memory_theoretical_vs_native(
+        memory_outputs, fig_dir / "memory_theoretical_vs_native.pdf"
+    )
+    print(f"Saved memory comparison plot to {p}")
+    p = plot_phase5_memory_compression_by_dim(
+        memory_outputs, fig_dir / "memory_compression_by_dim.pdf"
+    )
+    print(f"Saved compression plot to {p}")
+    p = plot_phase5_runtime_by_dim(
+        runtime_outputs, fig_dir / "runtime_pairs_by_dim.pdf", operation="pairwise_distance"
+    )
+    print(f"Saved pairwise runtime plot to {p}")
+    p = plot_phase5_runtime_by_dim(
+        runtime_outputs, fig_dir / "runtime_knn_by_dim.pdf", operation="top_k"
+    )
+    print(f"Saved top-k runtime plot to {p}")
 
     if not native_backend_available():
         print("\nNative backend is not built; runtime.json contains unavailable " \

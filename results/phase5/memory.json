@@ -1,0 +1,149 @@
+[
+  {
+    "dataset": "synthetic",
+    "n_vectors": 1000,
+    "dim": 64,
+    "theoretical": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 32,
+        "bits_per_vector": 2048,
+        "bytes_per_vector": 256.0,
+        "total_bytes": 256000,
+        "compression_ratio_vs_float768": 12.0
+      },
+      {
+        "representation": "4bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 4,
+        "bits_per_vector": 256,
+        "bytes_per_vector": 32.0,
+        "total_bytes": 32000,
+        "compression_ratio_vs_float768": 96.0
+      },
+      {
+        "representation": "2bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 2,
+        "bits_per_vector": 128,
+        "bytes_per_vector": 16.0,
+        "total_bytes": 16000,
+        "compression_ratio_vs_float768": 192.0
+      },
+      {
+        "representation": "1bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 1,
+        "bits_per_vector": 64,
+        "bytes_per_vector": 8.0,
+        "total_bytes": 8000,
+        "compression_ratio_vs_float768": 384.0
+      }
+    ],
+    "native_packed": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "native_packed",
+        "index_bytes": 256000,
+        "metadata_bytes": 0,
+        "total_bytes": 256000,
+        "bytes_per_vector": 256.0,
+        "compression_ratio_vs_float768": 12.0,
+        "notes": "contiguous float32 matrix"
+      },
+      {
+        "representation": "1bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "native_packed",
+        "index_bytes": 8000,
+        "metadata_bytes": 0,
+        "total_bytes": 8000,
+        "bytes_per_vector": 8.0,
+        "compression_ratio_vs_float768": 384.0,
+        "notes": "np.packbits-compatible packed binary codes"
+      },
+      {
+        "representation": "2bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "native_packed",
+        "index_bytes": 16000,
+        "metadata_bytes": 1024,
+        "total_bytes": 17024,
+        "bytes_per_vector": 17.024,
+        "compression_ratio_vs_float768": 180.45112781954887,
+        "notes": "packed 2-bit codes plus min/max metadata"
+      },
+      {
+        "representation": "4bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "native_packed",
+        "index_bytes": 32000,
+        "metadata_bytes": 1024,
+        "total_bytes": 33024,
+        "bytes_per_vector": 33.024,
+        "compression_ratio_vs_float768": 93.02325581395348,
+        "notes": "packed 4-bit codes plus min/max metadata"
+      }
+    ],
+    "python_numpy_reference": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "python_numpy_reference",
+        "index_bytes": 256000,
+        "metadata_bytes": 0,
+        "total_bytes": 256000,
+        "bytes_per_vector": 256.0,
+        "compression_ratio_vs_float768": 12.0,
+        "notes": "NumPy float32 matrix"
+      },
+      {
+        "representation": "1bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "python_numpy_reference",
+        "index_bytes": 8000,
+        "metadata_bytes": 0,
+        "total_bytes": 8000,
+        "bytes_per_vector": 8.0,
+        "compression_ratio_vs_float768": 384.0,
+        "notes": "NumPy packed bits"
+      },
+      {
+        "representation": "2bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "python_numpy_reference",
+        "index_bytes": 64000,
+        "metadata_bytes": 1024,
+        "total_bytes": 65024,
+        "bytes_per_vector": 65.024,
+        "compression_ratio_vs_float768": 47.24409448818898,
+        "notes": "uint8 TurboQuant codes plus metadata"
+      },
+      {
+        "representation": "4bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "python_numpy_reference",
+        "index_bytes": 64000,
+        "metadata_bytes": 1024,
+        "total_bytes": 65024,
+        "bytes_per_vector": 65.024,
+        "compression_ratio_vs_float768": 47.24409448818898,
+        "notes": "uint8 TurboQuant codes plus metadata"
+      }
+    ]
+  }
+]

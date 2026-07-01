@@ -43,7 +43,7 @@ For Phase 5 native runtime measurements, install Microsoft C++ Build Tools with 
 .\.venv\Scripts\python.exe -m bitemb.native.build_native
 ```
 
-Without this native backend, Phase 5 can still compute theoretical memory/runtime estimates. See [`docs/native_setup.md`](docs/native_setup.md) for details.
+Without this native backend, Phase 5 can still compute theoretical memory/runtime estimates. Generated CFFI build artifacts and `results/phase5/` outputs are ignored by Git. See [`docs/native_setup.md`](docs/native_setup.md) for details.
 
 ## Usage
 

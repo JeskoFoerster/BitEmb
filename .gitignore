@@ -15,3 +15,10 @@ htmlcov/
 *.npy
 cache/
 *.tex
+
+# Native CFFI / MSVC build artifacts
+Release/
+bitemb/native/_bitemb_native.c
+bitemb/native/_bitemb_native.*.pyd
+bitemb/native/_bitemb_native.*.so
+

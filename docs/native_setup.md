@@ -132,6 +132,21 @@ und
 
 ---
 
+## Git und erzeugte Dateien
+
+Der Native-Build und Phase-5-Laeufe erzeugen lokale Artefakte:
+
+```text
+Release/
+bitemb/native/_bitemb_native.c
+bitemb/native/_bitemb_native.*.pyd
+results/phase5/
+```
+
+Diese Dateien sind Build- oder Ergebnisartefakte und werden nicht committed. Sie
+sind in `.gitignore` eingetragen. Committen solltest du nur Quellcode,
+Dokumentation und Tests.
+
 ## Häufige Fehler
 
 ### Microsoft Visual C++ 14.0 or greater is required
