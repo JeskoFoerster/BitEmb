@@ -46,26 +46,46 @@ Das ergibt für jede Dimension eine Verteilung von Zahlen. Diese Verteilungen we
 
 #### Skewness (Schiefe)
 
-Schiefe beschreibt, ob eine Verteilung symmetrisch ist oder nach einer Seite "zieht".
+Schiefe beschreibt, ob eine Verteilung symmetrisch ist oder nach einer Seite "zieht". Um zu verstehen was gemessen wird, hilft es sich den Prozess Schritt für Schritt vorzustellen:
 
-Stell dir vor, du schaust dir die Werte einer Dimension über alle Dokumente an und zeichnest ein Histogramm. Eine symmetrische Verteilung sieht wie eine Glocke aus – die meisten Werte liegen in der Mitte, nach links und rechts fällt die Häufigkeit gleichmäßig ab. Eine schiefe Verteilung hat dagegen einen langen Schwanz auf einer Seite: die meisten Werte sind klein, aber ein paar wenige sind sehr groß (oder umgekehrt).
+1. Du hast 768 Dimensionen.
+2. Für jede Dimension schaust du, welche Werte alle Dokumente dort haben – das ergibt eine Verteilung von z.B. 5.000 Zahlen (eine pro Dokument).
+3. Diese Verteilung kannst du als Histogramm zeichnen – du hättest 768 solche Histogramme.
+4. Jedes dieser 768 Histogramme fasst du zu einer einzigen Zahl zusammen: der Skewness – sie misst wie schief dieses Histogramm ist.
+5. Du nimmst den Absolutwert davon, denn egal ob nach links oder rechts schief, beides ist problematisch.
+6. Diese 768 Zahlen machst du dann selbst wieder zu einem Histogramm – das ist die Grafik `dimension_distribution.pdf` (linkes Bild).
+
+**Wie sehen die Histogramme aus Schritt 3 aus?** Bei normalisierten 768-dimensionalen Vektoren liegen die Werte typischerweise in einem kleinen Bereich um 0 – die Gesamtlänge 1 verteilt sich auf 768 Dimensionen, jede trägt also nur einen kleinen Anteil. Ein solches Histogramm sieht meist wie eine schmale Glocke um 0 aus:
 
 ```
-Symmetrisch (günstig):          Schief (ungünstig, Masse auf einer Seite):
-      ╱╲                                ╱╲
-     ╱  ╲                             ╱╲  ╲
-    ╱    ╲                           ╱  ╲  ╲___
-───╱──────╲───                  ───╱────╲──────────
-  -1   0   1                      -1   0   1   2
-          ↑                               ↑
-     Schwelle 0                      Schwelle 0
-    ~50% | ~50%                      ~80% | ~20%
-                                    (→ 0) (→ 1)
+Wie eine Dimension intern aussieht (Werte über alle Dokumente):
+
+      ╱╲
+     ╱  ╲
+    ╱    ╲
+   ╱      ╲
+──╱────────╲──
+  -0.1  0  0.1
 ```
 
-**Warum ist das schlecht für naive Binarisierung?** Die Binarisierung setzt den Schwellenwert bei 0: alles über 0 wird zu 1, alles darunter zu 0. Das ergibt nur dann sinnvolle Bits, wenn die Verteilung symmetrisch um 0 liegt – dann landen ~50% der Dokumente auf jeder Seite, das Bit trennt die Dokumente in zwei gleich große Gruppen und trägt maximale Information.
+Für Binarisierung ist entscheidend: alles größer 0 wird zu 1, alles kleiner 0 wird zu 0. Solange die Glocke symmetrisch um 0 liegt, landen ~50% der Dokumente links (→ 0) und ~50% rechts (→ 1) – egal wie schmal oder breit die Glocke ist. Die Form der Verteilung spielt keine Rolle, nur wo ihre Mitte liegt.
 
-Ist die Verteilung schief – d.h. die meisten Werte liegen auf einer Seite der 0 – dann werden z.B. 80% der Dokumente zu 0 und nur 20% zu 1 (oder umgekehrt, je nach Richtung der Schiefe). Das Bit sagt damit kaum noch etwas aus: fast alle Dokumente sind "gleich", egal was der genaue Wert war.
+Wäre die Glocke nach rechts verschoben (schief), würden z.B. 80% der Dokumente positiv sein und alle zu 1 werden – das Bit wäre fast wertlos.
+
+```
+Symmetrisch (günstig):          Schief (ungünstig, Masse nach rechts):
+      ╱╲                                   ╱╲
+     ╱  ╲                                ╱╲  ╲
+    ╱    ╲                              ╱  ╲  ╲___
+───╱──────╲───                  ───────╱────╲──────────
+  -0.1  0  0.1                    -0.1  0  0.1  0.2
+          ↑                                ↑
+     Schwelle 0                       Schwelle 0
+    ~50% | ~50%                       ~20% | ~80%
+    (→ 0) (→ 1)                       (→ 0) (→ 1)
+```
+
+**Gleichverteilung wäre für Binarisierung nicht besser.** Man könnte annehmen, eine gleichmäßige Verteilung (flaches Histogramm) wäre ideal. Für Binarisierung macht das keinen Unterschied – der Schwellenwert bei 0 trennt 50/50, solange die Verteilung symmetrisch ist, egal ob Glocke oder flach. Für TurboQuant (2-Bit, 4-Bit) hingegen wäre eine Gleichverteilung tatsächlich besser, weil dann jede der 4 bzw. 16 Stufen gleich viele Dokumente bekommt. Genau deshalb rotiert TurboQuant den Raum vorher – um die schmalen Glocken gleichmäßiger zu machen.
 
 | \|Skewness\| | Bedeutung |
 |-------------|-----------|
@@ -73,6 +93,8 @@ Ist die Verteilung schief – d.h. die meisten Werte liegen auf einer Seite der 
 | > 1 | Stark schief → der Nullpunkt ist keine gute Trennlinie |
 
 > **Warum 1?** Ab |Skew| > 1 verschiebt sich das 50/50-Verhältnis deutlich (auf ca. 70/30 oder mehr). In der Statistik gilt |Skew| > 1 als Grenze für "deutlich asymmetrisch".
+
+> **Grafik `dimension_distribution.pdf` (linkes Histogramm):** Das ist das Histogramm aus Schritt 6 – die x-Achse zeigt den |Skewness|-Wert, die y-Achse die Anzahl der Dimensionen mit diesem Wert. Fast alle 768 Werte liegen nahe 0, also sind fast alle Dimensionen-Histogramme aus Schritt 3 symmetrisch. Die gestrichelte Linie bei |Skew| = 1 markiert die Warnschwelle – da die gesamte Masse weit links davon liegt, sind alle Dimensionen im günstigen Fall.
 
 #### Kurtosis (Wölbung)
 
@@ -98,7 +120,7 @@ Niedrige Kurtosis (günstig):   Hohe Kurtosis (ungünstig):
 
 > **Warum 3?** Die Normalverteilung hat Excess-Kurtosis = 0. Ab einem Wert von ~3 sind die Ränder so schwer, dass bei grober Quantisierung ein spürbarer Anteil der Werte in den äußersten Bucket fällt und dort ununterscheidbar wird. Die Grenze ist nicht scharf – sie markiert den Bereich, ab dem Ausreißer bei 4 Stufen (2-Bit) praktisch relevant werden.
 
-> **Grafik `dimension_distribution.pdf`:** Zwei Histogramme nebeneinander – links |Skewness|, rechts Kurtosis – über alle 768 Dimensionen, alle drei Datasets überlagert. Jeder Balken steht für eine Gruppe von Dimensionen mit ähnlichem Wert. Die gestrichelten Linien markieren die Warnschwellen (|Skew| = 1, Kurtosis = 3). Je mehr Masse rechts der Schwelle liegt, desto mehr Dimensionen sind problematisch für die jeweilige Quantisierungsmethode.
+> **Grafik `dimension_distribution.pdf` (rechtes Histogramm):** Für jede der 768 Dimensionen wird deren interne Werteverteilung (über alle Dokumente) auf eine einzige Zahl – die Kurtosis – reduziert. Das Histogramm zeigt, wie diese 768 Kurtosis-Werte verteilt sind. Je näher ein Balken an 0, desto normalverteilungsähnlicher ist diese Dimension intern – keine Ausreißer-Probleme. Die Spitze bei 0 in der Grafik ist also das günstigste mögliche Ergebnis. Das ASCII-Diagramm oben beschreibt einen hypothetischen schlechten Fall – so würde die interne Verteilung einer einzelnen Dimension aussehen, wenn sie hohe Kurtosis hätte.
 
 ---
 
