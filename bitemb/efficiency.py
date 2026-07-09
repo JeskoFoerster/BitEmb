@@ -1,9 +1,8 @@
 ﻿"""Phase 5 efficiency analysis helpers.
 
-This module separates theoretical efficiency estimates from practical native
-index layouts. Runtime measurements use the optional native backend when it is
-available; Python/NumPy remains a reference path, not the primary efficiency
-claim.
+This module separates theoretical efficiency estimates from practical NumPy
+layouts. Runtime measurements use vectorized NumPy operations so the project
+does not require a custom C extension or compiler setup.
 """
 
 from __future__ import annotations
@@ -21,8 +20,7 @@ Representation = Literal["float32", "4bit", "2bit", "1bit"]
 Operation = Literal["memory", "pairwise_distance", "top_k", "index_build"]
 Implementation = Literal[
     "theoretical",
-    "native_packed",
-    "python_numpy_reference",
+    "numpy_vectorized",
     "dequantized_baseline",
 ]
 
@@ -117,8 +115,8 @@ class PackedTurboQuantIndex:
 
 
 @dataclass
-class NativeLayouts:
-    """Concrete layouts used by Phase 5 memory/runtime analysis."""
+class NumpyLayouts:
+    """Concrete NumPy layouts used by Phase 5 memory/runtime analysis."""
 
     float32: NDArray[np.float32]
     binary1: NDArray[np.uint8]
@@ -254,7 +252,7 @@ def unpack_codes(packed: NDArray[np.uint8], bits: Literal[2, 4], dim: int) -> ND
 
 
 def pack_turboquant_index(index: TurboQuantIndex) -> PackedTurboQuantIndex:
-    """Convert the current uint8 TurboQuant codes into packed native layout."""
+    """Convert the current uint8 TurboQuant codes into a packed byte layout."""
     if index.bits not in (2, 4):
         raise ValueError("Packed TurboQuant supports only 2-bit and 4-bit indexes")
     bits: Literal[2, 4] = 2 if index.bits == 2 else 4
@@ -269,12 +267,12 @@ def pack_turboquant_index(index: TurboQuantIndex) -> PackedTurboQuantIndex:
     )
 
 
-def build_native_layouts(embeddings: NDArray[np.float32]) -> NativeLayouts:
+def build_numpy_layouts(embeddings: NDArray[np.float32]) -> NumpyLayouts:
     """Build all practical layouts used by Phase 5 for one embedding matrix."""
     embs = np.ascontiguousarray(embeddings, dtype=np.float32)
     tq2 = pack_turboquant_index(turboquant_encode(embs, bits=2))
     tq4 = pack_turboquant_index(turboquant_encode(embs, bits=4))
-    return NativeLayouts(
+    return NumpyLayouts(
         float32=embs,
         binary1=np.ascontiguousarray(binarize(embs), dtype=np.uint8),
         tq2=tq2,
@@ -282,8 +280,8 @@ def build_native_layouts(embeddings: NDArray[np.float32]) -> NativeLayouts:
     )
 
 
-def practical_memory_for_layouts(layouts: NativeLayouts) -> list[PracticalMemory]:
-    """Measure practical payload/index sizes for all native layouts."""
+def practical_memory_for_layouts(layouts: NumpyLayouts) -> list[PracticalMemory]:
+    """Measure practical payload/index sizes for all NumPy layouts."""
     n, dim = layouts.float32.shape
     baseline_bytes = n * 768 * 4
 
@@ -298,7 +296,7 @@ def practical_memory_for_layouts(layouts: NativeLayouts) -> list[PracticalMemory
             representation=rep,
             n_vectors=n,
             dim=dim,
-            implementation="native_packed",
+            implementation="numpy_vectorized",
             index_bytes=int(index_bytes),
             metadata_bytes=int(metadata_bytes),
             total_bytes=total,
@@ -308,8 +306,8 @@ def practical_memory_for_layouts(layouts: NativeLayouts) -> list[PracticalMemory
         )
 
     return [
-        row("float32", int(layouts.float32.nbytes), 0, "contiguous float32 matrix"),
-        row("1bit", int(layouts.binary1.nbytes), 0, "np.packbits-compatible packed binary codes"),
+        row("float32", int(layouts.float32.nbytes), 0, "contiguous NumPy float32 matrix"),
+        row("1bit", int(layouts.binary1.nbytes), 0, "NumPy packbits-compatible binary codes"),
         row(
             "2bit",
             int(layouts.tq2.packed_codes.nbytes),
@@ -325,48 +323,99 @@ def practical_memory_for_layouts(layouts: NativeLayouts) -> list[PracticalMemory
     ]
 
 
-def numpy_payload_memory(embeddings: NDArray[np.float32]) -> list[PracticalMemory]:
-    """Measure current Python/NumPy payload sizes as a reference baseline."""
-    embs = np.ascontiguousarray(embeddings, dtype=np.float32)
-    n, dim = embs.shape
-    baseline_bytes = n * 768 * 4
-    tq2 = turboquant_encode(embs, bits=2)
-    tq4 = turboquant_encode(embs, bits=4)
-    binary = binarize(embs)
 
-    rows: list[tuple[Representation, int, int, str]] = [
-        ("float32", int(embs.nbytes), 0, "NumPy float32 matrix"),
-        ("1bit", int(binary.nbytes), 0, "NumPy packed bits"),
-        (
-            "2bit",
-            int(tq2.codes.nbytes),
-            int(tq2.col_min.nbytes + tq2.col_max.nbytes),
-            "uint8 TurboQuant codes plus metadata",
-        ),
-        (
-            "4bit",
-            int(tq4.codes.nbytes),
-            int(tq4.col_min.nbytes + tq4.col_max.nbytes),
-            "uint8 TurboQuant codes plus metadata",
-        ),
-    ]
-    out: list[PracticalMemory] = []
-    for rep, payload, metadata, notes in rows:
-        total = payload + metadata
-        out.append(PracticalMemory(
-            representation=rep,
-            n_vectors=n,
-            dim=dim,
-            implementation="python_numpy_reference",
-            index_bytes=payload,
-            metadata_bytes=metadata,
-            total_bytes=total,
-            bytes_per_vector=total / n if n else 0.0,
-            compression_ratio_vs_float768=baseline_bytes / total if total else 0.0,
-            notes=notes,
-        ))
+def cosine_distance_pairs_numpy(
+    embeddings: NDArray[np.float32], pairs: NDArray[np.int64]
+) -> NDArray[np.float64]:
+    """Vectorized cosine distance for sampled pairs."""
+    embs = np.ascontiguousarray(embeddings, dtype=np.float32)
+    p = np.ascontiguousarray(pairs, dtype=np.int64)
+    dots = np.einsum("ij,ij->i", embs[p[:, 0]], embs[p[:, 1]], optimize=True)
+    return (1.0 - dots).astype(np.float64, copy=False)
+
+
+_POPCOUNT_TABLE = np.array([bin(i).count("1") for i in range(256)], dtype=np.uint8)
+
+
+def hamming_distance_pairs_numpy(
+    packed: NDArray[np.uint8], pairs: NDArray[np.int64]
+) -> NDArray[np.float64]:
+    """Vectorized Hamming distance for sampled packed binary pairs."""
+    codes = np.ascontiguousarray(packed, dtype=np.uint8)
+    p = np.ascontiguousarray(pairs, dtype=np.int64)
+    xor = np.bitwise_xor(codes[p[:, 0]], codes[p[:, 1]])
+    return _POPCOUNT_TABLE[xor].sum(axis=1, dtype=np.int64).astype(np.float64)
+
+
+def turboquant_distance_pairs_numpy(
+    index: PackedTurboQuantIndex,
+    pairs: NDArray[np.int64],
+    *,
+    chunk_size: int = 8192,
+) -> NDArray[np.float64]:
+    """Vectorized TurboQuant squared distance for sampled pairs."""
+    codes = unpack_codes(index.packed_codes, bits=index.bits, dim=index.dim)
+    scale = (index.col_max - index.col_min) / float((1 << index.bits) - 1)
+    p = np.ascontiguousarray(pairs, dtype=np.int64)
+    out = np.empty(p.shape[0], dtype=np.float64)
+    for start in range(0, p.shape[0], chunk_size):
+        end = min(start + chunk_size, p.shape[0])
+        diff_codes = codes[p[start:end, 0]].astype(np.float64) - codes[p[start:end, 1]]
+        diff = diff_codes * scale
+        out[start:end] = np.einsum("ij,ij->i", diff, diff, optimize=True)
     return out
 
+
+def knn_cosine_numpy(embeddings: NDArray[np.float32], k: int) -> NDArray[np.int64]:
+    """Brute-force top-k cosine search using NumPy matrix multiplication."""
+    embs = np.ascontiguousarray(embeddings, dtype=np.float32)
+    distances = 1.0 - (embs @ embs.T)
+    np.fill_diagonal(distances, np.inf)
+    idx = np.argpartition(distances, kth=k - 1, axis=1)[:, :k]
+    row = np.arange(embs.shape[0])[:, None]
+    order = np.argsort(distances[row, idx], axis=1)
+    return idx[row, order].astype(np.int64, copy=False)
+
+
+def knn_hamming_numpy(
+    packed: NDArray[np.uint8], k: int, *, batch_size: int = 256
+) -> NDArray[np.int64]:
+    """Brute-force top-k Hamming search using batched NumPy broadcasting."""
+    codes = np.ascontiguousarray(packed, dtype=np.uint8)
+    n = codes.shape[0]
+    out = np.empty((n, k), dtype=np.int64)
+    for start in range(0, n, batch_size):
+        end = min(start + batch_size, n)
+        xor = np.bitwise_xor(codes[start:end, None, :], codes[None, :, :])
+        distances = _POPCOUNT_TABLE[xor].sum(axis=2, dtype=np.int64)
+        distances[np.arange(end - start), np.arange(start, end)] = np.iinfo(np.int64).max
+        idx = np.argpartition(distances, kth=k - 1, axis=1)[:, :k]
+        row = np.arange(end - start)[:, None]
+        order = np.argsort(distances[row, idx], axis=1)
+        out[start:end] = idx[row, order]
+    return out
+
+
+def knn_turboquant_numpy(
+    index: PackedTurboQuantIndex, k: int, *, batch_size: int = 256
+) -> NDArray[np.int64]:
+    """Brute-force top-k TurboQuant search using dequantized NumPy blocks."""
+    codes = unpack_codes(index.packed_codes, bits=index.bits, dim=index.dim).astype(np.float64)
+    scale = (index.col_max - index.col_min) / float((1 << index.bits) - 1)
+    values = codes * scale + index.col_min
+    norms = np.einsum("ij,ij->i", values, values, optimize=True)
+    n = values.shape[0]
+    out = np.empty((n, k), dtype=np.int64)
+    for start in range(0, n, batch_size):
+        end = min(start + batch_size, n)
+        dots = values[start:end] @ values.T
+        distances = norms[start:end, None] + norms[None, :] - 2.0 * dots
+        distances[np.arange(end - start), np.arange(start, end)] = np.inf
+        idx = np.argpartition(distances, kth=k - 1, axis=1)[:, :k]
+        row = np.arange(end - start)[:, None]
+        order = np.argsort(distances[row, idx], axis=1)
+        out[start:end] = idx[row, order]
+    return out.astype(np.int64, copy=False)
 
 def measure_runtime(
     fn: Callable[[], object],

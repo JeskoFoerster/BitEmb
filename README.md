@@ -19,7 +19,6 @@ bitemb/              Core library
 ├── distance.py      Phase 2: pairwise distance & distortion analysis
 ├── neighborhood.py  Phase 3: neighborhood overlap & trustworthiness
 ├── efficiency.py    Phase 5: runtime & memory efficiency analysis
-├── native/          Optional CFFI backend for native packed measurements
 └── plotting.py      Publication-quality figures (matplotlib)
 
 scripts/             Experiment runners
@@ -37,13 +36,7 @@ tests/               Unit tests
 pip install -e ".[dev]"
 ```
 
-For Phase 5 native runtime measurements, install Microsoft C++ Build Tools with the **Desktop development with C++** workload, then build the optional CFFI backend:
-
-```powershell
-.\.venv\Scripts\python.exe -m bitemb.native.build_native
-```
-
-Without this native backend, Phase 5 can still compute theoretical memory/runtime estimates. Generated CFFI build artifacts and `results/phase5/` outputs are ignored by Git. See [`docs/native_setup.md`](docs/native_setup.md) for details.
+Phase 5 uses vectorized NumPy runtime measurements and does not require a C compiler, CFFI build step, or Microsoft C++ Build Tools. Generated `results/phase5/` outputs are ignored by Git.
 
 ## Usage
 
@@ -91,8 +84,7 @@ Detailed documentation for each phase is in `docs/`:
 | [`docs/phase1.md`](docs/phase1.md) | Float space characterization: norms, skewness, kurtosis, intrinsic dimensionality |
 | [`docs/phase2.md`](docs/phase2.md) | Distance analysis: Pearson r, Spearman ρ, MAE, RMSE |
 | [`docs/phase3.md`](docs/phase3.md) | Neighborhood preservation: overlap, trustworthiness |
-| [`docs/phase5.md`](docs/phase5.md) | Runtime and memory efficiency: theoretical estimates and native packed measurements |
-| [`docs/native_setup.md`](docs/native_setup.md) | Setup guide for the optional native CFFI backend |
+| [`docs/phase5.md`](docs/phase5.md) | Runtime and memory efficiency: theoretical estimates and NumPy-vectorized measurements |
 
 ## Methods
 

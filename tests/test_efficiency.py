@@ -5,12 +5,11 @@ import pytest
 
 from bitemb.efficiency import (
     REPRESENTATIONS,
-    build_native_layouts,
+    build_numpy_layouts,
     pack_codes,
     practical_memory_for_layouts,
     theoretical_memory,
     theoretical_work,
-    unavailable_runtime,
     unpack_codes,
 )
 from bitemb.quantization import turboquant_encode
@@ -59,8 +58,8 @@ def test_packed_turboquant_index_is_smaller_than_uint8(normalized_embs, bits):
         assert packed.nbytes == normalized_embs.shape[0] * ((normalized_embs.shape[1] * 4 + 7) // 8)
 
 
-def test_build_native_layouts_memory_records(normalized_embs):
-    layouts = build_native_layouts(normalized_embs)
+def test_build_numpy_layouts_memory_records(normalized_embs):
+    layouts = build_numpy_layouts(normalized_embs)
     rows = practical_memory_for_layouts(layouts)
     by_rep = {row.representation: row for row in rows}
     assert set(by_rep) == set(REPRESENTATIONS)
@@ -79,17 +78,3 @@ def test_theoretical_work_has_nonnegative_counts(rep):
     assert work.unpack_ops_per_distance >= 0
     assert work.popcount_ops_per_distance >= 0
 
-
-def test_unavailable_runtime_record():
-    rec = unavailable_runtime(
-        representation="1bit",
-        operation="pairwise_distance",
-        implementation="native_packed",
-        n_vectors=100,
-        dim=64,
-        n_pairs=1000,
-        notes="not built",
-    )
-    assert rec.status == "unavailable"
-    assert rec.median_ms is None
-    assert rec.times_ms == []

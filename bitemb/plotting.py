@@ -674,11 +674,11 @@ def _phase5_entry_label(entry: dict) -> str:
     return f"{entry['dataset']} (n={entry['n_vectors']}, d={entry['dim']})"
 
 
-def plot_phase5_memory_theoretical_vs_native(
+def plot_phase5_memory_theoretical_vs_numpy(
     results: list[dict],
     output_path: Path,
 ) -> Path:
-    """Bar plot comparing theoretical and native bytes per vector.
+    """Bar plot comparing theoretical and NumPy bytes per vector.
 
     Args:
         results: List of records from phase5 memory.json.
@@ -694,7 +694,7 @@ def plot_phase5_memory_theoretical_vs_native(
 
     for ax, entry in zip(axes[:, 0], entries):
         theoretical = {r["representation"]: r["bytes_per_vector"] for r in entry["theoretical"]}
-        native = {r["representation"]: r["bytes_per_vector"] for r in entry["native_packed"]}
+        numpy_mem = {r["representation"]: r["bytes_per_vector"] for r in entry["numpy_vectorized"]}
         x = np.arange(len(_REP_ORDER))
         width = 0.36
         ax.bar(
@@ -706,9 +706,9 @@ def plot_phase5_memory_theoretical_vs_native(
         )
         ax.bar(
             x + width / 2,
-            [native[r] for r in _REP_ORDER],
+            [numpy_mem[r] for r in _REP_ORDER],
             width,
-            label="native index",
+            label="NumPy layout",
             color="#3182bd",
         )
         ax.set_xticks(x)
@@ -729,7 +729,7 @@ def plot_phase5_memory_compression_by_dim(
     results: list[dict],
     output_path: Path,
 ) -> Path:
-    """Line plot of native compression ratio by PCA dimension."""
+    """Line plot of NumPy layout compression ratio by PCA dimension."""
     _apply_style()
     fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
 
@@ -741,8 +741,8 @@ def plot_phase5_memory_compression_by_dim(
             dims = [r["dim"] for r in ds_entries]
             ratios = []
             for entry in ds_entries:
-                native = {r["representation"]: r for r in entry["native_packed"]}
-                ratios.append(native[rep]["compression_ratio_vs_float768"])
+                numpy_mem = {r["representation"]: r for r in entry["numpy_vectorized"]}
+                ratios.append(numpy_mem[rep]["compression_ratio_vs_float768"])
             ax.plot(
                 dims,
                 ratios,
@@ -772,10 +772,7 @@ def plot_phase5_runtime_by_dim(
     operation: str = "pairwise_distance",
     metric: str = "median_ms",
 ) -> Path:
-    """Line plot of native runtime metric by dimension.
-
-    Missing native measurements are skipped, so the function is safe before the
-    optional C backend has been built.
+    """Line plot of NumPy runtime metric by dimension.
     """
     _apply_style()
     fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
@@ -793,7 +790,7 @@ def plot_phase5_runtime_by_dim(
                     r for r in entry["results"]
                     if r.get("representation") == rep
                     and r.get("operation") == operation
-                    and r.get("implementation") == "native_packed"
+                    and r.get("implementation") == "numpy_vectorized"
                     and r.get("status") == "ok"
                     and r.get(metric) is not None
                 ]
@@ -821,14 +818,14 @@ def plot_phase5_runtime_by_dim(
 
     ax.set_xlabel("PCA dimensions")
     ax.set_ylabel(metric.replace("_", " ").title())
-    ax.set_title(f"Native {operation.replace('_', ' ')}")
+    ax.set_title(f"NumPy {operation.replace('_', ' ')}")
     if plotted:
         ax.legend(loc="best", ncol=2, fontsize=7)
     else:
         ax.text(
             0.5,
             0.5,
-            "No native runtime measurements available",
+            "No NumPy runtime measurements available",
             ha="center",
             va="center",
             transform=ax.transAxes,

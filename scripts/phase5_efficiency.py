@@ -1,9 +1,8 @@
-﻿"""Phase 5: native runtime and memory efficiency analysis.
+﻿"""Phase 5: NumPy runtime and memory efficiency analysis.
 
 Examples:
     python scripts/phase5_efficiency.py --synthetic --max-docs 1000
     python scripts/phase5_efficiency.py --dataset scifact --max-docs 5000
-    python -m bitemb.native.build_native
 """
 
 from __future__ import annotations
@@ -32,23 +31,22 @@ from bitemb.config import DATASETS, PCA_DIMS, SEED  # noqa: E402
 from bitemb.distance import _sample_pairs  # noqa: E402
 from bitemb.efficiency import (  # noqa: E402
     REPRESENTATIONS,
-    build_native_layouts,
+    build_numpy_layouts,
+    cosine_distance_pairs_numpy,
     dataclasses_to_dicts,
+    hamming_distance_pairs_numpy,
+    knn_cosine_numpy,
+    knn_hamming_numpy,
+    knn_turboquant_numpy,
     measure_runtime,
-    numpy_payload_memory,
     practical_memory_for_layouts,
     theoretical_memory,
     theoretical_work,
-    unavailable_runtime,
-)
-from bitemb.native import (  # noqa: E402
-    NativeBackendUnavailableError,
-    NativePackedBackend,
-    native_backend_available,
+    turboquant_distance_pairs_numpy,
 )
 from bitemb.plotting import (  # noqa: E402
     plot_phase5_memory_compression_by_dim,
-    plot_phase5_memory_theoretical_vs_native,
+    plot_phase5_memory_theoretical_vs_numpy,
     plot_phase5_runtime_by_dim,
 )
 from bitemb.quantization import PCAReducer  # noqa: E402
@@ -96,7 +94,8 @@ def _theoretical_records(n_vectors: int, dim: int) -> tuple[list[dict], list[dic
     return dataclasses_to_dicts(memory), dataclasses_to_dicts(work)
 
 
-def _native_runtime_records(
+
+def _numpy_runtime_records(
     embeddings: np.ndarray,
     pairs: np.ndarray,
     k: int,
@@ -104,149 +103,113 @@ def _native_runtime_records(
     measurement_runs: int,
 ) -> list[dict]:
     n, dim = embeddings.shape
-    layouts = build_native_layouts(embeddings)
-
-    if not native_backend_available():
-        note = (
-            "Native backend unavailable. Run `python -m bitemb.native.build_native` "
-            "after installing a C compiler."
-        )
-        records = []
-        for rep in REPRESENTATIONS:
-            records.append(unavailable_runtime(
-                representation=rep,
-                operation="pairwise_distance",
-                implementation="native_packed",
-                n_vectors=n,
-                dim=dim,
-                n_pairs=pairs.shape[0],
-                notes=note,
-            ))
-            records.append(unavailable_runtime(
-                representation=rep,
-                operation="top_k",
-                implementation="native_packed",
-                n_vectors=n,
-                dim=dim,
-                k=k,
-                notes=note,
-            ))
-        return dataclasses_to_dicts(records)
-
-    try:
-        backend = NativePackedBackend()
-    except NativeBackendUnavailableError as exc:
-        note = str(exc)
-        return dataclasses_to_dicts([
-            unavailable_runtime(
-                representation=rep,
-                operation="pairwise_distance",
-                implementation="native_packed",
-                n_vectors=n,
-                dim=dim,
-                n_pairs=pairs.shape[0],
-                notes=note,
-            )
-            for rep in REPRESENTATIONS
-        ])
+    layouts = build_numpy_layouts(embeddings)
 
     runtime = []
     runtime.append(measure_runtime(
-        lambda: backend.cosine_distance_pairs(layouts.float32, pairs),
+        lambda: cosine_distance_pairs_numpy(layouts.float32, pairs),
         representation="float32",
         operation="pairwise_distance",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         n_pairs=pairs.shape[0],
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=pairs.shape[0],
+        notes="NumPy einsum over sampled pairs",
     ))
     runtime.append(measure_runtime(
-        lambda: backend.turboquant_distance_pairs(layouts.tq4, pairs),
+        lambda: turboquant_distance_pairs_numpy(layouts.tq4, pairs),
         representation="4bit",
         operation="pairwise_distance",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         n_pairs=pairs.shape[0],
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=pairs.shape[0],
+        notes="NumPy vectorized distance over packed 4-bit layout",
     ))
     runtime.append(measure_runtime(
-        lambda: backend.turboquant_distance_pairs(layouts.tq2, pairs),
+        lambda: turboquant_distance_pairs_numpy(layouts.tq2, pairs),
         representation="2bit",
         operation="pairwise_distance",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         n_pairs=pairs.shape[0],
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=pairs.shape[0],
+        notes="NumPy vectorized distance over packed 2-bit layout",
     ))
     runtime.append(measure_runtime(
-        lambda: backend.hamming_distance_pairs(layouts.binary1, pairs),
+        lambda: hamming_distance_pairs_numpy(layouts.binary1, pairs),
         representation="1bit",
         operation="pairwise_distance",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         n_pairs=pairs.shape[0],
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=pairs.shape[0],
+        notes="NumPy vectorized XOR plus lookup-table popcount",
     ))
 
     runtime.append(measure_runtime(
-        lambda: backend.knn_cosine(layouts.float32, k),
+        lambda: knn_cosine_numpy(layouts.float32, k),
         representation="float32",
         operation="top_k",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         k=k,
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=n,
+        notes="NumPy matrix multiplication plus argpartition",
     ))
     runtime.append(measure_runtime(
-        lambda: backend.knn_turboquant(layouts.tq4, k),
+        lambda: knn_turboquant_numpy(layouts.tq4, k),
         representation="4bit",
         operation="top_k",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         k=k,
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=n,
+        notes="Batched NumPy top-k over dequantized 4-bit values",
     ))
     runtime.append(measure_runtime(
-        lambda: backend.knn_turboquant(layouts.tq2, k),
+        lambda: knn_turboquant_numpy(layouts.tq2, k),
         representation="2bit",
         operation="top_k",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         k=k,
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=n,
+        notes="Batched NumPy top-k over dequantized 2-bit values",
     ))
     runtime.append(measure_runtime(
-        lambda: backend.knn_hamming(layouts.binary1, k),
+        lambda: knn_hamming_numpy(layouts.binary1, k),
         representation="1bit",
         operation="top_k",
-        implementation="native_packed",
+        implementation="numpy_vectorized",
         n_vectors=n,
         dim=dim,
         k=k,
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=n,
+        notes="Batched NumPy XOR plus lookup-table popcount and argpartition",
     ))
     return dataclasses_to_dicts(runtime)
 
@@ -272,19 +235,17 @@ def run(args: argparse.Namespace) -> tuple[list[dict], list[dict]]:
             n = embs.shape[0]
             n_pairs = min(args.n_pairs, n * (n - 1) // 2)
             pairs = _sample_pairs(n, n_pairs=n_pairs, seed=SEED)
-            layouts = build_native_layouts(embs)
+            layouts = build_numpy_layouts(embs)
 
             theoretical_mem, theoretical_ops = _theoretical_records(n, dim)
-            native_mem = dataclasses_to_dicts(practical_memory_for_layouts(layouts))
-            numpy_mem = dataclasses_to_dicts(numpy_payload_memory(embs))
+            numpy_mem = dataclasses_to_dicts(practical_memory_for_layouts(layouts))
 
             memory_outputs.append({
                 "dataset": dataset_name,
                 "n_vectors": n,
                 "dim": dim,
                 "theoretical": theoretical_mem,
-                "native_packed": native_mem,
-                "python_numpy_reference": numpy_mem,
+                "numpy_vectorized": numpy_mem,
             })
 
             runtime_records = []
@@ -298,7 +259,7 @@ def run(args: argparse.Namespace) -> tuple[list[dict], list[dict]]:
                 "k": None,
                 "work_model": rec,
             } for rec in theoretical_ops)
-            runtime_records.extend(_native_runtime_records(
+            runtime_records.extend(_numpy_runtime_records(
                 embs,
                 pairs,
                 args.k,
@@ -318,7 +279,7 @@ def run(args: argparse.Namespace) -> tuple[list[dict], list[dict]]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Phase 5: native runtime and memory efficiency")
+    parser = argparse.ArgumentParser(description="Phase 5: NumPy runtime and memory efficiency")
     parser.add_argument("--dataset", choices=list(DATASETS), default="scifact")
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--synthetic", action="store_true", help="Use synthetic " \
@@ -343,8 +304,8 @@ def main() -> None:
     print(f"Saved runtime results to {runtime_path}")
 
     fig_dir = args.output / "figures"
-    p = plot_phase5_memory_theoretical_vs_native(
-        memory_outputs, fig_dir / "memory_theoretical_vs_native.pdf"
+    p = plot_phase5_memory_theoretical_vs_numpy(
+        memory_outputs, fig_dir / "memory_theoretical_vs_numpy.pdf"
     )
     print(f"Saved memory comparison plot to {p}")
     p = plot_phase5_memory_compression_by_dim(
@@ -360,10 +321,6 @@ def main() -> None:
     )
     print(f"Saved top-k runtime plot to {p}")
 
-    if not native_backend_available():
-        print("\nNative backend is not built; runtime.json contains unavailable " \
-        "native runtime records.")
-        print("Build it with: python -m bitemb.native.build_native")
 
 
 if __name__ == "__main__":

@@ -7,13 +7,13 @@ die Struktur des Float-Raums erhalten. Phase 5 stellt die praktische
 Effizienzfrage:
 
 **Wie viel Speicher und Laufzeit sparen 1-Bit, 2-Bit und 4-Bit gegenüber
-Float32 im effizientesten praktisch vertretbaren nativen Suchpfad, und welcher
+Float32 im effizientesten praktisch vertretbaren NumPy-vektorisierten Suchpfad, und welcher
 Qualitätsverlust entsteht dafür?**
 
 Damit wird aus den bisherigen Qualitätsmessungen eine Kosten-Nutzen-Analyse.
 Eine Kombination aus Dimension und Bittiefe ist nur dann praktisch interessant,
 wenn sie nicht nur gute Qualität liefert, sondern auch im realistischen
-Speicherlayout und im nativen Suchpfad messbar Speicher oder Rechenzeit spart.
+Speicherlayout und im NumPy-vektorisierten Suchpfad messbar Speicher oder Rechenzeit spart.
 
 Wichtig ist die methodische Trennung: Phase 2 und Phase 3 bewerten die
 geometrische Qualität. Phase 5 bewertet Effizienz. Eine schnellere
@@ -40,7 +40,7 @@ Für jede Repräsentation werden zwei Effizienzbereiche untersucht:
 
 Beide Bereiche werden zuerst theoretisch berechnet und danach praktisch
 gemessen. Dadurch wird sichtbar, was unter idealen Annahmen möglich sein sollte
-und was die konkrete native Implementierung tatsächlich erreicht.
+und was die konkrete NumPy-Implementierung tatsächlich erreicht.
 
 ### Gleiche Versuchsmatrix wie in Phase 2 und Phase 3
 
@@ -121,16 +121,16 @@ bitgepackt gespeichert werden.
 ### Praktischer Speicherbedarf
 
 Nach der theoretischen Berechnung wird der tatsächliche Speicherbedarf der
-nativen Implementierung gemessen.
+NumPy-Implementierung gemessen.
 
 Für jede Repräsentation werden getrennt berichtet:
 
 1. **Theoretischer Code-Speicher:** Speicher bei idealer Bitpackung.
-2. **Nativer Index-Speicher:** tatsächlich belegter Speicher des fertigen nativen Index, inklusive Metadaten.
+2. **NumPy-Layout-Speicher:** tatsächlich belegter Speicher des fertigen NumPy-Layout, inklusive Metadaten.
 3. **Peak-Working-Memory:** maximaler Arbeitsspeicher während Pairwise- oder Top-k-Operationen.
 4. **NumPy-Payload-Speicher:** Speicher der aktuellen Python/NumPy-Implementierung als Referenz, nicht als Hauptwert.
 
-Der Hauptwert für die Speicheranalyse ist der native Index-Speicher. Das aktuelle
+Der Hauptwert für die Speicheranalyse ist der NumPy-Layout-Speicher. Das aktuelle
 `uint8`-Layout für 2-Bit und 4-Bit wird nur als Zwischenstand dokumentiert, weil
 es nicht die effizienteste Speicherung darstellt.
 
@@ -170,10 +170,10 @@ Diese Messung beantwortet:
 Top-k-Suche ist der retrieval-nähere Effizienzbenchmark. Gemessen wird für
 identische Query-Indizes und Korpusgrößen:
 
-- Float32: native Top-k-Suche per Cosine-Similarity auf `float32`-Arrays
-- 4-Bit: native Top-k-Suche direkt auf gepackten 4-Bit-Codes
-- 2-Bit: native Top-k-Suche direkt auf gepackten 2-Bit-Codes
-- 1-Bit: native Top-k-Suche per Hamming-Distanz direkt auf gepackten Bits
+- Float32: NumPy-vektorisierte Top-k-Suche per Cosine-Similarity auf `float32`-Arrays
+- 4-Bit: NumPy-vektorisierte Top-k-Suche direkt auf gepackten 4-Bit-Codes
+- 2-Bit: NumPy-vektorisierte Top-k-Suche direkt auf gepackten 2-Bit-Codes
+- 1-Bit: NumPy-vektorisierte Top-k-Suche per Hamming-Distanz direkt auf gepackten Bits
 
 Diese Messung beantwortet:
 
@@ -215,7 +215,7 @@ compression_ratio = baseline_float32_bytes / compressed_bytes
 Berichtet werden:
 
 - theoretische Kompressionsrate bei idealer Bitpackung
-- native Index-Kompression mit echter Bitpackung
+- NumPy-Layout-Kompression mit echter Bitpackung
 - NumPy-Payload-Kompression als Referenz
 
 ### Peak-Working-Memory
@@ -257,7 +257,7 @@ Python/NumPy ist für Qualitätsmetriken akzeptabel, aber für die effizienteste
 Laufzeitmessung nicht ausreichend. Python-Orchestrierung, NumPy-Allokationen und
 Dequantisierung können die Messung überlagern.
 
-Deshalb ist ein nativer C-Kern vorgesehen. Python bleibt die
+Deshalb ist ein vektorisierter NumPy-Kern vorgesehen. Python bleibt die
 Referenzimplementierung und steuert die Experimente. C übernimmt die
 zeitkritischen Operationen auf den gepackten Codes.
 
@@ -292,7 +292,7 @@ Jede theoretische und praktische Messung sollte dokumentieren:
 - Repräsentation (`float32`, `4bit`, `2bit`, `1bit`)
 - Operation (`memory`, `pairwise_distance`, `top_k`, `index_build`)
 - Messart (`theoretical`, `practical`)
-- Implementierung (`native_packed`, optional `python_numpy_reference`, optional `dequantized_baseline`)
+- Implementierung (`numpy_vectorized`, optional `numpy_vectorized`, optional `dequantized_baseline`)
 - Speicherlayout
 - Anzahl Paare oder Queries
 - k-Wert bei Top-k-Suche
@@ -339,17 +339,17 @@ results/
 ```
 
 `memory.json` enthält für Float32, 4-Bit, 2-Bit und 1-Bit jeweils theoretischen
-Speicher, nativen Indexspeicher, NumPy-Payload-Speicher und Peak-Working-Memory.
+Speicher, NumPy-Layoutspeicher, NumPy-Payload-Speicher und Peak-Working-Memory.
 
 `runtime.json` enthält für Float32, 4-Bit, 2-Bit und 1-Bit jeweils theoretische
-Arbeitsabschätzungen sowie praktisch gemessene native Laufzeiten und
+Arbeitsabschätzungen sowie praktisch gemessene NumPy-Laufzeiten und
 Durchsatzwerte für Pairwise-Distanzen und Top-k-Suche. Der Hauptwert ist
-`native_packed`; Python/NumPy und dequantisierte Varianten sind Referenz- bzw.
+`numpy_vectorized`; Python/NumPy und dequantisierte Varianten sind Referenz- bzw.
 Baseline-Werte.
 
 ### Speicher-Grafiken
 
-> **Grafik `memory_theoretical_vs_native.pdf`:** Vergleich zwischen
+> **Grafik `memory_theoretical_vs_numpy.pdf`:** Vergleich zwischen
 > theoretischem und nativ gemessenem Speicherbedarf pro Repräsentation.
 
 > **Grafik `memory_compression_by_dim.pdf`:** Kompressionsrate als Funktion der
@@ -371,7 +371,7 @@ Baseline-Werte.
 > **Grafik `quality_memory_pareto.pdf`:** Qualität gegen nativen
 > Indexspeicherbedarf.
 
-> **Grafik `quality_runtime_pareto.pdf`:** Qualität gegen native Laufzeit.
+> **Grafik `quality_runtime_pareto.pdf`:** Qualität gegen NumPy-Laufzeit.
 
 > **Grafik `quality_efficiency_pareto.pdf`:** Gemeinsame Betrachtung von
 > Qualität, Speicher und Laufzeit.
@@ -383,7 +383,7 @@ Baseline-Werte.
 ### Theoretischer Speicher ist nicht realer Speicher
 
 Theoretische Bitzahlen sind nur Untergrenzen. Entscheidend für praktische
-Aussagen ist der native Index-Speicher mit tatsächlicher Bitpackung.
+Aussagen ist der NumPy-Layout-Speicher mit tatsächlicher Bitpackung.
 
 Gegenmaßnahme: theoretische, native und NumPy-Kompressionsrate getrennt
 berichten.
@@ -445,13 +445,13 @@ Aufgaben:
 - 4-Bit-Packing implementieren
 - 2-Bit-Packing implementieren
 - Roundtrip-Tests schreiben
-- native Indexgröße für Float32, 4-Bit, 2-Bit und 1-Bit messen
+- NumPy-Layoutgröße für Float32, 4-Bit, 2-Bit und 1-Bit messen
 
 ### Schritt 3: Praktische native Speicheranalyse
 
 Aufgaben:
 
-- nativen Indexspeicher pro Repräsentation messen
+- NumPy-Layoutspeicher pro Repräsentation messen
 - Metadaten wie `col_min` und `col_max` berücksichtigen
 - Peak-Working-Memory für Distanz- und Top-k-Operationen messen
 - `results/phase5/memory.json` mit praktischen Messwerten erzeugen
@@ -460,12 +460,11 @@ Aufgaben:
 
 Aufgaben:
 
-- `bitemb/native/` anlegen
-- CFFI-Build-Skript schreiben
+- NumPy-Laufzeitpfad verwenden
 - Distanzen auf Float32, 1-Bit, 2-Bit und 4-Bit implementieren
 - Top-k-Suche auf Float32, 1-Bit, 2-Bit und 4-Bit implementieren
 - Tests gegen Python-Referenz schreiben
-- Runtime-Benchmark um `native_packed` erweitern
+- Runtime-Benchmark ueber `numpy_vectorized` ausfuehren
 
 Voraussetzung ist ein C-Compiler.
 
@@ -473,8 +472,8 @@ Voraussetzung ist ein C-Compiler.
 
 Aufgaben:
 
-- native Pairwise-Distanzen für Float32, 4-Bit, 2-Bit und 1-Bit messen
-- native Top-k-Suche für Float32, 4-Bit, 2-Bit und 1-Bit messen
+- NumPy-vektorisierte Pairwise-Distanzen für Float32, 4-Bit, 2-Bit und 1-Bit messen
+- NumPy-vektorisierte Top-k-Suche für Float32, 4-Bit, 2-Bit und 1-Bit messen
 - Durchsatzwerte berechnen
 - `results/phase5/runtime.json` erzeugen
 
@@ -488,7 +487,7 @@ Aufgaben:
 - Pairwise-Distanzfunktionen der bestehenden Implementierung messen
 - Top-k-Funktionen der bestehenden Implementierung messen
 - Dequantisierungskosten separat messen
-- Ergebnisse als `python_numpy_reference` und `dequantized_baseline` speichern
+- Ergebnisse als `numpy_vectorized` und `dequantized_baseline` speichern
 
 Diese Werte sind nicht die finale Effizienzaussage, sondern zeigen, wie stark
 die naive oder bequeme Implementierung vom nativen Hauptpfad abweicht.
@@ -500,7 +499,7 @@ die naive oder bequeme Implementierung vom nativen Hauptpfad abweicht.
 | Frage | Metrik |
 |-------|--------|
 | Wie viel Speicher benötigt jede Repräsentation theoretisch? | Theoretische Bytes pro Vektor |
-| Wie viel Speicher benötigt jede Repräsentation praktisch im nativen Index? | Nativer Index-Speicher |
+| Wie viel Speicher benötigt jede Repräsentation praktisch im NumPy-Layout? | NumPy-Layout-Speicher |
 | Wie viel RAM wird während der Suche benötigt? | Peak-Working-Memory |
 | Wie schnell sollten die Repräsentationen theoretisch sein? | Operationen pro Vergleich |
 | Wie schnell sind native Distanzberechnungen praktisch? | Median-Laufzeit, Paare/s |
