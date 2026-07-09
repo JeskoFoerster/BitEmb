@@ -36,7 +36,7 @@ tests/               Unit tests
 pip install -e ".[dev]"
 ```
 
-Phase 5 uses vectorized NumPy runtime measurements and does not require a C compiler, CFFI build step, or Microsoft C++ Build Tools. Generated `results/phase5/` outputs are ignored by Git.
+Phase 5 uses vectorized NumPy runtime measurements and does not require a C compiler, CFFI build step, or Microsoft C++ Build Tools. Generated `results/phase5/` outputs are ignored by Git; comparison runs are stored below that directory, e.g. `results/phase5/scaling_n/` and `results/phase5/scaling_dim/`.
 
 ## Usage
 

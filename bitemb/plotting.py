@@ -674,6 +674,10 @@ def _phase5_entry_label(entry: dict) -> str:
     return f"{entry['dataset']} (n={entry['n_vectors']}, d={entry['dim']})"
 
 
+def _phase5_series_label(entry: dict) -> str:
+    return f"{entry['dataset']} (n={entry['n_vectors']})"
+
+
 def plot_phase5_memory_theoretical_vs_numpy(
     results: list[dict],
     output_path: Path,
@@ -733,10 +737,13 @@ def plot_phase5_memory_compression_by_dim(
     _apply_style()
     fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
 
-    datasets = sorted({r["dataset"] for r in results})
+    series_labels = sorted({_phase5_series_label(r) for r in results})
     linestyles = ["-", "--", ":", "-."]
-    for ds_idx, dataset in enumerate(datasets):
-        ds_entries = sorted([r for r in results if r["dataset"] == dataset], key=lambda r: r["dim"])
+    for ds_idx, series_label in enumerate(series_labels):
+        ds_entries = sorted(
+            [r for r in results if _phase5_series_label(r) == series_label],
+            key=lambda r: r["dim"],
+        )
         for rep in _REP_ORDER:
             dims = [r["dim"] for r in ds_entries]
             ratios = []
@@ -752,7 +759,12 @@ def plot_phase5_memory_compression_by_dim(
                 markersize=4,
                 label=_REP_LABELS[rep] if ds_idx == 0 else None,
             )
-        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx % len(linestyles)], label=dataset)
+        ax.plot(
+            [], [],
+            color="gray",
+            linestyle=linestyles[ds_idx % len(linestyles)],
+            label=series_label,
+        )
 
     ax.set_xlabel("PCA dimensions")
     ax.set_ylabel("Compression vs. 768d Float32")
@@ -777,11 +789,14 @@ def plot_phase5_runtime_by_dim(
     _apply_style()
     fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
 
-    datasets = sorted({r["dataset"] for r in results})
+    series_labels = sorted({_phase5_series_label(r) for r in results})
     linestyles = ["-", "--", ":", "-."]
     plotted = False
-    for ds_idx, dataset in enumerate(datasets):
-        ds_entries = sorted([r for r in results if r["dataset"] == dataset], key=lambda r: r["dim"])
+    for ds_idx, series_label in enumerate(series_labels):
+        ds_entries = sorted(
+            [r for r in results if _phase5_series_label(r) == series_label],
+            key=lambda r: r["dim"],
+        )
         for rep in _REP_ORDER:
             dims = []
             values = []
@@ -808,12 +823,12 @@ def plot_phase5_runtime_by_dim(
                     markersize=4,
                     label=_REP_LABELS[rep] if ds_idx == 0 else None,
                 )
-        if any(r["dataset"] == dataset for r in results):
+        if ds_entries:
             ax.plot(
                 [], [],
                 color="gray",
                 linestyle=linestyles[ds_idx % len(linestyles)],
-                label=dataset,
+                label=series_label,
             )
 
     ax.set_xlabel("PCA dimensions")

@@ -3,6 +3,11 @@
 Examples:
     python scripts/phase5_efficiency.py --synthetic --max-docs 1000
     python scripts/phase5_efficiency.py --dataset scifact --max-docs 5000
+    python scripts/phase5_efficiency.py --all --max-docs-list 250 500 1000 \
+        --output results/phase5/scaling_n
+    python scripts/phase5_efficiency.py --all --max-docs 1000 \
+        --dims 64 128 256 384 768 --output results/phase5/scaling_dim
+    python scripts/phase5_efficiency.py --dataset scifact --full-corpus
 """
 
 from __future__ import annotations
@@ -27,7 +32,7 @@ except Exception:
 
 import numpy as np  # noqa: E402
 
-from bitemb.config import DATASETS, PCA_DIMS, SEED  # noqa: E402
+from bitemb.config import DATASETS, MODEL_NAME, PCA_DIMS, SEED  # noqa: E402
 from bitemb.distance import _sample_pairs  # noqa: E402
 from bitemb.efficiency import (  # noqa: E402
     REPRESENTATIONS,
@@ -52,6 +57,16 @@ from bitemb.plotting import (  # noqa: E402
 from bitemb.quantization import PCAReducer  # noqa: E402
 
 OUTPUT_DIR = Path("results/phase5")
+PHASE5_CACHE_DIR = Path("cache/phase5_embeddings")
+
+
+def _model_slug(model_name: str) -> str:
+    return "_".join(part for part in model_name.lower().replace("/", "_").split("_") if part)
+
+
+def _phase5_cache_path(dataset_name: str, max_docs: int) -> Path:
+    filename = f"{_model_slug(MODEL_NAME)}_{dataset_name}_max{max_docs}_seed{SEED}.npy"
+    return PHASE5_CACHE_DIR / filename
 
 
 def _synthetic_embeddings(n: int, dim: int = 768, seed: int = SEED) -> np.ndarray:
@@ -67,17 +82,43 @@ def _load_embeddings(dataset_name: str, max_docs: int | None, synthetic: bool) -
         n = max_docs or 1000
         return _synthetic_embeddings(n)
 
-    from bitemb.cache import load_or_encode
+    from bitemb.cache import _cache_path, load_or_encode
     from bitemb.dataset import load_beir
     from bitemb.engine import EmbeddingEngine
 
     ds = load_beir(dataset_name)
+    n_total = len(ds.corpus_texts)
     engine = EmbeddingEngine()
-    embs = load_or_encode(dataset_name, ds.corpus_texts, engine, show_progress=True)
-    if max_docs and max_docs < embs.shape[0]:
-        rng = np.random.default_rng(SEED)
-        idx = rng.choice(embs.shape[0], size=max_docs, replace=False)
-        embs = embs[idx]
+
+    if max_docs is None or max_docs >= n_total:
+        embs = load_or_encode(dataset_name, ds.corpus_texts, engine, show_progress=True)
+        return np.ascontiguousarray(embs, dtype=np.float32)
+
+    rng = np.random.default_rng(SEED)
+    idx = rng.choice(n_total, size=max_docs, replace=False)
+
+    full_cache = _cache_path(dataset_name)
+    if full_cache.exists():
+        embs = load_or_encode(dataset_name, ds.corpus_texts, engine, show_progress=True)
+        return np.ascontiguousarray(embs[idx], dtype=np.float32)
+
+    subset_cache = _phase5_cache_path(dataset_name, max_docs)
+    if subset_cache.exists():
+        embs = np.load(subset_cache)
+        if embs.shape[0] != max_docs:
+            raise ValueError(
+                f"Phase 5 cache mismatch for '{dataset_name}': cached {embs.shape[0]} rows, "
+                f"expected {max_docs}. Delete {subset_cache} to re-encode."
+            )
+        print(f"  Loaded Phase 5 subsample embeddings from {subset_cache}")
+        return np.ascontiguousarray(embs, dtype=np.float32)
+
+    texts = [ds.corpus_texts[i] for i in idx]
+    print(f"  Encoding Phase 5 subsample: {max_docs} of {n_total} documents...")
+    embs = engine.encode_passages(texts, show_progress=True)
+    subset_cache.parent.mkdir(parents=True, exist_ok=True)
+    np.save(subset_cache, embs)
+    print(f"  Cached Phase 5 subsample embeddings to {subset_cache}")
     return np.ascontiguousarray(embs, dtype=np.float32)
 
 
@@ -214,6 +255,26 @@ def _numpy_runtime_records(
     return dataclasses_to_dicts(runtime)
 
 
+def _sample_sizes(args: argparse.Namespace) -> list[int | None]:
+    sizes: list[int | None] = []
+    if args.max_docs_list:
+        sizes.extend(args.max_docs_list)
+    else:
+        sizes.append(args.max_docs)
+    if args.full_corpus:
+        sizes.append(None)
+    # Preserve order while removing duplicates. None means full corpus.
+    deduped: list[int | None] = []
+    for size in sizes:
+        if size not in deduped:
+            deduped.append(size)
+    return deduped
+
+
+def _sample_label(max_docs: int | None, n_vectors: int) -> str:
+    return "full" if max_docs is None else f"max_docs={max_docs}"
+
+
 def run(args: argparse.Namespace) -> tuple[list[dict], list[dict]]:
     if args.synthetic:
         datasets = ["synthetic"]
@@ -225,55 +286,68 @@ def run(args: argparse.Namespace) -> tuple[list[dict], list[dict]]:
     runtime_outputs: list[dict] = []
 
     for dataset_name in datasets:
-        print(f"\n=== Phase 5: {dataset_name} ===")
-        embs_full = _load_embeddings(dataset_name, args.max_docs, args.synthetic)
-        dims = tuple(d for d in args.dims if d <= embs_full.shape[1])
+        for max_docs in _sample_sizes(args):
+            sample_hint = "full corpus" if max_docs is None else f"max_docs={max_docs}"
+            print(f"\n=== Phase 5: {dataset_name} ({sample_hint}) ===")
+            embs_full = _load_embeddings(dataset_name, max_docs, args.synthetic)
+            dims = tuple(
+                d for d in args.dims
+                if d <= embs_full.shape[1] and (d == embs_full.shape[1] or d <= embs_full.shape[0])
+            )
+            if not dims:
+                print("  No requested PCA dimensions are valid for this sample size; skipping.")
+                continue
 
-        for dim in dims:
-            print(f"  dim={dim}")
-            embs = _embeddings_for_dim(embs_full, dim)
-            n = embs.shape[0]
-            n_pairs = min(args.n_pairs, n * (n - 1) // 2)
-            pairs = _sample_pairs(n, n_pairs=n_pairs, seed=SEED)
-            layouts = build_numpy_layouts(embs)
+            for dim in dims:
+                print(f"  dim={dim}")
+                embs = _embeddings_for_dim(embs_full, dim)
+                n = embs.shape[0]
+                n_pairs = min(args.n_pairs, n * (n - 1) // 2)
+                pairs = _sample_pairs(n, n_pairs=n_pairs, seed=SEED)
+                layouts = build_numpy_layouts(embs)
 
-            theoretical_mem, theoretical_ops = _theoretical_records(n, dim)
-            numpy_mem = dataclasses_to_dicts(practical_memory_for_layouts(layouts))
+                theoretical_mem, theoretical_ops = _theoretical_records(n, dim)
+                numpy_mem = dataclasses_to_dicts(practical_memory_for_layouts(layouts))
+                sample_label = _sample_label(max_docs, n)
 
-            memory_outputs.append({
-                "dataset": dataset_name,
-                "n_vectors": n,
-                "dim": dim,
-                "theoretical": theoretical_mem,
-                "numpy_vectorized": numpy_mem,
-            })
+                memory_outputs.append({
+                    "dataset": dataset_name,
+                    "sample": sample_label,
+                    "max_docs": max_docs,
+                    "n_vectors": n,
+                    "dim": dim,
+                    "theoretical": theoretical_mem,
+                    "numpy_vectorized": numpy_mem,
+                })
 
-            runtime_records = []
-            runtime_records.extend({
-                "representation": rec["representation"],
-                "operation": "pairwise_distance",
-                "implementation": "theoretical",
-                "n_vectors": n,
-                "dim": dim,
-                "n_pairs": n_pairs,
-                "k": None,
-                "work_model": rec,
-            } for rec in theoretical_ops)
-            runtime_records.extend(_numpy_runtime_records(
-                embs,
-                pairs,
-                args.k,
-                args.warmup_runs,
-                args.measurement_runs,
-            ))
-            runtime_outputs.append({
-                "dataset": dataset_name,
-                "n_vectors": n,
-                "dim": dim,
-                "n_pairs": n_pairs,
-                "k": args.k,
-                "results": runtime_records,
-            })
+                runtime_records = []
+                runtime_records.extend({
+                    "representation": rec["representation"],
+                    "operation": "pairwise_distance",
+                    "implementation": "theoretical",
+                    "n_vectors": n,
+                    "dim": dim,
+                    "n_pairs": n_pairs,
+                    "k": None,
+                    "work_model": rec,
+                } for rec in theoretical_ops)
+                runtime_records.extend(_numpy_runtime_records(
+                    embs,
+                    pairs,
+                    args.k,
+                    args.warmup_runs,
+                    args.measurement_runs,
+                ))
+                runtime_outputs.append({
+                    "dataset": dataset_name,
+                    "sample": sample_label,
+                    "max_docs": max_docs,
+                    "n_vectors": n,
+                    "dim": dim,
+                    "n_pairs": n_pairs,
+                    "k": args.k,
+                    "results": runtime_records,
+                })
 
     return memory_outputs, runtime_outputs
 
@@ -285,6 +359,17 @@ def main() -> None:
     parser.add_argument("--synthetic", action="store_true", help="Use synthetic " \
     "normalized embeddings")
     parser.add_argument("--max-docs", type=int, default=1000)
+    parser.add_argument(
+        "--max-docs-list",
+        type=int,
+        nargs="+",
+        help="Run Phase 5 for several controlled corpus-size caps in one invocation.",
+    )
+    parser.add_argument(
+        "--full-corpus",
+        action="store_true",
+        help="Additionally run each selected dataset without a max-docs cap.",
+    )
     parser.add_argument("--dims", type=int, nargs="+", default=list(PCA_DIMS))
     parser.add_argument("--n-pairs", type=int, default=10_000)
     parser.add_argument("--k", type=int, default=10)
