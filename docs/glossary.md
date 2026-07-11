@@ -6,7 +6,7 @@ Ergebnisdateien des Projekts vorkommen.
 ## Grundbegriffe
 
 **Embedding**  
-Zahlenvektor, der einen Text repräsentiert. Ähnliche Texte sollen Ähnliche
+Zahlenvektor, der einen Text repräsentiert. Ähnliche Texte sollen ähnliche
 Vektoren haben.
 
 **Float32**  
@@ -168,6 +168,122 @@ Gibt an, wie weit ein falscher Nachbar im Float-Raum eigentlich entfernt war.
 Größere Verschiebungen werden stärker bestraft.
 
 
+## Phase 4: Retrieval-Evaluation
+
+**Retrieval**  
+Suchprozess, bei dem eine Query gegen alle Dokumente im Korpus verglichen wird.
+Das Ergebnis ist ein Ranking der Dokumente nach Ähnlichkeit oder Distanz.
+
+**Query**  
+Suchanfrage aus dem BEIR-Testset. In Phase 4 wird jede Query mit dem
+BGE-Query-Prefix eingebettet und anschließend gegen den Korpus gesucht.
+
+**Korpus / Corpus**  
+Menge aller Dokumente, in denen gesucht wird. Für SciFact umfasst der aktuelle
+Phase-4-Run 5.183 Dokumente.
+
+**BEIR qrels**  
+Relevanzurteile des BEIR-Datensatzes. Sie geben an, welche Dokumente für eine
+Query relevant sind und mit welchem Relevanzgrad sie bewertet wurden.
+
+**Ranking**  
+Sortierte Ergebnisliste für eine Query. Gute Rankings platzieren relevante
+Dokumente möglichst weit oben.
+
+**Exakte Suche / Brute-force Retrieval**  
+Suchverfahren, bei dem jede Query mit jedem Dokument im Korpus verglichen wird.
+Phase 4 nutzt diese exakte Suche bewusst, damit keine Fehler durch
+approximative Indizes wie HNSW in die Messung eingehen.
+
+**Approximative Suche / ANN**  
+Approximate Nearest Neighbor Search. Schnelle Suchverfahren, die nicht immer das
+exakte Ranking finden. In Phase 4 werden sie bewusst nicht verwendet, weil sie
+den Quantisierungseffekt überlagern würden.
+
+**Cosine-Similarity-Ranking**  
+Ranking nach Cosine Similarity. Im Float32-Raum ist dies die Referenzmethode.
+Da die Embeddings L2-normalisiert sind, entspricht Cosine Similarity dem
+Skalarprodukt.
+
+**Asymmetrische TurboQuant-Distanz**  
+Distanzberechnung, bei der die Query exakt rotiert bleibt, während der Korpus
+quantisiert und dequantisiert vorliegt. Diese Variante wird für TurboQuant 2-bit
+und 4-bit in Phase 4 genutzt.
+
+**Hamming-Ranking**  
+Ranking nach Hamming-Distanz zwischen binären Vektoren. Niedrigere Distanz
+bedeutet höhere Ähnlichkeit.
+
+**Top-k**  
+Die ersten `k` Dokumente eines Rankings. In Phase 4 sind vor allem Top-10 und
+Top-100 relevant.
+
+**NDCG@10**  
+Normalized Discounted Cumulative Gain bei den ersten 10 Treffern. Die Metrik
+berücksichtigt sowohl Relevanzgrade als auch Rankingpositionen. Höher ist
+besser. In Phase 4 ist NDCG@10 die primäre Qualitätsmetrik.
+
+**DCG**  
+Discounted Cumulative Gain. Bewertet relevante Treffer höher, wenn sie weiter
+oben im Ranking stehen.
+
+**IDCG**  
+Ideal Discounted Cumulative Gain. Bestmöglicher DCG-Wert für eine Query. NDCG
+normalisiert den tatsächlichen DCG durch diesen Idealwert.
+
+**Recall@10**  
+Anteil der relevanten Dokumente, die in den ersten 10 Treffern enthalten sind.
+Höher ist besser.
+
+**Recall@100**  
+Anteil der relevanten Dokumente, die in den ersten 100 Treffern enthalten sind.
+Diese Metrik ist besonders wichtig für zweistufige Retrieval-Systeme, bei denen
+die erste Stufe Kandidaten sammelt und eine zweite Stufe genauer rerankt.
+
+**MRR / Mean Reciprocal Rank**  
+Mittelwert des Reciprocal Rank über alle Queries. MRR misst, wie früh das erste
+relevante Dokument im Ranking erscheint. Höher ist besser.
+
+**Reciprocal Rank**  
+Kehrwert des Rangs des ersten relevanten Dokuments. Wenn das erste relevante
+Dokument auf Rang 1 steht, ist der Wert 1. Bei Rang 5 ist der Wert 0,2.
+
+**Per-Query-Metriken**  
+Metrikwerte, die nicht nur als Durchschnitt über alle Queries gespeichert
+werden, sondern einzeln pro Query. Sie sind die Grundlage für die statistischen
+Tests in Phase 4.
+
+**Wilcoxon-Signed-Rank-Test**  
+Nichtparametrischer Test für gepaarte Stichproben. In Phase 4 vergleicht er die
+per-Query-Metriken zweier Repräsentationen. Er wird verwendet, weil
+Retrieval-Metriken typischerweise nicht normalverteilt sind.
+
+**p-Wert**  
+Wahrscheinlichkeit, unter der Nullhypothese einen mindestens so starken
+Unterschied zu beobachten. Kleine p-Werte sprechen gegen die Nullhypothese.
+
+**Signifikanzniveau / Alpha**  
+Schwelle für statistische Signifikanz. In Phase 4 gilt zunächst `alpha = 0,05`.
+
+**Bonferroni-Korrektur**  
+Korrektur für multiples Testen. Da pro Metrik sechs paarweise Vergleiche
+zwischen vier Repräsentationen durchgeführt werden, nutzt Phase 4
+`alpha_korr = 0,05 / 6 = 0,0083`.
+
+**Signifikanter Unterschied**  
+Ein Unterschied gilt in Phase 4 als signifikant, wenn der p-Wert kleiner als die
+Bonferroni-korrigierte Schwelle ist. Signifikant bedeutet nicht automatisch
+praktisch groß, sondern statistisch belastbar über Queries hinweg.
+
+**Kandidatengenerator**  
+Erste Stufe eines zweistufigen Retrieval-Systems. Sie soll möglichst viele
+relevante Dokumente in eine größere Kandidatenmenge holen. Recall@100 ist dafür
+wichtiger als NDCG@10.
+
+**Zweistufiges Retrieval-System**  
+Retrieval-Architektur mit grober erster Suche und anschließendem Reranking. Eine
+komprimierte Repräsentation kann für die erste Stufe geeignet sein, auch wenn
+sie für das finale Top-10-Ranking etwas Qualität verliert.
 ## Phase 5: Effizienz
 
 **Laufzeitanalyse / Runtime analysis**  
