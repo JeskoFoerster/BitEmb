@@ -1,4 +1,4 @@
-# BitEmb
+﻿# BitEmb
 
 Empirical analysis of quantization effects on embedding retrieval quality.
 
@@ -8,16 +8,17 @@ Which semantic properties of a float embedding space are preserved under quantiz
 
 ## Structure
 
-```
+```text
 bitemb/              Core library
 ├── config.py        Experiment parameters
 ├── engine.py        Embedding generation (BAAI/bge-large-en-v1.5)
-├── cache.py         Deterministic embedding cache (avoids re-encoding)
+├── cache.py         Deterministic embedding cache (corpus + queries)
 ├── quantization.py  Binary + TurboQuant (2-bit, 4-bit) + PCA reduction
 ├── dataset.py       BEIR data loading (SciFact, FiQA, TREC-COVID)
 ├── analysis.py      Phase 1: float space characterization
 ├── distance.py      Phase 2: pairwise distance & distortion analysis
 ├── neighborhood.py  Phase 3: neighborhood overlap & trustworthiness
+├── retrieval.py     Phase 4: exact BEIR retrieval evaluation
 ├── efficiency.py    Phase 5: runtime & memory efficiency analysis
 └── plotting.py      Publication-quality figures (matplotlib)
 
@@ -25,6 +26,7 @@ scripts/             Experiment runners
 ├── phase1_characterization.py
 ├── phase2_distance_analysis.py
 ├── phase3_neighborhood.py
+├── phase4_retrieval.py
 └── phase5_efficiency.py
 
 tests/               Unit tests
@@ -60,6 +62,11 @@ python scripts/phase3_neighborhood.py --dataset scifact
 python scripts/phase3_neighborhood.py --all
 python scripts/phase3_neighborhood.py --all --max-docs 5000 # recommended
 
+# Run Phase 4 (requires model download + dataset)
+python scripts/phase4_retrieval.py --dataset scifact
+python scripts/phase4_retrieval.py --all
+python scripts/phase4_retrieval.py --all --max-docs 10000
+
 # Run Phase 5 smoke test (no dataset download)
 python scripts/phase5_efficiency.py --synthetic --max-docs 1000 --dims 64
 
@@ -69,10 +76,11 @@ python scripts/phase5_efficiency.py --dataset scifact --max-docs 5000
 
 ## Embedding Cache
 
-Corpus embeddings are cached to `cache/embeddings/` on first run. Subsequent runs (including across phases) load from cache instead of re-encoding. 
-The cache always stores the **full** corpus — `--max-docs` subsamples from the cached matrix after loading. 
-This holds regardless of run order: even if the first run uses `--max-docs`, the full corpus is still encoded and cached. 
-Delete `cache/` to force re-encoding.
+Corpus embeddings are cached to `cache/embeddings/` on first run. Subsequent runs (including across phases) load from cache instead of re-encoding.
+The cache always stores the full corpus. `--max-docs` subsamples from the cached matrix after loading.
+This holds regardless of run order: even if the first run uses `--max-docs`, the full corpus is still encoded and cached.
+
+Query embeddings for Phase 4 are cached separately in `cache/query_embeddings/`, because BGE uses a query instruction prefix. Delete `cache/` to force re-encoding.
 
 ## Documentation
 
@@ -84,6 +92,7 @@ Detailed documentation for each phase is in `docs/`:
 | [`docs/phase1.md`](docs/phase1.md) | Float space characterization: norms, skewness, kurtosis, intrinsic dimensionality |
 | [`docs/phase2.md`](docs/phase2.md) | Distance analysis: Pearson r, Spearman ρ, MAE, RMSE |
 | [`docs/phase3.md`](docs/phase3.md) | Neighborhood preservation: overlap, trustworthiness |
+| [`docs/phase4.md`](docs/phase4.md) | Retrieval evaluation: NDCG@10, Recall@10/100, MRR, Wilcoxon tests |
 | [`docs/phase5.md`](docs/phase5.md) | Runtime and memory efficiency: theoretical estimates and NumPy-vectorized measurements |
 
 ## Methods

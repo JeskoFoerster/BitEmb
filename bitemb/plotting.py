@@ -850,3 +850,171 @@ def plot_phase5_runtime_by_dim(
     fig.savefig(output_path)
     plt.close(fig)
     return output_path
+
+# ---------- Phase 4: Retrieval Evaluation ----------
+
+_RETRIEVAL_REP_ORDER = ["float32", "4bit", "2bit", "1bit"]
+_RETRIEVAL_REP_LABELS = {
+    "float32": "Float32",
+    "4bit": "4-bit",
+    "2bit": "2-bit",
+    "1bit": "1-bit",
+}
+_RETRIEVAL_REP_COLORS = {
+    "float32": "#1f77b4",
+    "4bit": "#2ca02c",
+    "2bit": "#ff7f0e",
+    "1bit": "#d62728",
+}
+
+
+def _retrieval_bits_per_vector(representation: str, dim: int) -> int:
+    if representation == "float32":
+        return dim * 32
+    if representation == "4bit":
+        return dim * 4
+    if representation == "2bit":
+        return dim * 2
+    if representation == "1bit":
+        return dim
+    raise ValueError(f"Unknown representation: {representation}")
+
+
+def plot_retrieval_heatmap(
+    results: dict,
+    output_path: Path,
+    metric: str = "ndcg_at_10",
+    title: str | None = None,
+) -> Path:
+    """Heatmap of a retrieval metric across representation and PCA dimension."""
+    _apply_style()
+
+    dims = sorted({r["dim"] for r in results["results"]})
+    matrix = np.zeros((len(_RETRIEVAL_REP_ORDER), len(dims)))
+    for r in results["results"]:
+        row = _RETRIEVAL_REP_ORDER.index(r["representation"])
+        col = dims.index(r["dim"])
+        matrix[row, col] = r[metric]
+
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.4))
+    im = ax.imshow(matrix, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
+
+    ax.set_xticks(range(len(dims)))
+    ax.set_xticklabels([str(d) for d in dims])
+    ax.set_yticks(range(len(_RETRIEVAL_REP_ORDER)))
+    ax.set_yticklabels([_RETRIEVAL_REP_LABELS[r] for r in _RETRIEVAL_REP_ORDER])
+    ax.set_xlabel("PCA dimensions")
+
+    for i in range(len(_RETRIEVAL_REP_ORDER)):
+        for j in range(len(dims)):
+            val = matrix[i, j]
+            color = "white" if val < 0.5 else "black"
+            ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=8, color=color)
+
+    label = metric.replace("_", " ").upper()
+    fig.colorbar(im, ax=ax, shrink=0.8, label=label)
+    ax.set_title(title or f"{results['dataset']} - {label}")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def plot_retrieval_by_dim(
+    results: list[dict],
+    output_path: Path,
+    metric: str = "ndcg_at_10",
+    ylabel: str | None = None,
+) -> Path:
+    """Line plot of a retrieval metric as function of PCA dimension."""
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    linestyles = ["-", "--", ":"]
+    for ds_idx, ds in enumerate(results):
+        for representation in _RETRIEVAL_REP_ORDER:
+            entries = sorted(
+                [r for r in ds["results"] if r["representation"] == representation],
+                key=lambda r: r["dim"],
+            )
+            dims = [r["dim"] for r in entries]
+            values = [r[metric] for r in entries]
+            ax.plot(
+                dims,
+                values,
+                color=_RETRIEVAL_REP_COLORS[representation],
+                linestyle=linestyles[ds_idx % len(linestyles)],
+                marker="o",
+                markersize=4,
+                label=_RETRIEVAL_REP_LABELS[representation] if ds_idx == 0 else None,
+            )
+        ax.plot(
+            [], [],
+            color="gray",
+            linestyle=linestyles[ds_idx % len(linestyles)],
+            label=ds["dataset"],
+        )
+
+    label = ylabel or metric.replace("_", " ").upper()
+    ax.set_xlabel("PCA dimensions")
+    ax.set_ylabel(label)
+    ax.set_ylim(0.0, 1.05)
+    ax.set_xticks(sorted({r["dim"] for ds in results for r in ds["results"]}))
+    ax.legend(loc="best", ncol=2, fontsize=7)
+    ax.set_title(f"Retrieval {label} by Dimension")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def plot_retrieval_pareto(
+    results: list[dict],
+    output_path: Path,
+    metric: str = "ndcg_at_10",
+    ylabel: str | None = None,
+) -> Path:
+    """Pareto plot of retrieval quality against bits per vector."""
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    linestyles = ["-", "--", ":"]
+    markers = ["o", "s", "^"]
+    for ds_idx, ds in enumerate(results):
+        for representation in _RETRIEVAL_REP_ORDER:
+            entries = sorted(
+                [r for r in ds["results"] if r["representation"] == representation],
+                key=lambda r: r["dim"],
+            )
+            bits = [_retrieval_bits_per_vector(representation, r["dim"]) for r in entries]
+            values = [r[metric] for r in entries]
+            ax.plot(
+                bits,
+                values,
+                color=_RETRIEVAL_REP_COLORS[representation],
+                linestyle=linestyles[ds_idx % len(linestyles)],
+                marker=markers[ds_idx % len(markers)],
+                markersize=4,
+                label=_RETRIEVAL_REP_LABELS[representation] if ds_idx == 0 else None,
+            )
+        ax.plot(
+            [], [],
+            color="gray",
+            linestyle=linestyles[ds_idx % len(linestyles)],
+            label=ds["dataset"],
+        )
+
+    label = ylabel or metric.replace("_", " ").upper()
+    ax.set_xlabel("Bits per vector")
+    ax.set_ylabel(label)
+    ax.set_xscale("log", base=2)
+    ax.set_ylim(0.0, 1.05)
+    ax.legend(loc="best", ncol=2, fontsize=7)
+    ax.set_title(f"Retrieval {label} vs. Compression")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path

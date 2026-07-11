@@ -1,11 +1,11 @@
-"""BitEmb – Quantization effects on embedding retrieval quality."""
+﻿"""BitEmb - Quantization effects on embedding retrieval quality."""
 
 from bitemb.analysis import (
     compute_dimension_stats,
     compute_intrinsic_dimensionality,
     compute_norm_distribution,
 )
-from bitemb.cache import clear_cache, load_or_encode
+from bitemb.cache import clear_cache, load_or_encode, load_or_encode_queries
 from bitemb.config import DATASETS, MODEL_DIM, MODEL_NAME
 from bitemb.dataset import BeirDataset, load_beir
 from bitemb.distance import (
@@ -26,9 +26,18 @@ from bitemb.plotting import (
     plot_neighborhood_heatmap,
     plot_neighborhood_overlap_by_k,
     plot_neighborhood_pareto,
+    plot_retrieval_by_dim,
+    plot_retrieval_heatmap,
+    plot_retrieval_pareto,
     plot_variance_spectrum,
 )
 from bitemb.quantization import PCAReducer, TurboQuantIndex, binarize, turboquant_encode
+from bitemb.retrieval import (
+    RetrievalResult,
+    SignificanceResult,
+    compute_retrieval_evaluation,
+    compute_significance_tests,
+)
 
 __all__ = [
     "MODEL_NAME",
@@ -36,6 +45,7 @@ __all__ = [
     "DATASETS",
     "EmbeddingEngine",
     "load_or_encode",
+    "load_or_encode_queries",
     "clear_cache",
     "binarize",
     "turboquant_encode",
@@ -52,6 +62,10 @@ __all__ = [
     "RawDistances",
     "compute_neighborhood_preservation",
     "NeighborhoodResult",
+    "compute_retrieval_evaluation",
+    "compute_significance_tests",
+    "RetrievalResult",
+    "SignificanceResult",
     "plot_cumulative_variance",
     "plot_variance_spectrum",
     "plot_distance_scatter",
@@ -62,4 +76,7 @@ __all__ = [
     "plot_neighborhood_overlap_by_k",
     "plot_neighborhood_pareto",
     "plot_neighborhood_by_dim",
+    "plot_retrieval_heatmap",
+    "plot_retrieval_by_dim",
+    "plot_retrieval_pareto",
 ]

@@ -1,4 +1,4 @@
-"""Deterministic embedding cache for avoiding redundant model inference.
+﻿"""Deterministic embedding cache for avoiding redundant model inference.
 
 Caches the full corpus embeddings per (model, dataset) pair as .npy files.
 Since model inference is deterministic (no dropout at eval time), cached
@@ -7,6 +7,9 @@ embeddings are bit-for-bit identical to freshly computed ones.
 Cache key: {model_name_slug}_{dataset_name}.npy
 The cache stores the FULL corpus embedding matrix. Subsampling (--max-docs)
 is applied AFTER loading from cache, preserving methodological equivalence.
+
+Query embeddings are cached separately because BGE uses an instruction prefix
+for queries but not for passages.
 """
 
 from __future__ import annotations
@@ -24,6 +27,7 @@ if TYPE_CHECKING:
     from bitemb.engine import EmbeddingEngine
 
 CACHE_DIR = Path("cache/embeddings")
+QUERY_CACHE_DIR = Path("cache/query_embeddings")
 
 
 def _model_slug(model_name: str) -> str:
@@ -34,6 +38,11 @@ def _model_slug(model_name: str) -> str:
 def _cache_path(dataset_name: str, model_name: str = MODEL_NAME) -> Path:
     """Compute the cache file path for a (model, dataset) pair."""
     return CACHE_DIR / f"{_model_slug(model_name)}_{dataset_name}.npy"
+
+
+def _query_cache_path(dataset_name: str, model_name: str = MODEL_NAME) -> Path:
+    """Compute the query cache path for a (model, dataset) pair."""
+    return QUERY_CACHE_DIR / f"{_model_slug(model_name)}_{dataset_name}_queries.npy"
 
 
 def load_or_encode(
@@ -72,13 +81,53 @@ def load_or_encode(
         print(f"  Loaded cached embeddings from {path}")
         return embs
 
-    # Cache miss — encode and save
     print(f"  No cache found, encoding {len(texts)} documents...")
     embs = engine.encode_passages(texts, show_progress=show_progress)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     np.save(path, embs)
     print(f"  Cached embeddings to {path}")
+    return embs
+
+
+def load_or_encode_queries(
+    dataset_name: str,
+    queries: list[str],
+    engine: EmbeddingEngine,
+    *,
+    model_name: str = MODEL_NAME,
+    show_progress: bool = False,
+) -> NDArray[np.float32]:
+    """Load cached query embeddings or compute and cache them.
+
+    Args:
+        dataset_name: BEIR dataset identifier (e.g. "scifact").
+        queries: Filtered query texts with relevance judgments.
+        engine: EmbeddingEngine instance with encode_queries method.
+        model_name: Model identifier for cache key.
+        show_progress: Show encoding progress bar.
+
+    Returns:
+        Float32 query embedding matrix of shape (len(queries), dim).
+    """
+    path = _query_cache_path(dataset_name, model_name)
+
+    if path.exists():
+        embs = np.load(path)
+        if embs.shape[0] != len(queries):
+            raise ValueError(
+                f"Query cache mismatch for '{dataset_name}': cached {embs.shape[0]} rows, "
+                f"but dataset has {len(queries)} filtered queries. Delete {path} to re-encode."
+            )
+        print(f"  Loaded cached query embeddings from {path}")
+        return embs
+
+    print(f"  No query cache found, encoding {len(queries)} queries...")
+    embs = engine.encode_queries(queries, show_progress=show_progress)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.save(path, embs)
+    print(f"  Cached query embeddings to {path}")
     return embs
 
 
@@ -93,7 +142,13 @@ def clear_cache(dataset_name: str | None = None, model_name: str = MODEL_NAME) -
         path = _cache_path(dataset_name, model_name)
         if path.exists():
             path.unlink()
+        query_path = _query_cache_path(dataset_name, model_name)
+        if query_path.exists():
+            query_path.unlink()
     else:
         if CACHE_DIR.exists():
             for f in CACHE_DIR.glob("*.npy"):
+                f.unlink()
+        if QUERY_CACHE_DIR.exists():
+            for f in QUERY_CACHE_DIR.glob("*.npy"):
                 f.unlink()
