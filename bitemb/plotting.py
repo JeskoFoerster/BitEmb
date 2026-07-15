@@ -526,7 +526,7 @@ def plot_neighborhood_overlap_by_k(
     ax.set_xlabel("k (number of neighbors)")
     ax.set_ylabel(label)
     ax.set_ylim(0.0, 1.05)
-    ax.set_xticks([10, 50, 100])
+    ax.set_xticks([5, 10, 20])
     ax.legend(loc="lower right", ncol=2, fontsize=7)
     ax.set_title(f"{label} (d={dim})")
 

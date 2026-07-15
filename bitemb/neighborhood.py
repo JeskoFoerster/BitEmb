@@ -9,7 +9,7 @@ quantization. Two complementary metrics:
    introduced in the quantized space, weighted by their rank displacement.
 
 Both metrics are computed over the full 2D experimental matrix
-(bit_depth × PCA_dim) for k ∈ {10, 50, 100}.
+(bit_depth × PCA_dim) for k ∈ {5, 10, 20}.
 
 Reference: chapMethodik.tex, Section "Phase 3: Nachbarschaftserhaltung".
 """
@@ -29,7 +29,7 @@ from bitemb.quantization import (
     turboquant_encode,
 )
 
-K_VALUES = (10, 50, 100)
+K_VALUES = (5, 10, 20)
 
 
 @dataclass

@@ -1,7 +1,8 @@
 """Phase 3: Neighborhood preservation analysis.
 
 Computes neighborhood overlap and trustworthiness across the full 2D
-experimental matrix (bit_depth × PCA_dim) for k ∈ {10, 50, 100}.
+
+experimental matrix (bit_depth × PCA_dim) for k ∈ {5, 10, 20}.
 
 Usage:
     python scripts/phase3_neighborhood.py --dataset scifact
@@ -136,7 +137,7 @@ def main():
     for ds_result in all_outputs:
         name = ds_result["dataset"]
         for metric in ("overlap", "trustworthiness"):
-            for k in (10, 50, 100):
+            for k in (5, 10, 20):
                 fname = f"neighborhood_{metric}_k{k}_{name}.pdf"
                 p = plot_neighborhood_heatmap(
                     ds_result, fig_dir / fname, metric=metric, k=k,
@@ -145,7 +146,7 @@ def main():
 
     # Pareto plots (bits per vector vs. quality)
     for metric in ("overlap", "trustworthiness"):
-        for k in (10, 100):
+        for k in (5, 20):
             fname = f"neighborhood_pareto_{metric}_k{k}.pdf"
             p = plot_neighborhood_pareto(
                 all_outputs, fig_dir / fname, metric=metric, k=k,
@@ -154,7 +155,7 @@ def main():
 
     # Metric by PCA dimension
     for metric in ("overlap", "trustworthiness"):
-        for k in (10, 100):
+        for k in (5, 20):
             fname = f"neighborhood_{metric}_by_dim_k{k}.pdf"
             p = plot_neighborhood_by_dim(
                 all_outputs, fig_dir / fname, metric=metric, k=k,
