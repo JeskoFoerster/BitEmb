@@ -28,11 +28,11 @@ Die k-NN werden jeweils mit der natürlichen Distanzfunktion des Repräsentation
 
 ### Wahl von k
 
-Die Nachbarschaftsgröße k wird für k ∈ {10, 50, 100} ausgewertet.
+Die Nachbarschaftsgröße k wird für k ∈ {5, 10, 20} ausgewertet.
 
-- **k = 10** entspricht dem typischen Retrieval-Szenario ("Top-10 Ergebnisse"). Der Overlap ist hier am relevantesten für die Praxis, aber statistisch am instabilsten, weil eine Menge aus 10 Elementen stärker schwankt als eine aus 100.
-- **k = 100** ist robuster und relevant für zweistufige Systeme, bei denen eine erste Stufe 100 Kandidaten holt, die dann genauer bewertet werden.
-- Der Vergleich von k = 10 und k = 100 zeigt, ob Quantisierung die engste Nachbarschaft stärker beschädigt als die weitere.
+- **k = 5** und **k = 10** entsprechen dem engsten Retrieval-Szenario.
+- **k = 20** ist etwas robuster und fängt eine breitere Nachbarschaft ab.
+- Der Vergleich der verschiedenen k-Werte zeigt, ob Quantisierung die engste Nachbarschaft stärker beschädigt als die weitere.
 
 ---
 
@@ -52,9 +52,9 @@ Ein Overlap von 1.0 bedeutet: die k nächsten Nachbarn sind nach der Kompression
 
 Neighborhood Overlap ist ein **symmetrisches Maß**: Es behandelt fehlende echte Nachbarn und eingeführte falsche Nachbarn gleich. Es zählt nur, wie viel die beiden Mengen überlappen, ohne zu unterscheiden, welche Art von Fehler vorliegt.
 
-> **Grafiken `neighborhood_overlap_k10_<dataset>.pdf`, `neighborhood_overlap_k50_<dataset>.pdf`, `neighborhood_overlap_k100_<dataset>.pdf`:** Overlap pro Verfahren und Dimensionszahl für einen festen k-Wert, je Dataset. Zeigt wie stark Overlap mit steigender Dimensionszahl zunimmt und wie stark der Abfall von 4-Bit zu 1-Bit ist.
+> **Grafiken `neighborhood_overlap_k5_<dataset>.pdf`, `neighborhood_overlap_k10_<dataset>.pdf`, `neighborhood_overlap_k20_<dataset>.pdf`:** Overlap pro Verfahren und Dimensionszahl für einen festen k-Wert, je Dataset. Zeigt wie stark Overlap mit steigender Dimensionszahl zunimmt und wie stark der Abfall von 4-Bit zu 1-Bit ist.
 
-> **Grafiken `neighborhood_overlap_by_dim_k10.pdf`, `neighborhood_overlap_by_dim_k100.pdf`:** Aggregiert über alle Datasets, Overlap als Funktion der Dimensionszahl. Erlaubt direkten Vergleich ob ein Dataset systematisch besser oder schlechter abschneidet.
+> **Grafiken `neighborhood_overlap_by_dim_k5.pdf`, `neighborhood_overlap_by_dim_k20.pdf`:** Aggregiert über alle Datasets, Overlap als Funktion der Dimensionszahl. Erlaubt direkten Vergleich ob ein Dataset systematisch besser oder schlechter abschneidet.
 
 ### Trustworthiness
 
@@ -76,9 +76,9 @@ Der Wertebereich ist [0, 1], wobei T = 1 bedeutet, dass keine falschen Nachbarn 
 
 **Warum nicht Continuity?** Continuity misst den komplementären Fehler: echte Nachbarn die in der komprimierten Nachbarschaft fehlen. Das ist ebenfalls ein Fehler, aber für Retrieval weniger kritisch als falsche Nachbarn. Solange genug relevante Dokumente in den Top-k bleiben, ist das Fehlen einzelner verkraftbar. Continuity wird daher nicht separat ausgewertet.
 
-> **Grafiken `neighborhood_trustworthiness_k10_<dataset>.pdf`, `neighborhood_trustworthiness_k50_<dataset>.pdf`, `neighborhood_trustworthiness_k100_<dataset>.pdf`:** Trustworthiness pro Verfahren und Dimensionszahl für einen festen k-Wert, je Dataset.
+> **Grafiken `neighborhood_trustworthiness_k5_<dataset>.pdf`, `neighborhood_trustworthiness_k10_<dataset>.pdf`, `neighborhood_trustworthiness_k20_<dataset>.pdf`:** Trustworthiness pro Verfahren und Dimensionszahl für einen festen k-Wert, je Dataset.
 
-> **Grafiken `neighborhood_trustworthiness_by_dim_k10.pdf`, `neighborhood_trustworthiness_by_dim_k100.pdf`:** Aggregiert über alle Datasets, analog zu den Overlap-Grafiken.
+> **Grafiken `neighborhood_trustworthiness_by_dim_k5.pdf`, `neighborhood_trustworthiness_by_dim_k20.pdf`:** Aggregiert über alle Datasets, analog zu den Overlap-Grafiken.
 
 ---
 
@@ -103,11 +103,11 @@ Beide Metriken werden für die volle 2D-Matrix ausgewertet:
 
 - **Bittiefe:** 4-Bit (TurboQuant), 2-Bit (TurboQuant), 1-Bit (binär)
 - **Dimensionen:** 64, 128, 256, 384, 768
-- **k-Werte:** 10, 50, 100
+- **k-Werte:** 5, 10, 20
 
-> **Grafiken `neighborhood_pareto_overlap_k10.pdf`, `neighborhood_pareto_overlap_k100.pdf`:** Pareto-Front mit Speicherbedarf (Bit pro Vektor) auf der x-Achse und Overlap auf der y-Achse. Zeigt welche Kombination den besten Overlap für ein gegebenes Speicherbudget liefert.
+> **Grafiken `neighborhood_pareto_overlap_k5.pdf`, `neighborhood_pareto_overlap_k20.pdf`:** Pareto-Front mit Speicherbedarf (Bit pro Vektor) auf der x-Achse und Overlap auf der y-Achse. Zeigt welche Kombination den besten Overlap für ein gegebenes Speicherbudget liefert.
 
-> **Grafiken `neighborhood_pareto_trustworthiness_k10.pdf`, `neighborhood_pareto_trustworthiness_k100.pdf`:** Pareto-Front analog für Trustworthiness. Relevant um zu prüfen, ob die optimale Kombination für Overlap auch für Trustworthiness optimal ist, oder ob es einen Trade-off zwischen den beiden gibt.
+> **Grafiken `neighborhood_pareto_trustworthiness_k5.pdf`, `neighborhood_pareto_trustworthiness_k20.pdf`:** Pareto-Front analog für Trustworthiness. Relevant um zu prüfen, ob die optimale Kombination für Overlap auch für Trustworthiness optimal ist, oder ob es einen Trade-off zwischen den beiden gibt.
 
 > **Grafiken `overlap_by_k.pdf`, `trustworthiness_by_k.pdf`:** Beide Metriken als Funktion von k, aggregiert über Datasets. Zeigt ob der Qualitätsverlust mit wachsendem k zunimmt oder abnimmt.
 
@@ -119,5 +119,5 @@ Beide Metriken werden für die volle 2D-Matrix ausgewertet:
 |-------|--------|
 | Wie viele der k nächsten Nachbarn bleiben erhalten? | Neighborhood Overlap |
 | Werden falsche Nachbarn eingeführt, und wie weit lagen diese im Float-Raum? | Trustworthiness |
-| Ist k = 10 oder k = 100 stärker betroffen? | Overlap/Trustworthiness bei verschiedenen k |
+| Ist k = 5 oder k = 20 stärker betroffen? | Overlap/Trustworthiness bei verschiedenen k |
 | Welche Kombination ist optimal für ein gegebenes Speicherbudget? | Pareto-Fronten |
