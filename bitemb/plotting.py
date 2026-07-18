@@ -678,6 +678,30 @@ def _phase5_series_label(entry: dict) -> str:
     return f"{entry['dataset']} (n={entry['n_vectors']})"
 
 
+def _phase5_legend_below(ax: plt.Axes, ncol: int = 4) -> float:
+    """Place a compact legend below a Phase 5 plot and return the needed bottom margin."""
+    _, labels = ax.get_legend_handles_labels()
+    rows = max(1, (len(labels) + ncol - 1) // ncol)
+    bottom_margin = min(0.46, 0.18 + 0.06 * (rows - 1))
+    anchor_y = -0.24 - 0.08 * (rows - 1)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, anchor_y),
+        ncol=ncol,
+        fontsize=7,
+        frameon=False,
+        borderaxespad=0.0,
+    )
+    return bottom_margin
+
+
+def _format_factor(value: float, _pos: float) -> str:
+    """Format compression ratios as multiplicative factors."""
+    if value >= 10 or float(value).is_integer():
+        return f"{value:.0f}x"
+    return f"{value:.1f}x"
+
+
 def plot_phase5_memory_theoretical_vs_numpy(
     results: list[dict],
     output_path: Path,
@@ -720,9 +744,17 @@ def plot_phase5_memory_theoretical_vs_numpy(
         ax.set_ylabel("Bytes / vector")
         ax.set_title(_phase5_entry_label(entry))
         ax.set_yscale("log", base=2)
-        ax.legend(fontsize=7)
-
-    fig.tight_layout()
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        ncol=2,
+        fontsize=7,
+        frameon=False,
+        bbox_to_anchor=(0.5, 0.01),
+    )
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
     plt.close(fig)
@@ -767,10 +799,12 @@ def plot_phase5_memory_compression_by_dim(
         )
 
     ax.set_xlabel("PCA dimensions")
-    ax.set_ylabel("Compression vs. 768d Float32")
+    ax.set_ylabel("Compression factor", labelpad=8)
     ax.set_yscale("log", base=2)
+    ax.yaxis.set_major_formatter(_format_factor)
     ax.set_xticks(sorted({r["dim"] for r in results}))
-    ax.legend(loc="best", ncol=2, fontsize=7)
+    bottom_margin = _phase5_legend_below(ax, ncol=4)
+    fig.subplots_adjust(left=0.15, right=0.98, bottom=bottom_margin, top=0.95)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
@@ -835,7 +869,8 @@ def plot_phase5_runtime_by_dim(
     ax.set_ylabel(metric.replace("_", " ").title())
     ax.set_title(f"NumPy {operation.replace('_', ' ')}")
     if plotted:
-        ax.legend(loc="best", ncol=2, fontsize=7)
+        bottom_margin = _phase5_legend_below(ax, ncol=4)
+        fig.subplots_adjust(left=0.15, right=0.98, bottom=bottom_margin, top=0.88)
     else:
         ax.text(
             0.5,
@@ -845,6 +880,7 @@ def plot_phase5_runtime_by_dim(
             va="center",
             transform=ax.transAxes,
         )
+        fig.tight_layout()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
@@ -866,6 +902,18 @@ _RETRIEVAL_REP_COLORS = {
     "2bit": "#ff7f0e",
     "1bit": "#d62728",
 }
+
+
+def _retrieval_legend_below(ax: plt.Axes, ncol: int = 4) -> None:
+    """Place a compact legend below a Phase 4 retrieval plot."""
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.24),
+        ncol=ncol,
+        fontsize=7,
+        frameon=False,
+        borderaxespad=0.0,
+    )
 
 
 def _retrieval_bits_per_vector(representation: str, dim: int) -> int:
@@ -896,7 +944,7 @@ def plot_retrieval_heatmap(
         col = dims.index(r["dim"])
         matrix[row, col] = r[metric]
 
-    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.4))
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.8))
     im = ax.imshow(matrix, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
 
     ax.set_xticks(range(len(dims)))
@@ -912,8 +960,12 @@ def plot_retrieval_heatmap(
             ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=8, color=color)
 
     label = metric.replace("_", " ").upper()
-    fig.colorbar(im, ax=ax, shrink=0.8, label=label)
+    cax = fig.add_axes((0.22, 0.12, 0.62, 0.045))
+    cbar = fig.colorbar(im, cax=cax, orientation="horizontal")
+    cbar.set_label(label, labelpad=4)
     ax.set_title(title or f"{results['dataset']} - {label}")
+    fig.subplots_adjust(left=0.14, right=0.98, bottom=0.36, top=0.86)
+
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
@@ -961,8 +1013,9 @@ def plot_retrieval_by_dim(
     ax.set_ylabel(label)
     ax.set_ylim(0.0, 1.05)
     ax.set_xticks(sorted({r["dim"] for ds in results for r in ds["results"]}))
-    ax.legend(loc="best", ncol=2, fontsize=7)
+    _retrieval_legend_below(ax, ncol=4)
     ax.set_title(f"Retrieval {label} by Dimension")
+    fig.subplots_adjust(left=0.12, right=0.98, bottom=0.24, top=0.88)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
@@ -1011,8 +1064,9 @@ def plot_retrieval_pareto(
     ax.set_ylabel(label)
     ax.set_xscale("log", base=2)
     ax.set_ylim(0.0, 1.05)
-    ax.legend(loc="best", ncol=2, fontsize=7)
+    _retrieval_legend_below(ax, ncol=4)
     ax.set_title(f"Retrieval {label} vs. Compression")
+    fig.subplots_adjust(left=0.12, right=0.98, bottom=0.24, top=0.88)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)

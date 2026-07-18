@@ -206,7 +206,7 @@ Indexaufbau, nicht Suche auf einem fertigen Index.
 bytes_per_vector = total_index_bytes / n_vectors
 ```
 
-### Kompressionsrate
+### Kompressionsfaktor
 
 ```text
 compression_ratio = baseline_float32_bytes / compressed_bytes
@@ -214,7 +214,7 @@ compression_ratio = baseline_float32_bytes / compressed_bytes
 
 Berichtet werden:
 
-- theoretische Kompressionsrate bei idealer Bitpackung
+- theoretischer Kompressionsfaktor bei idealer Bitpackung
 - NumPy-Layout-Kompression mit echter Bitpackung
 - NumPy-Payload-Kompression als Referenz
 
@@ -352,7 +352,7 @@ Baseline-Werte.
 > **Grafik `memory_theoretical_vs_numpy.pdf`:** Vergleich zwischen
 > theoretischem und nativ gemessenem Speicherbedarf pro Repräsentation.
 
-> **Grafik `memory_compression_by_dim.pdf`:** Kompressionsrate als Funktion der
+> **Grafik `memory_compression_by_dim.pdf`:** Kompressionsfaktor als Funktion der
 > Dimension und Bittiefe.
 
 ### Laufzeit-Grafiken
@@ -385,7 +385,7 @@ Baseline-Werte.
 Theoretische Bitzahlen sind nur Untergrenzen. Entscheidend für praktische
 Aussagen ist der NumPy-Layout-Speicher mit tatsächlicher Bitpackung.
 
-Gegenmaßnahme: theoretische, native und NumPy-Kompressionsrate getrennt
+Gegenmaßnahme: theoretische, native und NumPy-Kompressionsfaktoren getrennt
 berichten.
 
 ### Theoretische Geschwindigkeit ist keine echte Laufzeit
@@ -431,7 +431,7 @@ Aufgaben:
 - theoretische Speicherwerte für Float32, 4-Bit, 2-Bit und 1-Bit berechnen
 - theoretische Operationen pro Distanzvergleich abschätzen
 - theoretische Skalierung für Pairwise-Distanzen und Top-k-Suche beschreiben
-- erwartete Kompressionsraten berechnen
+- erwartete Kompressionsfaktoren berechnen
 
 Dieser Schritt benötigt keinen Compiler und liefert die Erwartungswerte für die
 praktische Messung.

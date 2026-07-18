@@ -1,4 +1,7 @@
-﻿"""BitEmb - Quantization effects on embedding retrieval quality."""
+"""BitEmb - Quantization effects on embedding retrieval quality."""
+# ruff: noqa: I001
+
+from bitemb import _compat as _compat  # noqa: F401
 
 from bitemb.analysis import (
     compute_dimension_stats,
