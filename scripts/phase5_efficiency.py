@@ -147,7 +147,7 @@ def _numpy_runtime_records(
     layouts = build_numpy_layouts(embeddings)
 
     runtime = []
-    
+
     # ------------------ PAIRWISE DISTANCE ------------------
     # float32
     runtime.append(measure_runtime(
@@ -177,13 +177,13 @@ def _numpy_runtime_records(
         throughput_units=pairs.shape[0],
         notes="NumPy einsum over sampled pairs (float16)",
     ))
-    
+
     # Multi-bit Naive
     for b in (8, 4, 2):
         layout_name = f"naive_{b}bit"
         layout_obj = getattr(layouts, f"naive_{b}bit")
         runtime.append(measure_runtime(
-            lambda l=layout_obj: turboquant_distance_pairs_numpy(l, pairs),
+            lambda lo=layout_obj: turboquant_distance_pairs_numpy(lo, pairs),
             representation=layout_name,
             operation="pairwise_distance",
             implementation="numpy_vectorized",
@@ -195,13 +195,13 @@ def _numpy_runtime_records(
             throughput_units=pairs.shape[0],
             notes=f"NumPy vectorized distance over packed {b}-bit layout (naive)",
         ))
-        
+
     # Multi-bit TurboQuant
     for b in (8, 4, 2):
         layout_name = f"tq_{b}bit"
         layout_obj = getattr(layouts, f"tq_{b}bit")
         runtime.append(measure_runtime(
-            lambda l=layout_obj: turboquant_distance_pairs_numpy(l, pairs),
+            lambda lo=layout_obj: turboquant_distance_pairs_numpy(lo, pairs),
             representation=layout_name,
             operation="pairwise_distance",
             implementation="numpy_vectorized",
@@ -213,7 +213,7 @@ def _numpy_runtime_records(
             throughput_units=pairs.shape[0],
             notes=f"NumPy vectorized distance over packed {b}-bit layout (rotated)",
         ))
-        
+
     # 1-bit Naive
     runtime.append(measure_runtime(
         lambda: hamming_distance_pairs_numpy(layouts.naive_1bit, pairs),
@@ -272,13 +272,13 @@ def _numpy_runtime_records(
         throughput_units=n,
         notes="NumPy matrix multiplication plus argpartition (float16)",
     ))
-    
+
     # Multi-bit Naive
     for b in (8, 4, 2):
         layout_name = f"naive_{b}bit"
         layout_obj = getattr(layouts, f"naive_{b}bit")
         runtime.append(measure_runtime(
-            lambda l=layout_obj: knn_turboquant_numpy(l, k),
+            lambda lo=layout_obj: knn_turboquant_numpy(lo, k),
             representation=layout_name,
             operation="top_k",
             implementation="numpy_vectorized",
@@ -290,13 +290,13 @@ def _numpy_runtime_records(
             throughput_units=n,
             notes=f"Batched NumPy top-k over dequantized {b}-bit values (naive)",
         ))
-        
+
     # Multi-bit TurboQuant
     for b in (8, 4, 2):
         layout_name = f"tq_{b}bit"
         layout_obj = getattr(layouts, f"tq_{b}bit")
         runtime.append(measure_runtime(
-            lambda l=layout_obj: knn_turboquant_numpy(l, k),
+            lambda lo=layout_obj: knn_turboquant_numpy(lo, k),
             representation=layout_name,
             operation="top_k",
             implementation="numpy_vectorized",
@@ -308,7 +308,7 @@ def _numpy_runtime_records(
             throughput_units=n,
             notes=f"Batched NumPy top-k over dequantized {b}-bit values (rotated)",
         ))
-        
+
     # 1-bit Naive
     runtime.append(measure_runtime(
         lambda: knn_hamming_numpy(layouts.naive_1bit, k),

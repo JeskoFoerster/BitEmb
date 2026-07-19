@@ -123,12 +123,12 @@ def quantize_encode(
     """Encode float embeddings using naive or rotated uniform scalar quantization."""
     if bits not in (2, 4, 8):
         raise ValueError("Quantization supports 2-bit, 4-bit, or 8-bit")
-        
+
     if is_rotated:
         processed = _rotate(embeddings)
     else:
         processed = embeddings.astype(np.float64)
-        
+
     col_min = processed.min(axis=0)
     col_max = processed.max(axis=0)
     codes = _uniform_scalar_quantize(processed, bits)
@@ -148,7 +148,7 @@ def quantize_distance(
         query_processed = _rotate(query_embeddings)
     else:
         query_processed = query_embeddings.astype(np.float64)
-        
+
     corpus_approx = index.dequantize()
     q_sq = (query_processed**2).sum(axis=1, keepdims=True)
     c_sq = (corpus_approx**2).sum(axis=1)
