@@ -16,15 +16,28 @@ jeweiligen Testsets.
 
 ## Retrieval-Protokoll
 
-Für jede Query wird eine exakte Brute-Force-Suche in allen vier
+Für jede Query wird eine exakte Brute-Force-Suche in allen zehn
 Repräsentationsräumen ausgeführt:
 
 - **Float32:** Ranking nach Cosine-Similarity. Da die Embeddings normalisiert
   sind, entspricht das dem Skalarprodukt.
-- **TurboQuant 4-Bit:** Ranking nach asymmetrischer L2-Distanz zwischen exakt
-  rotierten Query-Vektoren und dequantisierten Korpusvektoren.
-- **TurboQuant 2-Bit:** analog zu 4-Bit, aber mit 2-Bit-Codes.
-- **Binär 1-Bit:** Ranking nach Hamming-Distanz auf gepackten Sign-Bits.
+- **Float16:** Ranking nach Cosine-Similarity auf float16-gecasteten Vektoren.
+- **Naive 8-Bit:** Ranking nach asymmetrischer L2-Distanz mit naiver
+  (unrotierter) 8-Bit-Quantisierung.
+- **TurboQuant 8-Bit:** Ranking nach asymmetrischer L2-Distanz mit rotierter
+  8-Bit-Quantisierung.
+- **Naive 4-Bit:** Ranking nach asymmetrischer L2-Distanz mit naiver
+  4-Bit-Quantisierung.
+- **TurboQuant 4-Bit:** Ranking nach asymmetrischer L2-Distanz mit rotierter
+  4-Bit-Quantisierung.
+- **Naive 2-Bit:** Ranking nach asymmetrischer L2-Distanz mit naiver
+  2-Bit-Quantisierung.
+- **TurboQuant 2-Bit:** Ranking nach asymmetrischer L2-Distanz mit rotierter
+  2-Bit-Quantisierung.
+- **Naive 1-Bit:** Ranking nach Hamming-Distanz auf gepackten Sign-Bits
+  (unrotiert).
+- **TurboQuant 1-Bit:** Ranking nach Hamming-Distanz auf gepackten Sign-Bits
+  (rotiert).
 
 Approximative Indizes wie HNSW werden bewusst nicht verwendet. Das Experiment
 isoliert den Quantisierungseffekt. Eine approximative Suche würde eigene
@@ -41,8 +54,9 @@ Indizes in realen Systemen praktisch unvermeidbar.
 
 Phase 4 nutzt dieselbe Matrix wie die vorherigen Phasen:
 
-- **Repräsentationen:** Float32, TurboQuant 4-Bit, TurboQuant 2-Bit, 1-Bit
-  binär
+- **Repräsentationen:** Float32, Float16, Naive 8-Bit, TurboQuant 8-Bit,
+  Naive 4-Bit, TurboQuant 4-Bit, Naive 2-Bit, TurboQuant 2-Bit, Naive 1-Bit,
+  TurboQuant 1-Bit
 - **Dimensionen:** 64, 128, 256, 384, 768
 - **Datasets:** SciFact, FiQA, TREC-COVID
 
@@ -91,21 +105,14 @@ Retrieval-Metriken schwanken stark zwischen Queries. Deshalb wird nicht nur der
 Mittelwert verglichen. Für jede Metrik und jede PCA-Dimension wird ein
 paarweiser Wilcoxon-Signed-Rank-Test auf den per-Query-Metriken ausgeführt.
 
-Verglichen werden alle sechs Paare der vier Repräsentationen:
-
-- Float32 vs. 4-Bit
-- Float32 vs. 2-Bit
-- Float32 vs. 1-Bit
-- 4-Bit vs. 2-Bit
-- 4-Bit vs. 1-Bit
-- 2-Bit vs. 1-Bit
+Verglichen werden alle 45 Paare der zehn Repräsentationen (C(10,2) = 45).
 
 Wilcoxon wird statt eines gepaarten t-Tests verwendet, weil Retrieval-Metriken
 typischerweise nicht normalverteilt sind. Das Signifikanzniveau ist:
 
 ```
 alpha = 0.05
-alpha_korr = 0.05 / 6 = 0.008333...
+alpha_korr = 0.05 / 45 = 0.001111...
 ```
 
 Ein Vergleich wird nur als signifikant markiert, wenn `p_value < alpha_korr`.

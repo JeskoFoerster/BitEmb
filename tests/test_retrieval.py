@@ -76,7 +76,7 @@ class TestComputeRetrievalEvaluation:
             corpus, queries, qrels, dim=24, batch_size=2,
         )
 
-        assert len(results) == 4
+        assert len(results) == 10
         assert [r.representation for r in results] == list(REPRESENTATIONS)
         assert all(isinstance(r, RetrievalResult) for r in results)
         assert set(per_query) == set(REPRESENTATIONS)
@@ -115,7 +115,7 @@ class TestComputeRetrievalEvaluation:
             corpus, queries, qrels, dim=8, pca_reducer=pca, batch_size=2,
         )
 
-        assert len(results) == 4
+        assert len(results) == 10
         assert all(r.dim == 8 for r in results)
         assert per_query["float32"]["ndcg_at_10"].shape == (4,)
 
@@ -134,7 +134,7 @@ class TestSignificance:
             for rep in REPRESENTATIONS
         }
         results = compute_significance_tests(per_query, dim=24)
-        assert len(results) == 24  # 4 metrics * 6 pairwise comparisons
+        assert len(results) == 180  # 4 metrics * 45 pairwise comparisons
         assert all(r.p_value == 1.0 for r in results)
         assert all(not r.significant for r in results)
 
@@ -143,7 +143,7 @@ class TestSignificance:
             rep: {metric: np.linspace(0.1, 0.9, 8) for metric in RETRIEVAL_METRICS}
             for rep in REPRESENTATIONS
         }
-        per_query["1bit"] = {
+        per_query["naive_1bit"] = {
             metric: np.zeros(8, dtype=np.float64) for metric in RETRIEVAL_METRICS
         }
 
@@ -152,7 +152,7 @@ class TestSignificance:
             r for r in results
             if r.metric == "mrr"
             and r.representation_a == "float32"
-            and r.representation_b == "1bit"
+            and r.representation_b == "naive_1bit"
         )
         assert mrr_float_vs_binary.p_value < 0.05
 
