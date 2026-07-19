@@ -1,4 +1,4 @@
-﻿"""Phase 5 efficiency analysis helpers.
+"""Phase 5 efficiency analysis helpers.
 
 This module separates theoretical efficiency estimates from practical NumPy
 layouts. Runtime measurements use vectorized NumPy operations so the project
@@ -14,9 +14,20 @@ from typing import Any, Callable, Literal, Sequence, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from bitemb.quantization import TurboQuantIndex, binarize, turboquant_encode
+from bitemb.quantization import TurboQuantIndex, binarize, binarize_rotated, quantize_encode
 
-Representation = Literal["float32", "4bit", "2bit", "1bit"]
+Representation = Literal[
+    "float32",
+    "16bit",
+    "naive_8bit",
+    "tq_8bit",
+    "naive_4bit",
+    "tq_4bit",
+    "naive_2bit",
+    "tq_2bit",
+    "naive_1bit",
+    "tq_1bit",
+]
 Operation = Literal["memory", "pairwise_distance", "top_k", "index_build"]
 Implementation = Literal[
     "theoretical",
@@ -24,7 +35,18 @@ Implementation = Literal[
     "dequantized_baseline",
 ]
 
-REPRESENTATIONS: tuple[Representation, ...] = ("float32", "4bit", "2bit", "1bit")
+REPRESENTATIONS: tuple[Representation, ...] = (
+    "float32",
+    "16bit",
+    "naive_8bit",
+    "tq_8bit",
+    "naive_4bit",
+    "tq_4bit",
+    "naive_2bit",
+    "tq_2bit",
+    "naive_1bit",
+    "tq_1bit",
+)
 
 
 @dataclass(frozen=True)
@@ -99,7 +121,7 @@ class PackedTurboQuantIndex:
     """TurboQuant codes stored in an actual packed byte layout."""
 
     packed_codes: NDArray[np.uint8]
-    bits: Literal[2, 4]
+    bits: Literal[2, 4, 8]
     dim: int
     n: int
     col_min: NDArray[np.float64]
@@ -119,19 +141,29 @@ class NumpyLayouts:
     """Concrete NumPy layouts used by Phase 5 memory/runtime analysis."""
 
     float32: NDArray[np.float32]
-    binary1: NDArray[np.uint8]
-    tq2: PackedTurboQuantIndex
-    tq4: PackedTurboQuantIndex
+    float16: NDArray[np.float16]
+    naive_1bit: NDArray[np.uint8]
+    tq_1bit: NDArray[np.uint8]
+    naive_2bit: PackedTurboQuantIndex
+    tq_2bit: PackedTurboQuantIndex
+    naive_4bit: PackedTurboQuantIndex
+    tq_4bit: PackedTurboQuantIndex
+    naive_8bit: PackedTurboQuantIndex
+    tq_8bit: PackedTurboQuantIndex
 
 
 def bit_depth_for_representation(representation: Representation) -> int:
     if representation == "float32":
         return 32
-    if representation == "4bit":
+    if representation == "16bit":
+        return 16
+    if representation in ("naive_8bit", "tq_8bit"):
+        return 8
+    if representation in ("naive_4bit", "tq_4bit"):
         return 4
-    if representation == "2bit":
+    if representation in ("naive_2bit", "tq_2bit"):
         return 2
-    if representation == "1bit":
+    if representation in ("naive_1bit", "tq_1bit"):
         return 1
     raise ValueError(f"Unknown representation: {representation}")
 
@@ -176,7 +208,29 @@ def theoretical_work(dim: int, representation: Representation) -> TheoreticalWor
             popcount_ops_per_distance=0,
             notes="dot product: dim multiplies plus dim adds",
         )
-    if representation == "1bit":
+    if representation == "16bit":
+        return TheoreticalWork(
+            representation=representation,
+            dim=dim,
+            packed_bytes_per_vector=dim * 2,
+            float_ops_per_distance=2 * dim,
+            integer_ops_per_distance=0,
+            unpack_ops_per_distance=0,
+            popcount_ops_per_distance=0,
+            notes="dot product: dim float16 multiplies plus dim float16 adds",
+        )
+    if representation in ("naive_8bit", "tq_8bit"):
+        return TheoreticalWork(
+            representation=representation,
+            dim=dim,
+            packed_bytes_per_vector=dim,
+            float_ops_per_distance=dim,
+            integer_ops_per_distance=dim,
+            unpack_ops_per_distance=0,
+            popcount_ops_per_distance=0,
+            notes="quantized distance directly on uint8 codes, no unpacking required",
+        )
+    if representation in ("naive_1bit", "tq_1bit"):
         words = (dim + 63) // 64
         return TheoreticalWork(
             representation=representation,
@@ -188,7 +242,7 @@ def theoretical_work(dim: int, representation: Representation) -> TheoreticalWor
             popcount_ops_per_distance=words,
             notes="packed XOR plus popcount per 64-bit word",
         )
-    if representation == "2bit":
+    if representation in ("naive_2bit", "tq_2bit"):
         return TheoreticalWork(
             representation=representation,
             dim=dim,
@@ -199,7 +253,7 @@ def theoretical_work(dim: int, representation: Representation) -> TheoreticalWor
             popcount_ops_per_distance=0,
             notes="packed code unpack plus per-dimension quantized distance",
         )
-    if representation == "4bit":
+    if representation in ("naive_4bit", "tq_4bit"):
         return TheoreticalWork(
             representation=representation,
             dim=dim,
@@ -213,15 +267,18 @@ def theoretical_work(dim: int, representation: Representation) -> TheoreticalWor
     raise ValueError(f"Unknown representation: {representation}")
 
 
-def pack_codes(codes: NDArray[np.uint8], bits: Literal[2, 4]) -> NDArray[np.uint8]:
-    """Pack uint8 quantization codes into 2-bit or 4-bit byte layout."""
-    if bits not in (2, 4):
-        raise ValueError("Only 2-bit and 4-bit packing are supported")
+def pack_codes(codes: NDArray[np.uint8], bits: Literal[2, 4, 8]) -> NDArray[np.uint8]:
+    """Pack uint8 quantization codes into 2-bit, 4-bit or 8-bit byte layout."""
+    if bits not in (2, 4, 8):
+        raise ValueError("Only 2-bit, 4-bit and 8-bit packing are supported")
     if codes.ndim != 2:
         raise ValueError("codes must have shape (n, dim)")
     max_code = (1 << bits) - 1
     if codes.size and int(codes.max()) > max_code:
         raise ValueError(f"codes contain values above {max_code}")
+
+    if bits == 8:
+        return codes.copy()
 
     n, dim = codes.shape
     per_byte = 8 // bits
@@ -236,12 +293,15 @@ def pack_codes(codes: NDArray[np.uint8], bits: Literal[2, 4]) -> NDArray[np.uint
     return packed
 
 
-def unpack_codes(packed: NDArray[np.uint8], bits: Literal[2, 4], dim: int) -> NDArray[np.uint8]:
-    """Unpack 2-bit or 4-bit codes. Used for tests and validation only."""
-    if bits not in (2, 4):
-        raise ValueError("Only 2-bit and 4-bit unpacking are supported")
+def unpack_codes(packed: NDArray[np.uint8], bits: Literal[2, 4, 8], dim: int) -> NDArray[np.uint8]:
+    """Unpack 2-bit, 4-bit or 8-bit codes. Used for tests and validation only."""
+    if bits not in (2, 4, 8):
+        raise ValueError("Only 2-bit, 4-bit and 8-bit unpacking are supported")
     if packed.ndim != 2:
         raise ValueError("packed must have shape (n, packed_dim)")
+    if bits == 8:
+        return packed.copy()
+
     per_byte = 8 // bits
     mask = (1 << bits) - 1
     out = np.empty((packed.shape[0], dim), dtype=np.uint8)
@@ -253,9 +313,9 @@ def unpack_codes(packed: NDArray[np.uint8], bits: Literal[2, 4], dim: int) -> ND
 
 def pack_turboquant_index(index: TurboQuantIndex) -> PackedTurboQuantIndex:
     """Convert the current uint8 TurboQuant codes into a packed byte layout."""
-    if index.bits not in (2, 4):
-        raise ValueError("Packed TurboQuant supports only 2-bit and 4-bit indexes")
-    bits: Literal[2, 4] = 2 if index.bits == 2 else 4
+    if index.bits not in (2, 4, 8):
+        raise ValueError("Packed TurboQuant supports only 2-bit, 4-bit, and 8-bit indexes")
+    bits: Literal[2, 4, 8] = 2 if index.bits == 2 else (4 if index.bits == 4 else 8)
     packed = pack_codes(index.codes, bits=bits)
     return PackedTurboQuantIndex(
         packed_codes=packed,
@@ -270,13 +330,17 @@ def pack_turboquant_index(index: TurboQuantIndex) -> PackedTurboQuantIndex:
 def build_numpy_layouts(embeddings: NDArray[np.float32]) -> NumpyLayouts:
     """Build all practical layouts used by Phase 5 for one embedding matrix."""
     embs = np.ascontiguousarray(embeddings, dtype=np.float32)
-    tq2 = pack_turboquant_index(turboquant_encode(embs, bits=2))
-    tq4 = pack_turboquant_index(turboquant_encode(embs, bits=4))
     return NumpyLayouts(
         float32=embs,
-        binary1=np.ascontiguousarray(binarize(embs), dtype=np.uint8),
-        tq2=tq2,
-        tq4=tq4,
+        float16=np.ascontiguousarray(embeddings, dtype=np.float16),
+        naive_1bit=np.ascontiguousarray(binarize(embs), dtype=np.uint8),
+        tq_1bit=np.ascontiguousarray(binarize_rotated(embs), dtype=np.uint8),
+        naive_2bit=pack_turboquant_index(quantize_encode(embs, bits=2, is_rotated=False)),
+        tq_2bit=pack_turboquant_index(quantize_encode(embs, bits=2, is_rotated=True)),
+        naive_4bit=pack_turboquant_index(quantize_encode(embs, bits=4, is_rotated=False)),
+        tq_4bit=pack_turboquant_index(quantize_encode(embs, bits=4, is_rotated=True)),
+        naive_8bit=pack_turboquant_index(quantize_encode(embs, bits=8, is_rotated=False)),
+        tq_8bit=pack_turboquant_index(quantize_encode(embs, bits=8, is_rotated=True)),
     )
 
 
@@ -307,28 +371,55 @@ def practical_memory_for_layouts(layouts: NumpyLayouts) -> list[PracticalMemory]
 
     return [
         row("float32", int(layouts.float32.nbytes), 0, "contiguous NumPy float32 matrix"),
-        row("1bit", int(layouts.binary1.nbytes), 0, "NumPy packbits-compatible binary codes"),
+        row("16bit", int(layouts.float16.nbytes), 0, "contiguous NumPy float16 matrix"),
+        row("naive_1bit", int(layouts.naive_1bit.nbytes), 0, "NumPy packbits-compatible binary codes (naive)"),
+        row("tq_1bit", int(layouts.tq_1bit.nbytes), 0, "NumPy packbits-compatible binary codes (rotated)"),
         row(
-            "2bit",
-            int(layouts.tq2.packed_codes.nbytes),
-            layouts.tq2.metadata_bytes,
-            "packed 2-bit codes plus min/max metadata",
+            "naive_2bit",
+            int(layouts.naive_2bit.packed_codes.nbytes),
+            layouts.naive_2bit.metadata_bytes,
+            "packed 2-bit codes plus min/max metadata (naive)",
         ),
         row(
-            "4bit",
-            int(layouts.tq4.packed_codes.nbytes),
-            layouts.tq4.metadata_bytes,
-            "packed 4-bit codes plus min/max metadata",
+            "tq_2bit",
+            int(layouts.tq_2bit.packed_codes.nbytes),
+            layouts.tq_2bit.metadata_bytes,
+            "packed 2-bit codes plus min/max metadata (rotated)",
+        ),
+        row(
+            "naive_4bit",
+            int(layouts.naive_4bit.packed_codes.nbytes),
+            layouts.naive_4bit.metadata_bytes,
+            "packed 4-bit codes plus min/max metadata (naive)",
+        ),
+        row(
+            "tq_4bit",
+            int(layouts.tq_4bit.packed_codes.nbytes),
+            layouts.tq_4bit.metadata_bytes,
+            "packed 4-bit codes plus min/max metadata (rotated)",
+        ),
+        row(
+            "naive_8bit",
+            int(layouts.naive_8bit.packed_codes.nbytes),
+            layouts.naive_8bit.metadata_bytes,
+            "packed 8-bit codes plus min/max metadata (naive)",
+        ),
+        row(
+            "tq_8bit",
+            int(layouts.tq_8bit.packed_codes.nbytes),
+            layouts.tq_8bit.metadata_bytes,
+            "packed 8-bit codes plus min/max metadata (rotated)",
         ),
     ]
 
 
 
 def cosine_distance_pairs_numpy(
-    embeddings: NDArray[np.float32], pairs: NDArray[np.int64]
+    embeddings: NDArray[Any], pairs: NDArray[np.int64]
 ) -> NDArray[np.float64]:
     """Vectorized cosine distance for sampled pairs."""
-    embs = np.ascontiguousarray(embeddings, dtype=np.float32)
+    dtype = embeddings.dtype
+    embs = np.ascontiguousarray(embeddings, dtype=dtype)
     p = np.ascontiguousarray(pairs, dtype=np.int64)
     dots = np.einsum("ij,ij->i", embs[p[:, 0]], embs[p[:, 1]], optimize=True)
     return (1.0 - dots).astype(np.float64, copy=False)
@@ -366,10 +457,11 @@ def turboquant_distance_pairs_numpy(
     return out
 
 
-def knn_cosine_numpy(embeddings: NDArray[np.float32], k: int) -> NDArray[np.int64]:
+def knn_cosine_numpy(embeddings: NDArray[Any], k: int) -> NDArray[np.int64]:
     """Brute-force top-k cosine search using NumPy matrix multiplication."""
-    embs = np.ascontiguousarray(embeddings, dtype=np.float32)
-    distances = 1.0 - (embs @ embs.T)
+    dtype = embeddings.dtype
+    embs = np.ascontiguousarray(embeddings, dtype=dtype)
+    distances = (1.0 - (embs @ embs.T)).astype(np.float64)
     np.fill_diagonal(distances, np.inf)
     idx = np.argpartition(distances, kth=k - 1, axis=1)[:, :k]
     row = np.arange(embs.shape[0])[:, None]

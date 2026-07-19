@@ -21,15 +21,27 @@ from scipy.stats import wilcoxon
 from bitemb.quantization import (
     PCAReducer,
     binarize,
+    binarize_rotated,
     hamming_distance,
-    turboquant_distance,
-    turboquant_encode,
+    quantize_distance,
+    quantize_encode,
 )
 
 RETRIEVAL_METRICS = ("ndcg_at_10", "recall_at_10", "recall_at_100", "mrr")
-REPRESENTATIONS = ("float32", "4bit", "2bit", "1bit")
+REPRESENTATIONS = (
+    "float32",
+    "16bit",
+    "naive_8bit",
+    "tq_8bit",
+    "naive_4bit",
+    "tq_4bit",
+    "naive_2bit",
+    "tq_2bit",
+    "naive_1bit",
+    "tq_1bit",
+)
 ALPHA = 0.05
-N_PAIRWISE_COMPARISONS = 6
+N_PAIRWISE_COMPARISONS = 45
 BONFERRONI_ALPHA = ALPHA / N_PAIRWISE_COMPARISONS
 
 
@@ -199,22 +211,51 @@ def _evaluate_float(
     return per_query
 
 
-def _evaluate_turboquant(
+def _evaluate_float16(
+    corpus_embs: NDArray[np.float32],
+    query_embs: NDArray[np.float32],
+    qrels: dict[int, dict[int, int]],
+    *,
+    top_k: int,
+    batch_size: int,
+) -> dict[str, NDArray[np.float64]]:
+    """Evaluate exact float16 cosine-similarity retrieval."""
+    per_query = _empty_per_query(query_embs.shape[0])
+    c_f16 = corpus_embs.astype(np.float16)
+    q_f16 = query_embs.astype(np.float16)
+
+    for start in range(0, q_f16.shape[0], batch_size):
+        end = min(start + batch_size, q_f16.shape[0])
+        sims = (q_f16[start:end] @ c_f16.T).astype(np.float64)
+        for local_idx, scores in enumerate(sims):
+            q_idx = start + local_idx
+            rels = qrels.get(q_idx, {})
+            ranked = _topk_desc(scores, top_k)
+            rr = _reciprocal_rank_desc(scores, rels)
+            metrics = _metrics_for_query(ranked, rr, rels)
+            for metric, value in metrics.items():
+                per_query[metric][q_idx] = value
+
+    return per_query
+
+
+def _evaluate_quantized(
     corpus_embs: NDArray[np.float32],
     query_embs: NDArray[np.float32],
     qrels: dict[int, dict[int, int]],
     *,
     bits: int,
+    is_rotated: bool,
     top_k: int,
     batch_size: int,
 ) -> dict[str, NDArray[np.float64]]:
-    """Evaluate exact TurboQuant retrieval with asymmetric query distances."""
+    """Evaluate exact quantized retrieval (naive or rotated) with asymmetric query distances."""
     per_query = _empty_per_query(query_embs.shape[0])
-    index = turboquant_encode(corpus_embs, bits=bits)
+    index = quantize_encode(corpus_embs, bits=bits, is_rotated=is_rotated)
 
     for start in range(0, query_embs.shape[0], batch_size):
         end = min(start + batch_size, query_embs.shape[0])
-        dists = turboquant_distance(index, query_embs[start:end])
+        dists = quantize_distance(index, query_embs[start:end])
         for local_idx, distances in enumerate(dists):
             q_idx = start + local_idx
             rels = qrels.get(q_idx, {})
@@ -232,12 +273,17 @@ def _evaluate_binary(
     query_embs: NDArray[np.float32],
     qrels: dict[int, dict[int, int]],
     *,
+    is_rotated: bool,
     top_k: int,
 ) -> dict[str, NDArray[np.float64]]:
-    """Evaluate exact binary retrieval with Hamming distance."""
+    """Evaluate exact binary retrieval with Hamming distance (naive or rotated)."""
     per_query = _empty_per_query(query_embs.shape[0])
-    corpus_packed = binarize(corpus_embs)
-    query_packed = binarize(query_embs)
+    if is_rotated:
+        corpus_packed = binarize_rotated(corpus_embs)
+        query_packed = binarize_rotated(query_embs)
+    else:
+        corpus_packed = binarize(corpus_embs)
+        query_packed = binarize(query_embs)
 
     for q_idx in range(query_packed.shape[0]):
         rels = qrels.get(q_idx, {})
@@ -291,13 +337,27 @@ def compute_retrieval_evaluation(
 
     per_query = {
         "float32": _evaluate_float(corpus, queries, qrels, top_k=top_k, batch_size=batch_size),
-        "4bit": _evaluate_turboquant(
-            corpus, queries, qrels, bits=4, top_k=top_k, batch_size=batch_size,
+        "16bit": _evaluate_float16(corpus, queries, qrels, top_k=top_k, batch_size=batch_size),
+        "naive_8bit": _evaluate_quantized(
+            corpus, queries, qrels, bits=8, is_rotated=False, top_k=top_k, batch_size=batch_size,
         ),
-        "2bit": _evaluate_turboquant(
-            corpus, queries, qrels, bits=2, top_k=top_k, batch_size=batch_size,
+        "tq_8bit": _evaluate_quantized(
+            corpus, queries, qrels, bits=8, is_rotated=True, top_k=top_k, batch_size=batch_size,
         ),
-        "1bit": _evaluate_binary(corpus, queries, qrels, top_k=top_k),
+        "naive_4bit": _evaluate_quantized(
+            corpus, queries, qrels, bits=4, is_rotated=False, top_k=top_k, batch_size=batch_size,
+        ),
+        "tq_4bit": _evaluate_quantized(
+            corpus, queries, qrels, bits=4, is_rotated=True, top_k=top_k, batch_size=batch_size,
+        ),
+        "naive_2bit": _evaluate_quantized(
+            corpus, queries, qrels, bits=2, is_rotated=False, top_k=top_k, batch_size=batch_size,
+        ),
+        "tq_2bit": _evaluate_quantized(
+            corpus, queries, qrels, bits=2, is_rotated=True, top_k=top_k, batch_size=batch_size,
+        ),
+        "naive_1bit": _evaluate_binary(corpus, queries, qrels, is_rotated=False, top_k=top_k),
+        "tq_1bit": _evaluate_binary(corpus, queries, qrels, is_rotated=True, top_k=top_k),
     }
 
     results = [

@@ -146,6 +146,8 @@ class RawDistances:
 
     dim: int
     d_float: NDArray[np.float64]  # (n_pairs,) normalized [0,1]
+    d_16bit: NDArray[np.float64]
+    d_8bit: NDArray[np.float64]
     d_4bit: NDArray[np.float64]
     d_2bit: NDArray[np.float64]
     d_1bit: NDArray[np.float64]
@@ -170,6 +172,8 @@ def compute_raw_distances(
 
     pairs = _sample_pairs(embs.shape[0], n_pairs, seed)
     d_float = _cosine_distance_pairs(embs, pairs)
+    d_16bit = _cosine_distance_pairs(embs.astype(np.float16), pairs)
+    d_8bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=8), pairs)
     d_4bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=4), pairs)
     d_2bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=2), pairs)
     d_1bit = _hamming_distance_pairs(binarize(embs), pairs)
@@ -177,6 +181,8 @@ def compute_raw_distances(
     return RawDistances(
         dim=dim,
         d_float=_normalize_to_unit(d_float),
+        d_16bit=_normalize_to_unit(d_16bit),
+        d_8bit=_normalize_to_unit(d_8bit),
         d_4bit=_normalize_to_unit(d_4bit),
         d_2bit=_normalize_to_unit(d_2bit),
         d_1bit=_normalize_to_unit(d_1bit),
@@ -200,7 +206,7 @@ def compute_distance_distortion(
         seed: Random seed for pair sampling.
 
     Returns:
-        List of 3 DistortionResult (one per bit depth: 4, 2, 1).
+        List of 5 DistortionResult (one per bit depth: 16, 8, 4, 2, 1).
     """
     # Apply PCA reduction if needed
     if pca_reducer is not None and dim < 768:
@@ -215,6 +221,23 @@ def compute_distance_distortion(
     d_float = _cosine_distance_pairs(embs, pairs)
 
     results = []
+
+    # Float16 (16-bit)
+    d_16 = _cosine_distance_pairs(embs.astype(np.float16), pairs)
+    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_16)
+    results.append(DistortionResult(
+        bit_depth=16, dim=dim, pearson_r=pr, pearson_p=pp,
+        spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
+    ))
+
+    # TurboQuant 8-bit
+    tq8 = turboquant_encode(embs, bits=8)
+    d_tq8 = _turboquant_distance_pairs(tq8, pairs)
+    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_tq8)
+    results.append(DistortionResult(
+        bit_depth=8, dim=dim, pearson_r=pr, pearson_p=pp,
+        spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
+    ))
 
     # TurboQuant 4-bit
     tq4 = turboquant_encode(embs, bits=4)

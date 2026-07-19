@@ -221,9 +221,20 @@ def generate_phase1_table(results: list[dict], output_path: Path) -> Path:
 
 # ---------- Phase 2: Distance Distortion ----------
 
-# Colors per bit depth (consistent across plots)
-_BIT_COLORS = {1: "#d62728", 2: "#ff7f0e", 4: "#2ca02c"}
-_BIT_LABELS = {1: "Binary (1-bit)", 2: "TurboQuant 2-bit", 4: "TurboQuant 4-bit"}
+_BIT_COLORS = {
+    16: "#aec7e8",
+    8: "#9467bd",
+    4: "#2ca02c",
+    2: "#ff7f0e",
+    1: "#d62728",
+}
+_BIT_LABELS = {
+    16: "Float16 (16-bit)",
+    8: "TurboQuant 8-bit",
+    4: "TurboQuant 4-bit",
+    2: "TurboQuant 2-bit",
+    1: "Binary (1-bit)",
+}
 
 
 # ---------- Phase 2: Scatter Plot (Float vs. Quantized Distance) ----------
@@ -331,7 +342,7 @@ def plot_distortion_pareto(
 
     for ds_idx, ds in enumerate(results):
         name = ds["dataset"]
-        for bit_depth in [4, 2, 1]:
+        for bit_depth in [16, 8, 4, 2, 1]:
             entries = [r for r in ds["results"] if r["bit_depth"] == bit_depth]
             entries.sort(key=lambda r: r["dim"])
             bits_per_vec = [r["dim"] * bit_depth for r in entries]
@@ -380,7 +391,7 @@ def plot_distortion_heatmap(
     _apply_style()
 
     dims = sorted({r["dim"] for r in results["results"]})
-    bits = [4, 2, 1]
+    bits = [16, 8, 4, 2, 1]
 
     matrix = np.zeros((len(bits), len(dims)))
     for r in results["results"]:
@@ -388,7 +399,7 @@ def plot_distortion_heatmap(
         col = dims.index(r["dim"])
         matrix[row, col] = r[metric]
 
-    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.2))
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 3.2))
 
     # For error metrics (lower is better), invert colormap and auto-scale
     is_error_metric = metric in ("mae", "rmse")
@@ -443,7 +454,7 @@ def plot_neighborhood_heatmap(
 
     entries = [r for r in results["results"] if r["k"] == k]
     dims = sorted({r["dim"] for r in entries})
-    bits = [4, 2, 1]
+    bits = [16, 8, 4, 2, 1]
 
     matrix = np.zeros((len(bits), len(dims)))
     for r in entries:
@@ -451,7 +462,7 @@ def plot_neighborhood_heatmap(
         col = dims.index(r["dim"])
         matrix[row, col] = r[metric]
 
-    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 2.2))
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 3.2))
     im = ax.imshow(matrix, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
 
     ax.set_xticks(range(len(dims)))
@@ -502,7 +513,7 @@ def plot_neighborhood_overlap_by_k(
 
     for ds_idx, ds in enumerate(results):
         entries = [r for r in ds["results"] if r["dim"] == dim]
-        for bit_depth in [4, 2, 1]:
+        for bit_depth in [16, 8, 4, 2, 1]:
             bit_entries = sorted(
                 [r for r in entries if r["bit_depth"] == bit_depth],
                 key=lambda r: r["k"],
@@ -562,7 +573,7 @@ def plot_neighborhood_pareto(
     linestyles = ["-", "--", ":"]
 
     for ds_idx, ds in enumerate(results):
-        for bit_depth in [4, 2, 1]:
+        for bit_depth in [16, 8, 4, 2, 1]:
             entries = sorted(
                 [r for r in ds["results"] if r["bit_depth"] == bit_depth and r["k"] == k],
                 key=lambda r: r["dim"],
@@ -621,7 +632,7 @@ def plot_neighborhood_by_dim(
     linestyles = ["-", "--", ":"]
 
     for ds_idx, ds in enumerate(results):
-        for bit_depth in [4, 2, 1]:
+        for bit_depth in [16, 8, 4, 2, 1]:
             entries = sorted(
                 [r for r in ds["results"] if r["bit_depth"] == bit_depth and r["k"] == k],
                 key=lambda r: r["dim"],
@@ -655,18 +666,41 @@ def plot_neighborhood_by_dim(
 
 # ---------- Phase 5: Runtime and Memory Efficiency ----------
 
-_REP_ORDER = ["float32", "4bit", "2bit", "1bit"]
+_REP_ORDER = [
+    "float32",
+    "16bit",
+    "naive_8bit",
+    "tq_8bit",
+    "naive_4bit",
+    "tq_4bit",
+    "naive_2bit",
+    "tq_2bit",
+    "naive_1bit",
+    "tq_1bit",
+]
 _REP_COLORS = {
     "float32": "#1f77b4",
-    "4bit": "#2ca02c",
-    "2bit": "#ff7f0e",
-    "1bit": "#d62728",
+    "16bit": "#aec7e8",
+    "naive_8bit": "#c5b0d5",
+    "tq_8bit": "#9467bd",
+    "naive_4bit": "#98df8a",
+    "tq_4bit": "#2ca02c",
+    "naive_2bit": "#ffbb78",
+    "tq_2bit": "#ff7f0e",
+    "naive_1bit": "#ff9896",
+    "tq_1bit": "#d62728",
 }
 _REP_LABELS = {
     "float32": "Float32",
-    "4bit": "4-bit",
-    "2bit": "2-bit",
-    "1bit": "1-bit",
+    "16bit": "Naive 16-bit",
+    "naive_8bit": "Naive 8-bit",
+    "tq_8bit": "TurboQuant 8-bit",
+    "naive_4bit": "Naive 4-bit",
+    "tq_4bit": "TurboQuant 4-bit",
+    "naive_2bit": "Naive 2-bit",
+    "tq_2bit": "TurboQuant 2-bit",
+    "naive_1bit": "Naive 1-bit",
+    "tq_1bit": "TurboQuant 1-bit",
 }
 
 
@@ -700,6 +734,20 @@ def _format_factor(value: float, _pos: float) -> str:
     if value >= 10 or float(value).is_integer():
         return f"{value:.0f}x"
     return f"{value:.1f}x"
+
+
+_SHORT_REP_LABELS = {
+    "float32": "Float32",
+    "16bit": "Naive 16b",
+    "naive_8bit": "Naive 8b",
+    "tq_8bit": "TQ 8b",
+    "naive_4bit": "Naive 4b",
+    "tq_4bit": "TQ 4b",
+    "naive_2bit": "Naive 2b",
+    "tq_2bit": "TQ 2b",
+    "naive_1bit": "Naive 1b",
+    "tq_1bit": "TQ 1b",
+}
 
 
 def plot_phase5_memory_theoretical_vs_numpy(
@@ -740,7 +788,10 @@ def plot_phase5_memory_theoretical_vs_numpy(
             color="#3182bd",
         )
         ax.set_xticks(x)
-        ax.set_xticklabels([_REP_LABELS[r] for r in _REP_ORDER])
+        ax.set_xticklabels([
+            ("\n" + _SHORT_REP_LABELS[r] if i % 2 == 1 else _SHORT_REP_LABELS[r])
+            for i, r in enumerate(_REP_ORDER)
+        ], fontsize=7)
         ax.set_ylabel("Bytes / vector")
         ax.set_title(_phase5_entry_label(entry))
         ax.set_yscale("log", base=2)
@@ -752,9 +803,11 @@ def plot_phase5_memory_theoretical_vs_numpy(
         ncol=2,
         fontsize=7,
         frameon=False,
-        bbox_to_anchor=(0.5, 0.01),
+        bbox_to_anchor=(0.5, 0.045),
     )
-    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    # Single note at the very bottom center
+    fig.text(0.5, 0.01, "TQ: TurboQuant", ha="center", fontsize=6.5, color="dimgray", alpha=0.8)
+    fig.tight_layout(rect=(0, 0.1, 1, 1))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
     plt.close(fig)
@@ -889,18 +942,41 @@ def plot_phase5_runtime_by_dim(
 
 # ---------- Phase 4: Retrieval Evaluation ----------
 
-_RETRIEVAL_REP_ORDER = ["float32", "4bit", "2bit", "1bit"]
+_RETRIEVAL_REP_ORDER = [
+    "float32",
+    "16bit",
+    "naive_8bit",
+    "tq_8bit",
+    "naive_4bit",
+    "tq_4bit",
+    "naive_2bit",
+    "tq_2bit",
+    "naive_1bit",
+    "tq_1bit",
+]
 _RETRIEVAL_REP_LABELS = {
     "float32": "Float32",
-    "4bit": "4-bit",
-    "2bit": "2-bit",
-    "1bit": "1-bit",
+    "16bit": "Naive 16-bit",
+    "naive_8bit": "Naive 8-bit",
+    "tq_8bit": "TurboQuant 8-bit",
+    "naive_4bit": "Naive 4-bit",
+    "tq_4bit": "TurboQuant 4-bit",
+    "naive_2bit": "Naive 2-bit",
+    "tq_2bit": "TurboQuant 2-bit",
+    "naive_1bit": "Naive 1-bit",
+    "tq_1bit": "TurboQuant 1-bit",
 }
 _RETRIEVAL_REP_COLORS = {
     "float32": "#1f77b4",
-    "4bit": "#2ca02c",
-    "2bit": "#ff7f0e",
-    "1bit": "#d62728",
+    "16bit": "#aec7e8",
+    "naive_8bit": "#c5b0d5",
+    "tq_8bit": "#9467bd",
+    "naive_4bit": "#98df8a",
+    "tq_4bit": "#2ca02c",
+    "naive_2bit": "#ffbb78",
+    "tq_2bit": "#ff7f0e",
+    "naive_1bit": "#ff9896",
+    "tq_1bit": "#d62728",
 }
 
 
@@ -919,11 +995,15 @@ def _retrieval_legend_below(ax: plt.Axes, ncol: int = 4) -> None:
 def _retrieval_bits_per_vector(representation: str, dim: int) -> int:
     if representation == "float32":
         return dim * 32
-    if representation == "4bit":
+    if representation == "16bit":
+        return dim * 16
+    if representation in ("naive_8bit", "tq_8bit"):
+        return dim * 8
+    if representation in ("naive_4bit", "tq_4bit"):
         return dim * 4
-    if representation == "2bit":
+    if representation in ("naive_2bit", "tq_2bit"):
         return dim * 2
-    if representation == "1bit":
+    if representation in ("naive_1bit", "tq_1bit"):
         return dim
     raise ValueError(f"Unknown representation: {representation}")
 
