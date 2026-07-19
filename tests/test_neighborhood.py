@@ -117,11 +117,11 @@ class TestTrustworthiness:
 
 class TestComputeNeighborhoodPreservation:
     def test_returns_correct_count(self, small_embeddings):
-        """Should return 3 bit_depths × 3 k_values = 9 results."""
+        """Should return 5 bit_depths × 2 k_values = 10 results."""
         results = compute_neighborhood_preservation(
             small_embeddings, dim=32, k_values=(5, 10),
         )
-        assert len(results) == 6  # 3 bit_depths × 2 k_values
+        assert len(results) == 10  # 5 bit_depths × 2 k_values
 
     def test_result_type(self, small_embeddings):
         results = compute_neighborhood_preservation(

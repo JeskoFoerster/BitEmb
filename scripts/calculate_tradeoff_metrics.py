@@ -11,8 +11,9 @@ import json
 import os
 import sys
 from pathlib import Path
-import numpy as np
+
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -90,46 +91,46 @@ def apply_style():
 
 def main():
     apply_style()
-    
+
     # Paths resolved relative to this script's location
     script_dir = Path(__file__).resolve().parent
     base_dir = script_dir.parent
-    
+
     metrics_path = base_dir / "results/phase4/retrieval_metrics.json"
     memory_path = base_dir / "results/phase5/memory_metrics.json"
     output_dir = base_dir / "results/phase5/figures"
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     if not metrics_path.exists() or not memory_path.exists():
-        print(f"Error: Data files not found.")
+        print("Error: Data files not found.")
         print(f"Expected retrieval metrics at: {metrics_path}")
         print(f"Expected memory metrics at: {memory_path}")
-        print(f"Please ensure Phase 4 and Phase 5 experiments have been run.")
+        print("Please ensure Phase 4 and Phase 5 experiments have been run.")
         sys.exit(1)
-        
+
     with open(metrics_path, "r") as f:
         metrics_data = json.load(f)
-        
+
     with open(memory_path, "r") as f:
         memory_data = json.load(f)
-        
+
     # Get scifact retrieval results
     scifact_results = None
     for entry in metrics_data:
         if entry["dataset"] == "scifact":
             scifact_results = entry["results"]
             break
-            
+
     if not scifact_results:
         print("Error: SciFact retrieval results not found in json.")
         sys.exit(1)
-        
+
     quality_map = {}
     for r in scifact_results:
         rep = r["representation"]
         dim = r["dim"]
         quality_map[(rep, dim)] = r["ndcg_at_10"]
-        
+
     # Get memory usage
     memory_map = {}
     for entry in memory_data:
@@ -138,36 +139,36 @@ def main():
             for nv in entry["numpy_vectorized"]:
                 rep = nv["representation"]
                 memory_map[(rep, dim)] = nv["total_bytes"] / entry["n_vectors"]
-                
+
     # Baseline (float32, 768d)
     q_baseline = quality_map.get(("float32", 768))
     c_baseline = memory_map.get(("float32", 768))
-    
+
     if not q_baseline or not c_baseline:
         print("Error: Baseline (float32, 768d) not found.")
         sys.exit(1)
-        
+
     # Calculate metrics
     results = []
     for (rep, dim), q_val in sorted(quality_map.items()):
         c_val = memory_map.get((rep, dim))
         if c_val is None:
             continue
-            
+
         q_rel = q_val / q_baseline
         c_rel = c_val / c_baseline
         s_rel = 1.0 - c_rel
-        
+
         # RQSR
         rqsr = q_rel / c_rel if c_rel > 0 else float('inf')
-        
+
         # CQ_1
         cq1 = 2.0 * (q_rel * s_rel) / (q_rel + s_rel) if (q_rel + s_rel) > 0 else 0.0
-        
+
         # QES (Elasticity)
         q_loss = 1.0 - q_rel
         qes = q_loss / s_rel if s_rel > 0 else 0.0
-        
+
         results.append({
             "rep": rep,
             "dim": dim,
@@ -182,8 +183,11 @@ def main():
         })
 
     # Output text results
-    print(f"Calculated trade-off metrics for SciFact dataset against baseline (float32, 768d, NDCG@10={q_baseline:.4f}).")
-    
+    print(
+        "Calculated trade-off metrics for SciFact dataset against baseline"
+        f" (float32, 768d, NDCG@10={q_baseline:.4f})."
+    )
+
     # ------------------ Plot 1: CQ1-Score by PCA Dimension ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
     for rep in _REP_ORDER:
@@ -193,9 +197,9 @@ def main():
         dims = [r["dim"] for r in rep_results]
         cq1_vals = [r["cq1"] for r in rep_results]
         ax.plot(
-            dims, cq1_vals, 
-            color=_REP_COLORS[rep], 
-            marker=_REP_MARKERS[rep], 
+            dims, cq1_vals,
+            color=_REP_COLORS[rep],
+            marker=_REP_MARKERS[rep],
             linestyle="-" if "naive" not in rep else ":",
             label=_REP_LABELS[rep]
         )
@@ -206,7 +210,7 @@ def main():
     ax.set_ylim(0.5, 1.02)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
-    
+
     # Save Plot 1
     p1_png = output_dir / "tradeoff_cq1_by_dim.png"
     p1_pdf = output_dir / "tradeoff_cq1_by_dim.pdf"
@@ -214,7 +218,7 @@ def main():
     fig.savefig(p1_pdf, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {p1_png}")
-    
+
     # ------------------ Plot 2: Elasticity (QES) by PCA Dimension ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
     for rep in _REP_ORDER:
@@ -224,13 +228,13 @@ def main():
         dims = [r["dim"] for r in rep_results]
         qes_vals = [r["qes"] for r in rep_results]
         ax.plot(
-            dims, qes_vals, 
-            color=_REP_COLORS[rep], 
-            marker=_REP_MARKERS[rep], 
+            dims, qes_vals,
+            color=_REP_COLORS[rep],
+            marker=_REP_MARKERS[rep],
             linestyle="-" if "naive" not in rep else ":",
             label=_REP_LABELS[rep]
         )
-    
+
     ax.axhline(0.0, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
     ax.set_xlabel("PCA Dimension")
     ax.set_ylabel(r"Quality Elasticity of Storage ($\epsilon_{Q,C}$)")
@@ -239,7 +243,7 @@ def main():
     ax.set_ylim(-0.05, 0.6)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
-    
+
     # Save Plot 2
     p2_png = output_dir / "tradeoff_elasticity_by_dim.png"
     p2_pdf = output_dir / "tradeoff_elasticity_by_dim.pdf"
@@ -247,7 +251,7 @@ def main():
     fig.savefig(p2_pdf, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {p2_png}")
-    
+
     # ------------------ Plot 3: Quality vs. Savings (Pareto Space) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
     for rep in _REP_ORDER:
@@ -258,13 +262,13 @@ def main():
         savings = [r["s_rel"] for r in rep_results]
         quality = [r["q_rel"] for r in rep_results]
         ax.plot(
-            savings, quality, 
-            color=_REP_COLORS[rep], 
-            marker=_REP_MARKERS[rep], 
+            savings, quality,
+            color=_REP_COLORS[rep],
+            marker=_REP_MARKERS[rep],
             linestyle="-" if "naive" not in rep else ":",
             label=_REP_LABELS[rep]
         )
-        
+
         # Annotate selected points with dimension
         for r in rep_results:
             if r["dim"] in [64, 256, 768]:
@@ -277,8 +281,12 @@ def main():
                     fontsize=7,
                     alpha=0.8
                 )
-                
-    ax.text(0.02, 0.02, "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d", transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8)
+
+    ax.text(
+        0.02, 0.02,
+        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
+    )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Normalized Trade-off Space (Quality vs. Savings)")
@@ -286,7 +294,7 @@ def main():
     ax.set_ylim(0.4, 1.05)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
-    
+
     # Save Plot 3
     p3_png = output_dir / "tradeoff_quality_vs_savings.png"
     p3_pdf = output_dir / "tradeoff_quality_vs_savings.pdf"
@@ -294,7 +302,7 @@ def main():
     fig.savefig(p3_pdf, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {p3_png}")
-    
+
     # ------------------ Plot 4a: Zoomed Quality vs. Savings (TurboQuant Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
     for rep in _REP_ORDER:
@@ -306,13 +314,13 @@ def main():
         savings = [r["s_rel"] for r in rep_results]
         quality = [r["q_rel"] for r in rep_results]
         ax.plot(
-            savings, quality, 
-            color=_REP_COLORS[rep], 
-            marker=_REP_MARKERS[rep], 
+            savings, quality,
+            color=_REP_COLORS[rep],
+            marker=_REP_MARKERS[rep],
             linestyle="-",
             label=_REP_LABELS[rep]
         )
-        
+
         for r in rep_results:
             if r["dim"] in [64, 256, 768]:
                 ax.annotate(
@@ -324,8 +332,12 @@ def main():
                     fontsize=7,
                     alpha=0.8
                 )
-                
-    ax.text(0.02, 0.02, "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d", transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8)
+
+    ax.text(
+        0.02, 0.02,
+        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
+    )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Zoomed Trade-off Space (TurboQuant Only)")
@@ -333,7 +345,7 @@ def main():
     ax.set_ylim(0.43, 1.03)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
-    
+
     # Save Plot 4a
     p4a_png = output_dir / "tradeoff_quality_vs_savings_zoomed_tq.png"
     p4a_pdf = output_dir / "tradeoff_quality_vs_savings_zoomed_tq.pdf"
@@ -353,13 +365,13 @@ def main():
         savings = [r["s_rel"] for r in rep_results]
         quality = [r["q_rel"] for r in rep_results]
         ax.plot(
-            savings, quality, 
-            color=_REP_COLORS[rep], 
-            marker=_REP_MARKERS[rep], 
+            savings, quality,
+            color=_REP_COLORS[rep],
+            marker=_REP_MARKERS[rep],
             linestyle=":",
             label=_REP_LABELS[rep]
         )
-        
+
         for r in rep_results:
             if r["dim"] in [64, 256, 768]:
                 ax.annotate(
@@ -371,8 +383,12 @@ def main():
                     fontsize=7,
                     alpha=0.8
                 )
-                
-    ax.text(0.02, 0.02, "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d", transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8)
+
+    ax.text(
+        0.02, 0.02,
+        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
+    )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Zoomed Trade-off Space (Naive Only)")
@@ -380,7 +396,7 @@ def main():
     ax.set_ylim(0.43, 1.03)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
-    
+
     # Save Plot 4b
     p4b_png = output_dir / "tradeoff_quality_vs_savings_zoomed_naive.png"
     p4b_pdf = output_dir / "tradeoff_quality_vs_savings_zoomed_naive.pdf"
@@ -400,13 +416,13 @@ def main():
         comp_ratios = [1.0 / r["c_rel"] for r in rep_results]
         quality = [r["q_rel"] for r in rep_results]
         ax.plot(
-            comp_ratios, quality, 
-            color=_REP_COLORS[rep], 
-            marker=_REP_MARKERS[rep], 
+            comp_ratios, quality,
+            color=_REP_COLORS[rep],
+            marker=_REP_MARKERS[rep],
             linestyle="-",
             label=_REP_LABELS[rep]
         )
-        
+
         for r in rep_results:
             if r["dim"] in [64, 256, 768]:
                 ax.annotate(
@@ -418,8 +434,12 @@ def main():
                     fontsize=7,
                     alpha=0.8
                 )
-                
-    ax.text(0.02, 0.02, "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d", transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8)
+
+    ax.text(
+        0.02, 0.02,
+        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
+    )
     ax.set_xlabel("Compression Factor (Multiplier vs. Float32 768d, Log-Scale)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Quality vs. Compression Factor (TurboQuant Only)")
@@ -431,7 +451,7 @@ def main():
     plt.xticks(rotation=45)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
-    
+
     # Save Plot 5a
     p5a_png = output_dir / "tradeoff_quality_vs_compression_ratio_tq.png"
     p5a_pdf = output_dir / "tradeoff_quality_vs_compression_ratio_tq.pdf"
@@ -451,13 +471,13 @@ def main():
         comp_ratios = [1.0 / r["c_rel"] for r in rep_results]
         quality = [r["q_rel"] for r in rep_results]
         ax.plot(
-            comp_ratios, quality, 
-            color=_REP_COLORS[rep], 
-            marker=_REP_MARKERS[rep], 
+            comp_ratios, quality,
+            color=_REP_COLORS[rep],
+            marker=_REP_MARKERS[rep],
             linestyle=":",
             label=_REP_LABELS[rep]
         )
-        
+
         for r in rep_results:
             if r["dim"] in [64, 256, 768]:
                 ax.annotate(
@@ -469,8 +489,12 @@ def main():
                     fontsize=7,
                     alpha=0.8
                 )
-                
-    ax.text(0.02, 0.02, "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d", transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8)
+
+    ax.text(
+        0.02, 0.02,
+        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
+    )
     ax.set_xlabel("Compression Factor (Multiplier vs. Float32 768d, Log-Scale)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Quality vs. Compression Factor (Naive Only)")
@@ -482,7 +506,7 @@ def main():
     plt.xticks(rotation=45)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
-    
+
     # Save Plot 5b
     p5b_png = output_dir / "tradeoff_quality_vs_compression_ratio_naive.png"
     p5b_pdf = output_dir / "tradeoff_quality_vs_compression_ratio_naive.pdf"
@@ -490,14 +514,20 @@ def main():
     fig.savefig(p5b_pdf, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {p5b_png}")
-    
+
     # Remove old combined files
-    for filename in ["tradeoff_quality_vs_savings_zoomed.png", "tradeoff_quality_vs_savings_zoomed.pdf", "tradeoff_quality_vs_compression_ratio.png", "tradeoff_quality_vs_compression_ratio.pdf"]:
+    old_files = [
+        "tradeoff_quality_vs_savings_zoomed.png",
+        "tradeoff_quality_vs_savings_zoomed.pdf",
+        "tradeoff_quality_vs_compression_ratio.png",
+        "tradeoff_quality_vs_compression_ratio.pdf",
+    ]
+    for filename in old_files:
         filepath = output_dir / filename
         if filepath.exists():
             os.remove(filepath)
             print(f"Deleted old combined file: {filename}")
-            
+
     print("All figures successfully saved in the repository under results/phase5/figures/")
 
 if __name__ == "__main__":

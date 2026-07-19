@@ -129,9 +129,9 @@ class TestComputeMetrics:
 class TestComputeDistanceDistortion:
     def test_returns_three_results(self, corpus_embs):
         results = compute_distance_distortion(corpus_embs, dim=768, n_pairs=500)
-        assert len(results) == 3
+        assert len(results) == 5
         bit_depths = [r.bit_depth for r in results]
-        assert sorted(bit_depths) == [1, 2, 4]
+        assert sorted(bit_depths) == [1, 2, 4, 8, 16]
 
     def test_result_types(self, corpus_embs):
         results = compute_distance_distortion(corpus_embs, dim=768, n_pairs=500)
@@ -154,7 +154,7 @@ class TestComputeDistanceDistortion:
         results = compute_distance_distortion(
             corpus_embs, dim=128, pca_reducer=pca, n_pairs=500,
         )
-        assert len(results) == 3
+        assert len(results) == 5
         for r in results:
             assert r.dim == 128
 

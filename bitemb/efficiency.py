@@ -372,8 +372,14 @@ def practical_memory_for_layouts(layouts: NumpyLayouts) -> list[PracticalMemory]
     return [
         row("float32", int(layouts.float32.nbytes), 0, "contiguous NumPy float32 matrix"),
         row("16bit", int(layouts.float16.nbytes), 0, "contiguous NumPy float16 matrix"),
-        row("naive_1bit", int(layouts.naive_1bit.nbytes), 0, "NumPy packbits-compatible binary codes (naive)"),
-        row("tq_1bit", int(layouts.tq_1bit.nbytes), 0, "NumPy packbits-compatible binary codes (rotated)"),
+        row(
+            "naive_1bit", int(layouts.naive_1bit.nbytes), 0,
+            "NumPy packbits-compatible binary codes (naive)",
+        ),
+        row(
+            "tq_1bit", int(layouts.tq_1bit.nbytes), 0,
+            "NumPy packbits-compatible binary codes (rotated)",
+        ),
         row(
             "naive_2bit",
             int(layouts.naive_2bit.packed_codes.nbytes),

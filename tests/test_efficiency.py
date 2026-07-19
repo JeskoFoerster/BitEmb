@@ -30,7 +30,14 @@ def test_theoretical_memory_float32_768():
     assert mem.compression_ratio_vs_float768 == pytest.approx(1.0)
 
 
-@pytest.mark.parametrize(("rep", "expected_ratio"), [("4bit", 8.0), ("2bit", 16.0), ("1bit", 32.0)])
+@pytest.mark.parametrize(("rep", "expected_ratio"), [
+    ("naive_4bit", 8.0),
+    ("tq_4bit", 8.0),
+    ("naive_2bit", 16.0),
+    ("tq_2bit", 16.0),
+    ("naive_1bit", 32.0),
+    ("tq_1bit", 32.0),
+])
 def test_theoretical_memory_compression_full_dim(rep, expected_ratio):
     mem = theoretical_memory(10, 768, rep)
     assert mem.compression_ratio_vs_float768 == pytest.approx(expected_ratio)
@@ -64,9 +71,12 @@ def test_build_numpy_layouts_memory_records(normalized_embs):
     by_rep = {row.representation: row for row in rows}
     assert set(by_rep) == set(REPRESENTATIONS)
     assert by_rep["float32"].total_bytes == normalized_embs.nbytes
-    assert by_rep["1bit"].total_bytes < by_rep["float32"].total_bytes
-    assert by_rep["2bit"].total_bytes < by_rep["float32"].total_bytes
-    assert by_rep["4bit"].total_bytes < by_rep["float32"].total_bytes
+    assert by_rep["naive_1bit"].total_bytes < by_rep["float32"].total_bytes
+    assert by_rep["tq_1bit"].total_bytes < by_rep["float32"].total_bytes
+    assert by_rep["naive_2bit"].total_bytes < by_rep["float32"].total_bytes
+    assert by_rep["tq_2bit"].total_bytes < by_rep["float32"].total_bytes
+    assert by_rep["naive_4bit"].total_bytes < by_rep["float32"].total_bytes
+    assert by_rep["tq_4bit"].total_bytes < by_rep["float32"].total_bytes
 
 
 @pytest.mark.parametrize("rep", REPRESENTATIONS)
