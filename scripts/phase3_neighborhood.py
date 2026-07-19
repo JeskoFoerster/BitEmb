@@ -59,7 +59,7 @@ def run(
     for dim in PCA_DIMS:
         print(f"\n  --- PCA dim = {dim} ---")
 
-        if dim < 768:
+        if dim < 1024:
             pca = PCAReducer(n_components=dim).fit(corpus_embs)
         else:
             pca = None

@@ -47,7 +47,7 @@ und was die konkrete NumPy-Implementierung tatsächlich erreicht.
 Die Effizienzanalyse nutzt dieselbe Matrix wie die vorherigen Phasen:
 
 - **Bittiefe:** Float32, 4-Bit, 2-Bit, 1-Bit
-- **Dimensionen:** 64, 128, 256, 384, 768
+- **Dimensionen:** 64, 128, 256, 384, 512, 768, 1024
 - **Datasets:** SciFact, FiQA, TREC-COVID
 
 Dadurch können Speicher, Laufzeit und Qualität direkt gemeinsam betrachtet
@@ -96,20 +96,20 @@ bytes_per_vector = bits_per_vector / 8
 total_bytes = n_vectors * bytes_per_vector
 ```
 
-Die Float32-Baseline mit 768 Dimensionen benötigt:
+Die Float32-Baseline mit 1024 Dimensionen benötigt:
 
 ```text
-768 * 32 bit = 24.576 bit = 3.072 byte pro Vektor
+1024 * 32 bit = 32.768 bit = 4.096 byte pro Vektor
 ```
 
 Beispiele:
 
-| Repräsentation | Bits pro Vektor | Bytes pro Vektor | Kompression vs. 768d Float32 |
+| Repräsentation | Bits pro Vektor | Bytes pro Vektor | Kompression vs. 1024d Float32 |
 |----------------|----------------:|-----------------:|------------------------------:|
-| Float32, 768d | 24.576 | 3.072 | 1x |
-| 4-Bit, 768d | 3.072 | 384 | 8x |
-| 2-Bit, 768d | 1.536 | 192 | 16x |
-| 1-Bit, 768d | 768 | 96 | 32x |
+| Float32, 1024d | 24.576 | 3.072 | 1x |
+| 4-Bit, 1024d | 3.072 | 384 | 8x |
+| 2-Bit, 1024d | 1.536 | 192 | 16x |
+| 1-Bit, 1024d | 1024 | 128 | 32x |
 | 4-Bit, 384d | 1.536 | 192 | 16x |
 | 2-Bit, 384d | 768 | 96 | 32x |
 | 1-Bit, 384d | 384 | 48 | 64x |

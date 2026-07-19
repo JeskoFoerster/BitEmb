@@ -253,7 +253,7 @@ def _compute_trustworthiness(
 
 def compute_neighborhood_preservation(
     embeddings: NDArray[np.float32],
-    dim: int = 768,
+    dim: int = 1024,
     pca_reducer: PCAReducer | None = None,
     k_values: tuple[int, ...] = K_VALUES,
     seed: int = SEED,
@@ -264,17 +264,17 @@ def compute_neighborhood_preservation(
     then measures overlap and trustworthiness.
 
     Args:
-        embeddings: L2-normalized float32 corpus embeddings (n, 768).
-        dim: Target dimensionality (768 = no reduction).
-        pca_reducer: Fitted PCAReducer if dim < 768, else None.
+        embeddings: L2-normalized float32 corpus embeddings (n, 1024).
+        dim: Target dimensionality (1024 = no reduction).
+        pca_reducer: Fitted PCAReducer if dim < 1024, else None.
         k_values: Tuple of k values to evaluate.
         seed: Random seed (unused here, kept for API consistency).
 
     Returns:
-        List of NeighborhoodResult (3 bit_depths × len(k_values)).
+        List of NeighborhoodResult (5 bit_depths × len(k_values)).
     """
     # Apply PCA reduction if needed
-    if pca_reducer is not None and dim < 768:
+    if pca_reducer is not None and dim < 1024:
         embs = pca_reducer.transform(embeddings)
     else:
         embs = embeddings

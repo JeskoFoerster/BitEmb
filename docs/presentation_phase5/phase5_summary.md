@@ -137,7 +137,7 @@ Dieser Graph zeigt pro Repräsentation den theoretischen Speicher und den prakti
 
 ### `memory_compression_by_dim.pdf`
 
-Dieser Graph zeigt den Kompressionsfaktor gegenüber `768d float32`, also um welchen Faktor der Speicherbedarf kleiner ist.
+Dieser Graph zeigt den Kompressionsfaktor gegenüber `1024d float32`, also um welchen Faktor der Speicherbedarf kleiner ist.
 
 - Höher ist besser.
 - Kleinere Dimensionen erhöhen die Kompression zusätzlich.

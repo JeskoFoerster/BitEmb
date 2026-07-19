@@ -26,7 +26,7 @@ Für jedes Paar werden die Abstände in allen Repräsentationsräumen berechnet:
 
 - **Float-Raum:** Cosine-Distanz = 1 − Cosine-Similarity. Theoretisch zwischen 0 (identisch) und 2 (exakt entgegengesetzt). Für Sprachmodell-Embeddings liegen die Werte empirisch meist unter 1, weil entgegengesetzte Vektoren in der Praxis selten vorkommen.
 - **TurboQuant 4-Bit / 2-Bit:** L2²-Distanz zwischen dequantisierten Vektoren. Die Vektoren werden für die Analyse rekonstruiert, um einen fairen Vergleich auf einer gemeinsamen Skala zu ermöglichen. In einem echten Produktivsystem würde man direkt auf den komprimierten Codes operieren.
-- **Binär (1-Bit):** Hamming-Distanz, zählt in wie vielen der 768 Bits zwei Vektoren sich unterscheiden.
+- **Binär (1-Bit):** Hamming-Distanz, zählt in wie vielen der 1024 Bits zwei Vektoren sich unterscheiden.
 
 Da diese Distanzmaße unterschiedliche Skalen haben, werden alle auf [0, 1] normiert, bevor sie verglichen werden. So sind MAE und RMSE direkt interpretierbar.
 
@@ -72,7 +72,7 @@ MAE ist robust gegenüber Ausreißern, ein einzelnes sehr schlecht komprimiertes
 
 RMSE ähnelt MAE, gewichtet aber große Fehler stärker, weil die Abweichungen vor der Mittelung quadriert werden. Wenn MAE und RMSE stark voneinander abweichen, gibt es einzelne Paare mit sehr hohem Fehler. Ein Verhältnis RMSE / MAE > 1.5 deutet auf eine schiefe Fehlerverteilung mit einzelnen großen Ausreißern hin.
 
-> **Grafik `distortion_heatmap_<metrik>_<dataset>.pdf`:** Vier Heatmaps pro Dataset, eine für Pearson r, Spearman ρ, MAE und RMSE. Zeilen = Bittiefe (4-Bit, 2-Bit, 1-Bit), Spalten = Dimensionszahl (64, 128, 256, 384, 768). Damit sieht man auf einen Blick, wie sich jede Metrik über die gesamte Versuchsmatrix verhält.
+> **Grafik `distortion_heatmap_<metrik>_<dataset>.pdf`:** Vier Heatmaps pro Dataset, eine für Pearson r, Spearman ρ, MAE und RMSE. Zeilen = Bittiefe (4-Bit, 2-Bit, 1-Bit), Spalten = Dimensionszahl (64, 128, 256, 384, 512, 768, 1024). Damit sieht man auf einen Blick, wie sich jede Metrik über die gesamte Versuchsmatrix verhält.
 
 ---
 
@@ -93,7 +93,7 @@ Ein Verfahren kann hohe Korrelation aber hohen MAE haben: Es sortiert Paare perf
 Alle vier Metriken werden für jede Kombination aus Bittiefe und Dimensionszahl berechnet:
 
 - **Bittiefe:** 4-Bit (TurboQuant), 2-Bit (TurboQuant), 1-Bit (binär)
-- **Dimensionen:** 64, 128, 256, 384, 768
+- **Dimensionen:** 64, 128, 256, 384, 512, 768, 1024
 
 Das ergibt 15 Kombinationen pro Dataset. Der Speicherbedarf einer Kombination beträgt `Dimensionen × Bittiefe` Bit pro Vektor, von 768 × 4 = 3072 Bit (4-Bit, volle Dimension) bis 64 × 1 = 64 Bit (binär, minimale Dimension).
 

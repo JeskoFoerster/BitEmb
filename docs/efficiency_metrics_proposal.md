@@ -91,7 +91,7 @@ Die Grafik veranschaulicht die Elastizität $\epsilon_{Q,C}$ über die Dimension
 
 ## Experimentelle Ergebnisse (SciFact Dataset)
 
-Die unkomprimierte Baseline ist **`float32` bei `768d`** (NDCG@10 = **`0.7287`**, Speicherbedarf = **`3072.0 Bytes`** pro Vektor). 
+Die unkomprimierte Baseline ist **`float32` bei `1024d`** (NDCG@10 = **`0.7287`**, Speicherbedarf = **`3072.0 Bytes`** pro Vektor). 
 
 Die folgende Tabelle zeigt alle experimentellen Konfigurationen, sortiert nach dem **$CQ_1$-Score** (ausgewogener Trade-off):
 
@@ -153,7 +153,7 @@ Die folgende Abbildung zeigt alle Konfigurationen im normalisierten Trade-off-Ra
 
 ![Normalized Trade-off Space (Quality vs. Savings)](../results/phase5/figures/tradeoff_quality_vs_savings.png)
 
-*   **Interpretation**: Die Grafik verdeutlicht die Pareto-Front. Die TurboQuant-Varianten (durchgezogene Linien) verschieben die Kurven systematisch weiter nach oben rechts in Richtung des idealen Punkts $(1.0, 1.0)$ als ihre naiven Pendants (gestrichelte Linien). Der Unterschied ist im extremen Low-Bit-Bereich (1-Bit und 2-Bit) am stärksten ausgeprägt. So erreicht `tq_1bit` bei 768d einen $CQ_1$-Score von `0.9651` und übertrifft `naive_1bit` (`0.8953`) qualitativ enorm, da die orthogonale Rotation die Varianz optimal über alle Dimensionen verteilt und den Nachbarschaftsbezug erhält.
+*   **Interpretation**: Die Grafik verdeutlicht die Pareto-Front. Die TurboQuant-Varianten (durchgezogene Linien) verschieben die Kurven systematisch weiter nach oben rechts in Richtung des idealen Punkts $(1.0, 1.0)$ als ihre naiven Pendants (gestrichelte Linien). Der Unterschied ist im extremen Low-Bit-Bereich (1-Bit und 2-Bit) am stärksten ausgeprägt. So erreicht `tq_1bit` bei 1024d einen $CQ_1$-Score von `0.9651` und übertrifft `naive_1bit` (`0.8953`) qualitativ enorm, da die orthogonale Rotation die Varianz optimal über alle Dimensionen verteilt und den Nachbarschaftsbezug erhält.
 
 ### Gezoomter Trade-off-Raum (nur quantisierte Modelle)
 Da die Baseline (`float32` und `16bit`) das Diagramm durch ihre Lage stark staucht, zeigen die folgenden Grafiken den **gezoomten Ausschnitt** ($S_{rel} \ge 0.70$), getrennt nach Quantisierungsverfahren:
@@ -165,7 +165,7 @@ Da die Baseline (`float32` und `16bit`) das Diagramm durch ihre Lage stark stauc
 ![Zoomed Trade-off Space - Naive](../results/phase5/figures/tradeoff_quality_vs_savings_zoomed_naive.png)
 
 *   **Vergleichende Erkenntnis**: 
-    *   In der TurboQuant-Visualisierung liegen fast alle Datenpunkte für 2-Bit, 4-Bit und 8-Bit sowie der 1-Bit-Vektor bei 768d extrem nah am idealen Punkt $(1.0, 1.0)$ in der oberen rechten Ecke. Dies beweist eine hohe geometrische Stabilität des rotierten Vektorraums.
+    *   In der TurboQuant-Visualisierung liegen fast alle Datenpunkte für 2-Bit, 4-Bit und 8-Bit sowie der 1-Bit-Vektor bei 1024d extrem nah am idealen Punkt $(1.0, 1.0)$ in der oberen rechten Ecke. Dies beweist eine hohe geometrische Stabilität des rotierten Vektorraums.
     *   Bei der naiven Quantisierung hingegen stürzen die 1-Bit- und 2-Bit-Kurven qualitativ steil ab, sobald die Dimension verringert wird.
 
 ### Qualität vs. Kompressionsfaktor (Logarithmischer Blick)
@@ -178,5 +178,5 @@ Da prozentuale Einsparungen (z. B. $96.8\%$ vs. $98.4\%$) den geometrischen Skal
 ![Quality vs. Compression Factor - Naive](../results/phase5/figures/tradeoff_quality_vs_compression_ratio_naive.png)
 
 *   **Vergleichende Interpretation**:
-    *   **TurboQuant** zeigt eine bemerkenswerte Robustheit bei extremen Kompressionsfaktoren: Selbst bei einem **32-fachen Kompressionsfaktor** (1-Bit, 768d) werden **`96.1%`** der Baseline-Qualität gehalten. Bei einem **64-fachen Kompressionsfaktor** (1-Bit, 384d) sind es noch **`92.6%`**.
-    *   Die **naive Quantisierung** zeigt bei identischen Kompressionsfaktoren (z. B. 32x bei 1-Bit, 768d) einen dramatischen Qualitätsabfall auf **`83.2%`** (ein Verlust von fast 13 Prozentpunkten gegenüber TurboQuant).
+    *   **TurboQuant** zeigt eine bemerkenswerte Robustheit bei extremen Kompressionsfaktoren: Selbst bei einem **32-fachen Kompressionsfaktor** (1-Bit, 1024d) werden **`96.1%`** der Baseline-Qualität gehalten. Bei einem **64-fachen Kompressionsfaktor** (1-Bit, 384d) sind es noch **`92.6%`**.
+    *   Die **naive Quantisierung** zeigt bei identischen Kompressionsfaktoren (z. B. 32x bei 1-Bit, 1024d) einen dramatischen Qualitätsabfall auf **`83.2%`** (ein Verlust von fast 13 Prozentpunkten gegenüber TurboQuant).

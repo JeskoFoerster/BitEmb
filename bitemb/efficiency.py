@@ -60,7 +60,7 @@ class TheoreticalMemory:
     bits_per_vector: int
     bytes_per_vector: float
     total_bytes: int
-    compression_ratio_vs_float768: float
+    compression_ratio_vs_float1024: float
 
 
 @dataclass(frozen=True)
@@ -89,7 +89,7 @@ class PracticalMemory:
     metadata_bytes: int
     total_bytes: int
     bytes_per_vector: float
-    compression_ratio_vs_float768: float
+    compression_ratio_vs_float1024: float
     notes: str
 
 
@@ -173,7 +173,7 @@ def theoretical_memory(
     dim: int,
     representation: Representation,
     *,
-    baseline_dim: int = 768,
+    baseline_dim: int = 1024,
 ) -> TheoreticalMemory:
     """Compute ideal packed storage for a representation."""
     bit_depth = bit_depth_for_representation(representation)
@@ -191,7 +191,7 @@ def theoretical_memory(
         bits_per_vector=bits_per_vector,
         bytes_per_vector=bytes_per_vector,
         total_bytes=total_bytes,
-        compression_ratio_vs_float768=float(compression),
+        compression_ratio_vs_float1024=float(compression),
     )
 
 
@@ -347,7 +347,7 @@ def build_numpy_layouts(embeddings: NDArray[np.float32]) -> NumpyLayouts:
 def practical_memory_for_layouts(layouts: NumpyLayouts) -> list[PracticalMemory]:
     """Measure practical payload/index sizes for all NumPy layouts."""
     n, dim = layouts.float32.shape
-    baseline_bytes = n * 768 * 4
+    baseline_bytes = n * 1024 * 4
 
     def row(
         rep: Representation,
@@ -365,7 +365,7 @@ def practical_memory_for_layouts(layouts: NumpyLayouts) -> list[PracticalMemory]
             metadata_bytes=int(metadata_bytes),
             total_bytes=total,
             bytes_per_vector=total / n if n else 0.0,
-            compression_ratio_vs_float768=baseline_bytes / total if total else 0.0,
+            compression_ratio_vs_float1024=baseline_bytes / total if total else 0.0,
             notes=notes,
         )
 

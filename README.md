@@ -97,7 +97,7 @@ Detailed documentation for each phase is in `docs/`:
 
 ## Methods
 
-- **Model**: `BAAI/bge-large-en-v1.5` (768d, not Matryoshka-trained)
+- **Model**: `BAAI/bge-large-en-v1.5` (1024d, not Matryoshka-trained)
 - **Datasets**: BEIR SciFact, FiQA, TREC-COVID
 - **Quantization**: Naive binary (1-bit), TurboQuant 2-bit, TurboQuant 4-bit
-- **Dimension Reduction**: PCA to d ∈ {64, 128, 256, 384, 768}
+- **Dimension Reduction**: PCA to d ∈ {64, 128, 256, 384, 512, 768, 1024}

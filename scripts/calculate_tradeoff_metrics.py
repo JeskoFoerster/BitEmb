@@ -140,12 +140,12 @@ def main():
                 rep = nv["representation"]
                 memory_map[(rep, dim)] = nv["total_bytes"] / entry["n_vectors"]
 
-    # Baseline (float32, 768d)
-    q_baseline = quality_map.get(("float32", 768))
-    c_baseline = memory_map.get(("float32", 768))
+    # Baseline (float32, 1024d)
+    q_baseline = quality_map.get(("float32", 1024))
+    c_baseline = memory_map.get(("float32", 1024))
 
     if not q_baseline or not c_baseline:
-        print("Error: Baseline (float32, 768d) not found.")
+        print("Error: Baseline (float32, 1024d) not found.")
         sys.exit(1)
 
     # Calculate metrics
@@ -185,7 +185,7 @@ def main():
     # Output text results
     print(
         "Calculated trade-off metrics for SciFact dataset against baseline"
-        f" (float32, 768d, NDCG@10={q_baseline:.4f})."
+        f" (float32, 1024d, NDCG@10={q_baseline:.4f})."
     )
 
     # ------------------ Plot 1: CQ1-Score by PCA Dimension ------------------
@@ -206,7 +206,7 @@ def main():
     ax.set_xlabel("PCA Dimension")
     ax.set_ylabel("$CQ_1$-Score (Balanced Trade-off)")
     ax.set_title("Compression-Quality Score ($CQ_1$) by Dimension")
-    ax.set_xticks([64, 128, 256, 384, 768])
+    ax.set_xticks([64, 128, 256, 384, 512, 768, 1024])
     ax.set_ylim(0.5, 1.02)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
@@ -239,7 +239,7 @@ def main():
     ax.set_xlabel("PCA Dimension")
     ax.set_ylabel(r"Quality Elasticity of Storage ($\epsilon_{Q,C}$)")
     ax.set_title("Storage Quality Elasticity (QES) by Dimension")
-    ax.set_xticks([64, 128, 256, 384, 768])
+    ax.set_xticks([64, 128, 256, 384, 512, 768, 1024])
     ax.set_ylim(-0.05, 0.6)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
@@ -271,7 +271,7 @@ def main():
 
         # Annotate selected points with dimension
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (r["s_rel"], r["q_rel"]),
@@ -284,7 +284,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -322,7 +322,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (r["s_rel"], r["q_rel"]),
@@ -335,7 +335,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -373,7 +373,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (r["s_rel"], r["q_rel"]),
@@ -386,7 +386,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -424,7 +424,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (1.0 / r["c_rel"], r["q_rel"]),
@@ -437,10 +437,10 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
-    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 768d, Log-Scale)")
+    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 1024d, Log-Scale)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Quality vs. Compression Factor (TurboQuant Only)")
     ax.set_xscale("log")
@@ -479,7 +479,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (1.0 / r["c_rel"], r["q_rel"]),
@@ -492,10 +492,10 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
-    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 768d, Log-Scale)")
+    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 1024d, Log-Scale)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Quality vs. Compression Factor (Naive Only)")
     ax.set_xscale("log")

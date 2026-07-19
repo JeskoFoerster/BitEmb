@@ -7,7 +7,7 @@ and compared via Pearson r, Spearman ρ, MAE, and RMSE.
 
 The analysis spans a 2D experimental matrix:
   - Bit depth: float32, 4-bit, 2-bit, 1-bit (binary)
-  - Dimensionality: 64, 128, 256, 384, 768
+  - Dimensionality: 64, 128, 256, 384, 512, 768, 1024
 
 Reference: chapMethodik.tex, Section 5 (Phase 2).
 """
@@ -155,7 +155,7 @@ class RawDistances:
 
 def compute_raw_distances(
     embeddings: NDArray[np.float32],
-    dim: int = 768,
+    dim: int = 1024,
     pca_reducer: PCAReducer | None = None,
     n_pairs: int = N_PAIRS,
     seed: int = SEED,
@@ -165,7 +165,7 @@ def compute_raw_distances(
     Returns the [0,1]-normalized distance vectors for float and all quantized
     representations, allowing direct visual comparison.
     """
-    if pca_reducer is not None and dim < 768:
+    if pca_reducer is not None and dim < 1024:
         embs = pca_reducer.transform(embeddings)
     else:
         embs = embeddings
@@ -191,7 +191,7 @@ def compute_raw_distances(
 
 def compute_distance_distortion(
     embeddings: NDArray[np.float32],
-    dim: int = 768,
+    dim: int = 1024,
     pca_reducer: PCAReducer | None = None,
     n_pairs: int = N_PAIRS,
     seed: int = SEED,
@@ -199,9 +199,9 @@ def compute_distance_distortion(
     """Run the full Phase 2 distortion analysis for one PCA dimension.
 
     Args:
-        embeddings: L2-normalized float32 corpus embeddings (n, 768).
-        dim: Target dimensionality (768 = no reduction).
-        pca_reducer: Fitted PCAReducer if dim < 768, else None.
+        embeddings: L2-normalized float32 corpus embeddings (n, 1024).
+        dim: Target dimensionality (1024 = no reduction).
+        pca_reducer: Fitted PCAReducer if dim < 1024, else None.
         n_pairs: Number of random pairs to sample.
         seed: Random seed for pair sampling.
 
@@ -209,7 +209,7 @@ def compute_distance_distortion(
         List of 5 DistortionResult (one per bit depth: 16, 8, 4, 2, 1).
     """
     # Apply PCA reduction if needed
-    if pca_reducer is not None and dim < 768:
+    if pca_reducer is not None and dim < 1024:
         embs = pca_reducer.transform(embeddings)
     else:
         embs = embeddings

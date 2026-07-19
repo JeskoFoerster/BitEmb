@@ -102,7 +102,7 @@ Ein Verfahren mit niedrigem Overlap aber hoher Trustworthiness ist für Retrieva
 Beide Metriken werden für die volle 2D-Matrix ausgewertet:
 
 - **Bittiefe:** 4-Bit (TurboQuant), 2-Bit (TurboQuant), 1-Bit (binär)
-- **Dimensionen:** 64, 128, 256, 384, 768
+- **Dimensionen:** 64, 128, 256, 384, 512, 768, 1024
 - **k-Werte:** 5, 10, 20
 
 > **Grafiken `neighborhood_pareto_overlap_k5.pdf`, `neighborhood_pareto_overlap_k20.pdf`:** Pareto-Front mit Speicherbedarf (Bit pro Vektor) auf der x-Achse und Overlap auf der y-Achse. Zeigt welche Kombination den besten Overlap für ein gegebenes Speicherbudget liefert.

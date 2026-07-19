@@ -53,7 +53,7 @@ def plot_cumulative_variance(
     """Plot cumulative explained variance for multiple datasets.
 
     Args:
-        variances: {dataset_name: cumulative_variance_array (768,)}.
+        variances: {dataset_name: cumulative_variance_array (1024,)}.
         output_path: Path for the output PDF.
         pca_dims: Vertical reference lines for PCA reduction targets.
 
@@ -77,7 +77,7 @@ def plot_cumulative_variance(
 
     ax.set_xlabel("Number of principal components")
     ax.set_ylabel("Cumulative explained variance")
-    ax.set_xlim(1, 768)
+    ax.set_xlim(1, 1024)
     ax.set_ylim(0.5, 1.0)
     ax.legend(loc="lower right")
 
@@ -101,7 +101,7 @@ def plot_variance_spectrum(
     motivating TurboQuant's rotation step.
 
     Args:
-        variances: {dataset_name: explained_variance_ratio array (768,)}.
+        variances: {dataset_name: explained_variance_ratio array (1024,)}.
         output_path: Path for the output PDF.
         n_components: Number of components to display.
 
@@ -115,9 +115,9 @@ def plot_variance_spectrum(
         ax.plot(range(1, n_components + 1), var_ratio[:n_components], label=name)
 
     # Uniform baseline (what rotation achieves)
-    uniform = 1.0 / 768
+    uniform = 1.0 / 1024
     ax.axhline(uniform, color="black", linestyle=":", linewidth=0.8)
-    ax.text(n_components - 15, uniform * 1.3, "uniform (1/768)", fontsize=7)
+    ax.text(n_components - 15, uniform * 1.3, "uniform (1/1024)", fontsize=7)
 
     ax.set_xlabel("Principal component rank")
     ax.set_ylabel("Explained variance ratio")
@@ -138,10 +138,10 @@ def plot_dimension_distribution(
     stats: dict[str, dict[str, NDArray[np.float64]]],
     output_path: Path,
 ) -> Path:
-    """Two-panel plot: |skewness| and kurtosis distributions across 768 dims.
+    """Two-panel plot: |skewness| and kurtosis distributions across 1024 dims.
 
     Args:
-        stats: {dataset_name: {"skewness": array(768,), "kurtosis": array(768,)}}.
+        stats: {dataset_name: {"skewness": array(1024,), "kurtosis": array(1024,)}}.
         output_path: Path for the output PDF.
     """
     _apply_style()
@@ -245,7 +245,7 @@ def plot_distance_scatter(
     d_quant: dict[int, NDArray[np.float64]],
     output_path: Path,
     dataset_name: str = "",
-    dim: int = 768,
+    dim: int = 1024,
 ) -> Path:
     """Scatter plot: float distance vs. quantized distance for each bit depth.
 
@@ -286,7 +286,7 @@ def plot_error_histogram(
     d_quant: dict[int, NDArray[np.float64]],
     output_path: Path,
     dataset_name: str = "",
-    dim: int = 768,
+    dim: int = 1024,
 ) -> Path:
     """Histogram of absolute errors |d_float - d_quant| per bit depth.
 
@@ -491,7 +491,7 @@ def plot_neighborhood_heatmap(
 def plot_neighborhood_overlap_by_k(
     results: list[dict],
     output_path: Path,
-    dim: int = 768,
+    dim: int = 1024,
     metric: str = "overlap",
     ylabel: str | None = None,
 ) -> Path:
@@ -654,7 +654,7 @@ def plot_neighborhood_by_dim(
     ax.set_xlabel("PCA dimensions")
     ax.set_ylabel(label)
     ax.set_ylim(0.0, 1.05)
-    ax.set_xticks([64, 128, 256, 384, 768])
+    ax.set_xticks([64, 128, 256, 384, 512, 768, 1024])
     ax.legend(loc="lower right", ncol=2, fontsize=7)
     ax.set_title(f"{label} vs. Dimension (k={k})")
 
@@ -834,7 +834,7 @@ def plot_phase5_memory_compression_by_dim(
             ratios = []
             for entry in ds_entries:
                 numpy_mem = {r["representation"]: r for r in entry["numpy_vectorized"]}
-                ratios.append(numpy_mem[rep]["compression_ratio_vs_float768"])
+                ratios.append(numpy_mem[rep]["compression_ratio_vs_float1024"])
             ax.plot(
                 dims,
                 ratios,
