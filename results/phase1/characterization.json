@@ -22,7 +22,7 @@
     "intrinsic_dimensionality": {
       "twonn": 13.155116769150379,
       "pca_95": 390,
-      "pca_cumulative_variance_50": 0.49998337030410767,
+      "pca_cumulative_variance_50": 0.4999832808971405,
       "pca_cumulative_variance_100": 0.6524887681007385,
       "pca_cumulative_variance_256": 0.8735674619674683
     }
@@ -50,7 +50,7 @@
     "intrinsic_dimensionality": {
       "twonn": 22.071865295642535,
       "pca_95": 395,
-      "pca_cumulative_variance_50": 0.5270451307296753,
+      "pca_cumulative_variance_50": 0.5270450711250305,
       "pca_cumulative_variance_100": 0.6697492599487305,
       "pca_cumulative_variance_256": 0.8777461647987366
     }
@@ -78,9 +78,9 @@
     "intrinsic_dimensionality": {
       "twonn": 11.062335398110958,
       "pca_95": 417,
-      "pca_cumulative_variance_50": 0.4998158075737237,
-      "pca_cumulative_variance_100": 0.6381754922512171,
-      "pca_cumulative_variance_256": 0.8544873434180078
+      "pca_cumulative_variance_50": 0.49981574821176117,
+      "pca_cumulative_variance_100": 0.638175474015159,
+      "pca_cumulative_variance_256": 0.8544873507036737
     }
   }
 ]
