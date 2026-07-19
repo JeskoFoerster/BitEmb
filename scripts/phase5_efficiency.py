@@ -1,4 +1,4 @@
-﻿"""Phase 5: NumPy runtime and memory efficiency analysis.
+"""Phase 5: NumPy runtime and memory efficiency analysis.
 
 Examples:
     python scripts/phase5_efficiency.py --synthetic --max-docs 1000
@@ -147,6 +147,9 @@ def _numpy_runtime_records(
     layouts = build_numpy_layouts(embeddings)
 
     runtime = []
+    
+    # ------------------ PAIRWISE DISTANCE ------------------
+    # float32
     runtime.append(measure_runtime(
         lambda: cosine_distance_pairs_numpy(layouts.float32, pairs),
         representation="float32",
@@ -160,9 +163,10 @@ def _numpy_runtime_records(
         throughput_units=pairs.shape[0],
         notes="NumPy einsum over sampled pairs",
     ))
+    # float16
     runtime.append(measure_runtime(
-        lambda: turboquant_distance_pairs_numpy(layouts.tq4, pairs),
-        representation="4bit",
+        lambda: cosine_distance_pairs_numpy(layouts.float16, pairs),
+        representation="16bit",
         operation="pairwise_distance",
         implementation="numpy_vectorized",
         n_vectors=n,
@@ -171,11 +175,49 @@ def _numpy_runtime_records(
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=pairs.shape[0],
-        notes="NumPy vectorized distance over packed 4-bit layout",
+        notes="NumPy einsum over sampled pairs (float16)",
     ))
+    
+    # Multi-bit Naive
+    for b in (8, 4, 2):
+        layout_name = f"naive_{b}bit"
+        layout_obj = getattr(layouts, f"naive_{b}bit")
+        runtime.append(measure_runtime(
+            lambda l=layout_obj: turboquant_distance_pairs_numpy(l, pairs),
+            representation=layout_name,
+            operation="pairwise_distance",
+            implementation="numpy_vectorized",
+            n_vectors=n,
+            dim=dim,
+            n_pairs=pairs.shape[0],
+            warmup_runs=warmup_runs,
+            measurement_runs=measurement_runs,
+            throughput_units=pairs.shape[0],
+            notes=f"NumPy vectorized distance over packed {b}-bit layout (naive)",
+        ))
+        
+    # Multi-bit TurboQuant
+    for b in (8, 4, 2):
+        layout_name = f"tq_{b}bit"
+        layout_obj = getattr(layouts, f"tq_{b}bit")
+        runtime.append(measure_runtime(
+            lambda l=layout_obj: turboquant_distance_pairs_numpy(l, pairs),
+            representation=layout_name,
+            operation="pairwise_distance",
+            implementation="numpy_vectorized",
+            n_vectors=n,
+            dim=dim,
+            n_pairs=pairs.shape[0],
+            warmup_runs=warmup_runs,
+            measurement_runs=measurement_runs,
+            throughput_units=pairs.shape[0],
+            notes=f"NumPy vectorized distance over packed {b}-bit layout (rotated)",
+        ))
+        
+    # 1-bit Naive
     runtime.append(measure_runtime(
-        lambda: turboquant_distance_pairs_numpy(layouts.tq2, pairs),
-        representation="2bit",
+        lambda: hamming_distance_pairs_numpy(layouts.naive_1bit, pairs),
+        representation="naive_1bit",
         operation="pairwise_distance",
         implementation="numpy_vectorized",
         n_vectors=n,
@@ -184,11 +226,12 @@ def _numpy_runtime_records(
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=pairs.shape[0],
-        notes="NumPy vectorized distance over packed 2-bit layout",
+        notes="NumPy vectorized XOR plus lookup-table popcount (naive)",
     ))
+    # 1-bit TurboQuant
     runtime.append(measure_runtime(
-        lambda: hamming_distance_pairs_numpy(layouts.binary1, pairs),
-        representation="1bit",
+        lambda: hamming_distance_pairs_numpy(layouts.tq_1bit, pairs),
+        representation="tq_1bit",
         operation="pairwise_distance",
         implementation="numpy_vectorized",
         n_vectors=n,
@@ -197,9 +240,11 @@ def _numpy_runtime_records(
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=pairs.shape[0],
-        notes="NumPy vectorized XOR plus lookup-table popcount",
+        notes="NumPy vectorized XOR plus lookup-table popcount (rotated)",
     ))
 
+    # ------------------ TOP-K SEARCH ------------------
+    # float32
     runtime.append(measure_runtime(
         lambda: knn_cosine_numpy(layouts.float32, k),
         representation="float32",
@@ -213,9 +258,10 @@ def _numpy_runtime_records(
         throughput_units=n,
         notes="NumPy matrix multiplication plus argpartition",
     ))
+    # float16
     runtime.append(measure_runtime(
-        lambda: knn_turboquant_numpy(layouts.tq4, k),
-        representation="4bit",
+        lambda: knn_cosine_numpy(layouts.float16, k),
+        representation="16bit",
         operation="top_k",
         implementation="numpy_vectorized",
         n_vectors=n,
@@ -224,11 +270,49 @@ def _numpy_runtime_records(
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=n,
-        notes="Batched NumPy top-k over dequantized 4-bit values",
+        notes="NumPy matrix multiplication plus argpartition (float16)",
     ))
+    
+    # Multi-bit Naive
+    for b in (8, 4, 2):
+        layout_name = f"naive_{b}bit"
+        layout_obj = getattr(layouts, f"naive_{b}bit")
+        runtime.append(measure_runtime(
+            lambda l=layout_obj: knn_turboquant_numpy(l, k),
+            representation=layout_name,
+            operation="top_k",
+            implementation="numpy_vectorized",
+            n_vectors=n,
+            dim=dim,
+            k=k,
+            warmup_runs=warmup_runs,
+            measurement_runs=measurement_runs,
+            throughput_units=n,
+            notes=f"Batched NumPy top-k over dequantized {b}-bit values (naive)",
+        ))
+        
+    # Multi-bit TurboQuant
+    for b in (8, 4, 2):
+        layout_name = f"tq_{b}bit"
+        layout_obj = getattr(layouts, f"tq_{b}bit")
+        runtime.append(measure_runtime(
+            lambda l=layout_obj: knn_turboquant_numpy(l, k),
+            representation=layout_name,
+            operation="top_k",
+            implementation="numpy_vectorized",
+            n_vectors=n,
+            dim=dim,
+            k=k,
+            warmup_runs=warmup_runs,
+            measurement_runs=measurement_runs,
+            throughput_units=n,
+            notes=f"Batched NumPy top-k over dequantized {b}-bit values (rotated)",
+        ))
+        
+    # 1-bit Naive
     runtime.append(measure_runtime(
-        lambda: knn_turboquant_numpy(layouts.tq2, k),
-        representation="2bit",
+        lambda: knn_hamming_numpy(layouts.naive_1bit, k),
+        representation="naive_1bit",
         operation="top_k",
         implementation="numpy_vectorized",
         n_vectors=n,
@@ -237,11 +321,12 @@ def _numpy_runtime_records(
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=n,
-        notes="Batched NumPy top-k over dequantized 2-bit values",
+        notes="Batched NumPy XOR plus lookup-table popcount and argpartition (naive)",
     ))
+    # 1-bit TurboQuant
     runtime.append(measure_runtime(
-        lambda: knn_hamming_numpy(layouts.binary1, k),
-        representation="1bit",
+        lambda: knn_hamming_numpy(layouts.tq_1bit, k),
+        representation="tq_1bit",
         operation="top_k",
         implementation="numpy_vectorized",
         n_vectors=n,
@@ -250,8 +335,9 @@ def _numpy_runtime_records(
         warmup_runs=warmup_runs,
         measurement_runs=measurement_runs,
         throughput_units=n,
-        notes="Batched NumPy XOR plus lookup-table popcount and argpartition",
+        notes="Batched NumPy XOR plus lookup-table popcount and argpartition (rotated)",
     ))
+
     return dataclasses_to_dicts(runtime)
 
 
@@ -381,8 +467,8 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=True)
     memory_outputs, runtime_outputs = run(args)
 
-    memory_path = args.output / "memory.json"
-    runtime_path = args.output / "runtime.json"
+    memory_path = args.output / "memory_metrics.json"
+    runtime_path = args.output / "runtime_metrics.json"
     memory_path.write_text(json.dumps(memory_outputs, indent=2), encoding="utf-8")
     runtime_path.write_text(json.dumps(runtime_outputs, indent=2), encoding="utf-8")
     print(f"\nSaved memory results to {memory_path}")

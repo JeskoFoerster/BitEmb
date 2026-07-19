@@ -757,7 +757,7 @@ def plot_phase5_memory_theoretical_vs_numpy(
     """Bar plot comparing theoretical and NumPy bytes per vector.
 
     Args:
-        results: List of records from phase5 memory.json.
+        results: List of records from phase5 memory_metrics.json.
         output_path: Path for the output PDF.
     """
     _apply_style()

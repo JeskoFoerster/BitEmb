@@ -1,17 +1,9 @@
-"""Quantization methods: naive binary, TurboQuant 2-bit and 4-bit.
+"""Quantization methods: naive and TurboQuant (rotated) versions for 1, 2, 4, and 8 bits.
 
-TurboQuant (Zandieh et al., 2025):
-  1. Multiply embeddings by a random orthogonal matrix (decorrelates dims).
-  2. Apply uniform scalar quantization per dimension.
-
-The rotation is data-independent and preserves all distances/angles exactly.
-It redistributes variance uniformly so that a fixed-grid quantizer works
-efficiently across all dimensions.
-
-Additionally provides PCA-based dimension reduction (Section 3.3.3 of Methodik):
-  - Fit PCA on corpus embeddings (unsupervised, task-agnostic).
-  - Project both corpus and queries to d ∈ {64, 128, 256, 384, 768}.
-  - Quantization is then applied on the reduced vectors.
+Provides:
+  - Naive and rotated binarization (1-bit)
+  - Uniform scalar quantization with/without rotation (2-bit, 4-bit, 8-bit)
+  - PCA-based dimension reduction
 """
 
 from __future__ import annotations
@@ -39,48 +31,43 @@ def _get_rotation(dim: int = MODEL_DIM) -> NDArray[np.float64]:
     return _ROTATIONS[dim]
 
 
-# ---------- Binary quantization ----------
-
-
-def binarize(embeddings: NDArray[np.float32]) -> NDArray[np.uint8]:
-    """Naive sign-threshold binarization → packed uint8.
-
-    Each dimension becomes 1 if positive, 0 otherwise.
-    Compression: 32x vs float32.
-    """
-    return np.packbits((embeddings > 0).astype(np.uint8), axis=1)
-
-
-_POPCOUNT_TABLE = np.array([bin(i).count("1") for i in range(256)], dtype=np.int64)
-
-
-def hamming_distance(a: NDArray[np.uint8], b: NDArray[np.uint8]) -> NDArray[np.int64]:
-    """Hamming distance between packed bit vectors (a: n×d', b: 1×d' or m×d').
-
-    Returns integer distance array.
-    """
-    xor = np.bitwise_xor(a, b)
-    return _POPCOUNT_TABLE[xor].sum(axis=-1)
-
-
-# ---------- TurboQuant ----------
-
-
 def _rotate(embeddings: NDArray[np.float32]) -> NDArray[np.float64]:
     """Apply the cached random orthogonal rotation."""
     rot = _get_rotation(embeddings.shape[1])
     return embeddings.astype(np.float64) @ rot.T
 
 
+# ---------- 1-Bit Binarization (Naive & Rotated) ----------
+
+
+def binarize(embeddings: NDArray[np.float32]) -> NDArray[np.uint8]:
+    """Naive sign-threshold binarization → packed uint8."""
+    return np.packbits((embeddings > 0).astype(np.uint8), axis=1)
+
+
+def binarize_rotated(embeddings: NDArray[np.float32]) -> NDArray[np.uint8]:
+    """Rotated sign-threshold binarization → packed uint8."""
+    rotated = _rotate(embeddings).astype(np.float32)
+    return binarize(rotated)
+
+
+_POPCOUNT_TABLE = np.array([bin(i).count("1") for i in range(256)], dtype=np.int64)
+
+
+def hamming_distance(a: NDArray[np.uint8], b: NDArray[np.uint8]) -> NDArray[np.int64]:
+    """Hamming distance between packed bit vectors."""
+    xor = np.bitwise_xor(a, b)
+    return _POPCOUNT_TABLE[xor].sum(axis=-1)
+
+
+# ---------- Multi-Bit Uniform Quantization (Naive & TurboQuant) ----------
+
+
 def _uniform_scalar_quantize(
     values: NDArray[np.float64], bits: int
 ) -> NDArray[np.uint8]:
-    """Uniform scalar quantization per-dimension to `bits` bit levels.
-
-    Maps each dimension's range [min, max] to {0, ..., 2^bits - 1}.
-    Returns uint8 codes (sufficient for up to 8 bits).
-    """
-    levels = (1 << bits) - 1  # e.g. 3 for 2-bit, 15 for 4-bit
+    """Uniform scalar quantization per-dimension to `bits` bit levels."""
+    levels = (1 << bits) - 1
     col_min = values.min(axis=0, keepdims=True)
     col_max = values.max(axis=0, keepdims=True)
     span = col_max - col_min
@@ -90,15 +77,8 @@ def _uniform_scalar_quantize(
     return codes
 
 
-class TurboQuantIndex:
-    """Stores TurboQuant-compressed embeddings with metadata for distance computation.
-
-    Attributes:
-        codes: uint8 quantization codes (n, dim)
-        bits: bit depth (2 or 4)
-        col_min: per-dimension minimum of rotated embeddings
-        col_max: per-dimension maximum of rotated embeddings
-    """
+class QuantizedIndex:
+    """Stores quantized embeddings (naive or TurboQuant) with reconstruction metadata."""
 
     def __init__(
         self,
@@ -106,15 +86,17 @@ class TurboQuantIndex:
         bits: int,
         col_min: NDArray[np.float64],
         col_max: NDArray[np.float64],
+        is_rotated: bool = True,
     ) -> None:
         self.codes = codes
         self.bits = bits
         self.col_min = col_min
         self.col_max = col_max
         self._levels = (1 << bits) - 1
+        self.is_rotated = is_rotated
 
     def dequantize(self) -> NDArray[np.float64]:
-        """Reconstruct approximate rotated vectors from codes."""
+        """Reconstruct approximate rotated/unrotated vectors from codes."""
         span = self.col_max - self.col_min
         return self.codes.astype(np.float64) / self._levels * span + self.col_min
 
@@ -131,81 +113,71 @@ class TurboQuantIndex:
         return int(np.ceil(self.n * self.dim * self.bits / 8))
 
 
-def turboquant_encode(
-    embeddings: NDArray[np.float32], bits: int = 2
-) -> TurboQuantIndex:
-    """Encode float embeddings with TurboQuant.
-
-    Args:
-        embeddings: L2-normalized float32 embeddings (n, dim).
-        bits: Quantization depth (2 or 4).
-
-    Returns:
-        TurboQuantIndex with quantized codes and reconstruction params.
-    """
-    if bits not in (2, 4):
-        raise ValueError("TurboQuant supports 2-bit or 4-bit quantization")
-    rotated = _rotate(embeddings)
-    col_min = rotated.min(axis=0)
-    col_max = rotated.max(axis=0)
-    codes = _uniform_scalar_quantize(rotated, bits)
-    return TurboQuantIndex(codes, bits, col_min, col_max)
+# Backwards compatibility alias
+TurboQuantIndex = QuantizedIndex
 
 
+def quantize_encode(
+    embeddings: NDArray[np.float32], bits: int = 2, is_rotated: bool = True
+) -> QuantizedIndex:
+    """Encode float embeddings using naive or rotated uniform scalar quantization."""
+    if bits not in (2, 4, 8):
+        raise ValueError("Quantization supports 2-bit, 4-bit, or 8-bit")
+        
+    if is_rotated:
+        processed = _rotate(embeddings)
+    else:
+        processed = embeddings.astype(np.float64)
+        
+    col_min = processed.min(axis=0)
+    col_max = processed.max(axis=0)
+    codes = _uniform_scalar_quantize(processed, bits)
+    return QuantizedIndex(codes, bits, col_min, col_max, is_rotated=is_rotated)
+
+
+# Backwards compatibility alias
+def turboquant_encode(embeddings: NDArray[np.float32], bits: int = 2) -> TurboQuantIndex:
+    return quantize_encode(embeddings, bits=bits, is_rotated=True)
+
+
+def quantize_distance(
+    index: QuantizedIndex, query_embeddings: NDArray[np.float32]
+) -> NDArray[np.float64]:
+    """Compute asymmetric L2² distance between query and quantized index."""
+    if index.is_rotated:
+        query_processed = _rotate(query_embeddings)
+    else:
+        query_processed = query_embeddings.astype(np.float64)
+        
+    corpus_approx = index.dequantize()
+    q_sq = (query_processed**2).sum(axis=1, keepdims=True)
+    c_sq = (corpus_approx**2).sum(axis=1)
+    dots = query_processed @ corpus_approx.T
+    return q_sq + c_sq - 2 * dots
+
+
+# Backwards compatibility alias
 def turboquant_distance(
     index: TurboQuantIndex, query_embeddings: NDArray[np.float32]
 ) -> NDArray[np.float64]:
-    """Compute asymmetric L2² distance: exact rotated query vs quantized corpus.
-
-    Returns shape (n_queries, n_corpus).
-    """
-    query_rotated = _rotate(query_embeddings)
-    corpus_approx = index.dequantize()
-    # Efficient batch distance: ||q - c||² for all pairs
-    # = ||q||² + ||c||² - 2·q·cᵀ
-    q_sq = (query_rotated**2).sum(axis=1, keepdims=True)
-    c_sq = (corpus_approx**2).sum(axis=1)
-    dots = query_rotated @ corpus_approx.T
-    return q_sq + c_sq - 2 * dots
+    return quantize_distance(index, query_embeddings)
 
 
 # ---------- PCA Dimension Reduction ----------
 
 
 class PCAReducer:
-    """PCA-based dimension reduction fitted on corpus embeddings.
-
-    Fits an unsupervised, task-agnostic PCA on the corpus float space.
-    The same projection is then applied to queries, ensuring no information
-    leakage from relevance labels into the reduction.
-
-    Attributes:
-        n_components: Target dimensionality after reduction.
-        explained_variance_ratio_: Per-component explained variance (after fit).
-    """
+    """PCA-based dimension reduction fitted on corpus embeddings."""
 
     def __init__(self, n_components: int) -> None:
         self.n_components = n_components
         self._pca = PCA(n_components=n_components, random_state=SEED)
 
     def fit(self, corpus_embs: NDArray[np.float32]) -> "PCAReducer":
-        """Fit PCA on corpus embeddings (unsupervised).
-
-        Args:
-            corpus_embs: L2-normalized float32 corpus embeddings (n, 768).
-        """
         self._pca.fit(corpus_embs)
         return self
 
     def transform(self, embeddings: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Project embeddings to reduced space and re-normalize.
-
-        Args:
-            embeddings: Float32 embeddings (n, 768).
-
-        Returns:
-            L2-normalized float32 embeddings (n, n_components).
-        """
         reduced = self._pca.transform(embeddings).astype(np.float32)
         norms = np.linalg.norm(reduced, axis=1, keepdims=True)
         norms[norms == 0] = 1.0
@@ -213,10 +185,8 @@ class PCAReducer:
 
     @property
     def explained_variance_ratio_(self) -> NDArray[np.float64]:
-        """Explained variance ratio per component (available after fit)."""
         return self._pca.explained_variance_ratio_
 
     @property
     def cumulative_variance(self) -> NDArray[np.float64]:
-        """Cumulative explained variance (available after fit)."""
         return np.cumsum(self._pca.explained_variance_ratio_)
