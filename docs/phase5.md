@@ -1,4 +1,4 @@
-﻿# Phase 5: Laufzeit- und Speicheranalyse
+# Phase 5: Laufzeit- und Speicheranalyse
 
 ## Ziel
 
@@ -333,15 +333,15 @@ Alle Varianten müssen mit denselben Inputs gemessen werden:
 ```text
 results/
   phase5/
-    memory.json
-    runtime.json
+    memory_metrics.json
+    runtime_metrics.json
     figures/
 ```
 
-`memory.json` enthält für Float32, 4-Bit, 2-Bit und 1-Bit jeweils theoretischen
+`memory_metrics.json` enthält für Float32, 4-Bit, 2-Bit und 1-Bit jeweils theoretischen
 Speicher, NumPy-Layoutspeicher, NumPy-Payload-Speicher und Peak-Working-Memory.
 
-`runtime.json` enthält für Float32, 4-Bit, 2-Bit und 1-Bit jeweils theoretische
+`runtime_metrics.json` enthält für Float32, 4-Bit, 2-Bit und 1-Bit jeweils theoretische
 Arbeitsabschätzungen sowie praktisch gemessene NumPy-Laufzeiten und
 Durchsatzwerte für Pairwise-Distanzen und Top-k-Suche. Der Hauptwert ist
 `numpy_vectorized`; Python/NumPy und dequantisierte Varianten sind Referenz- bzw.
@@ -454,7 +454,7 @@ Aufgaben:
 - NumPy-Layoutspeicher pro Repräsentation messen
 - Metadaten wie `col_min` und `col_max` berücksichtigen
 - Peak-Working-Memory für Distanz- und Top-k-Operationen messen
-- `results/phase5/memory.json` mit praktischen Messwerten erzeugen
+- `results/phase5/memory_metrics.json` mit praktischen Messwerten erzeugen
 
 ### Schritt 4: Native C-Kernfunktionen
 
@@ -475,7 +475,7 @@ Aufgaben:
 - NumPy-vektorisierte Pairwise-Distanzen für Float32, 4-Bit, 2-Bit und 1-Bit messen
 - NumPy-vektorisierte Top-k-Suche für Float32, 4-Bit, 2-Bit und 1-Bit messen
 - Durchsatzwerte berechnen
-- `results/phase5/runtime.json` erzeugen
+- `results/phase5/runtime_metrics.json` erzeugen
 
 ### Schritt 6: Python/NumPy- und Dequantisierungsbaselines ergänzen
 
