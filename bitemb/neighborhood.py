@@ -17,6 +17,7 @@ Reference: chapMethodik.tex, Section "Phase 3: Nachbarschaftserhaltung".
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -45,11 +46,11 @@ class NeighborhoodResult:
     random_baseline: float  # E[overlap] = k / N
 
 
-def _knn_cosine(embs: NDArray[np.float32], k: int) -> NDArray[np.int64]:
+def _knn_cosine(embs: NDArray[Any], k: int) -> NDArray[np.int64]:
     """Compute exact k-NN indices via cosine similarity (brute-force).
 
     Args:
-        embs: L2-normalized embeddings (n, d). Cosine sim = dot product.
+        embs: L2-normalized embeddings. Cosine sim = dot product.
         k: Number of neighbors (excluding self).
 
     Returns:
@@ -291,13 +292,15 @@ def compute_neighborhood_preservation(
 
     # Compute k-NN in each quantized space
     knn_by_bits: dict[int, NDArray[np.int64]] = {
+        16: _knn_cosine(embs.astype(np.float16), max_k),
+        8: _knn_turboquant(embs, bits=8, k=max_k),
         4: _knn_turboquant(embs, bits=4, k=max_k),
         2: _knn_turboquant(embs, bits=2, k=max_k),
         1: _knn_hamming(binarize(embs), k=max_k),
     }
 
     results = []
-    for bit_depth in (4, 2, 1):
+    for bit_depth in (16, 8, 4, 2, 1):
         knn_quant = knn_by_bits[bit_depth]
         for k in k_values:
             overlap = _compute_overlap(knn_float, knn_quant, k)

@@ -5,1233 +5,679 @@
     "seed": 42,
     "results": [
       {
-        "bit_depth": 4,
+        "bit_depth": 16,
+        "dim": 64,
+        "k": 5,
+        "overlap": 0.9974146247347097,
+        "trustworthiness": 0.9999994929540182,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 16,
         "dim": 64,
         "k": 10,
-        "overlap": 0.86666,
-        "trustworthiness": 0.9998966315578293,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.998128497009454,
+        "trustworthiness": 0.9999996340983385,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
-        "bit_depth": 4,
+        "bit_depth": 16,
         "dim": 64,
-        "k": 50,
-        "overlap": 0.8870080000000001,
-        "trustworthiness": 0.9997131412326125,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.9986108431410379,
+        "trustworthiness": 0.999999724774842,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 4,
+        "bit_depth": 8,
         "dim": 64,
-        "k": 100,
-        "overlap": 0.8957959999999999,
-        "trustworthiness": 0.9995293947829673,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 5,
+        "overlap": 0.989619911248312,
+        "trustworthiness": 0.9999978525111359,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
-        "bit_depth": 2,
-        "dim": 64,
-        "k": 10,
-        "overlap": 0.42523999999999995,
-        "trustworthiness": 0.9923657819239643,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 64,
-        "k": 50,
-        "overlap": 0.48316800000000004,
-        "trustworthiness": 0.9818979299421261,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 64,
-        "k": 100,
-        "overlap": 0.5159039999999999,
-        "trustworthiness": 0.9741401839364883,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
+        "bit_depth": 8,
         "dim": 64,
         "k": 10,
-        "overlap": 0.35273999999999994,
-        "trustworthiness": 0.9564902357307654,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.990102257379896,
+        "trustworthiness": 0.9999978269921735,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
-        "bit_depth": 1,
+        "bit_depth": 8,
         "dim": 64,
-        "k": 50,
-        "overlap": 0.337892,
-        "trustworthiness": 0.8999526108234338,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 64,
-        "k": 100,
-        "overlap": 0.338256,
-        "trustworthiness": 0.8662276659449428,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 128,
-        "k": 10,
-        "overlap": 0.8931,
-        "trustworthiness": 0.9999332450596851,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 128,
-        "k": 50,
-        "overlap": 0.90256,
-        "trustworthiness": 0.9997871028530815,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.907334,
-        "trustworthiness": 0.9996281097020311,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 128,
-        "k": 10,
-        "overlap": 0.5169199999999999,
-        "trustworthiness": 0.9956923462734477,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 128,
-        "k": 50,
-        "overlap": 0.543644,
-        "trustworthiness": 0.9874180022337293,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.5660940000000001,
-        "trustworthiness": 0.9807754708732859,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 128,
-        "k": 10,
-        "overlap": 0.39652,
-        "trustworthiness": 0.9500298485304444,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 128,
-        "k": 50,
-        "overlap": 0.326252,
-        "trustworthiness": 0.87332156848411,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.30872,
-        "trustworthiness": 0.8336031227961646,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 256,
-        "k": 10,
-        "overlap": 0.91112,
-        "trustworthiness": 0.999952484702578,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 256,
-        "k": 50,
-        "overlap": 0.916684,
-        "trustworthiness": 0.999846304802518,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.9191240000000002,
-        "trustworthiness": 0.9997264328281266,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 256,
-        "k": 10,
-        "overlap": 0.60356,
-        "trustworthiness": 0.9978082575985555,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 256,
-        "k": 50,
-        "overlap": 0.6084,
-        "trustworthiness": 0.9919414844146613,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.619842,
-        "trustworthiness": 0.9868152337354367,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 256,
-        "k": 10,
-        "overlap": 0.40721999999999997,
-        "trustworthiness": 0.9360766897381884,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 256,
-        "k": 50,
-        "overlap": 0.294048,
-        "trustworthiness": 0.8350777768301351,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.26714,
-        "trustworthiness": 0.79145406495515,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 384,
-        "k": 10,
-        "overlap": 0.9230800000000001,
-        "trustworthiness": 0.9999624756745912,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 384,
-        "k": 50,
-        "overlap": 0.9259120000000001,
-        "trustworthiness": 0.9998803208447559,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 384,
-        "k": 100,
-        "overlap": 0.9283799999999999,
-        "trustworthiness": 0.9997839257655429,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 384,
-        "k": 10,
-        "overlap": 0.65074,
-        "trustworthiness": 0.998548476276457,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 384,
-        "k": 50,
-        "overlap": 0.651284,
-        "trustworthiness": 0.994375440349274,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 384,
-        "k": 100,
-        "overlap": 0.6593479999999999,
-        "trustworthiness": 0.9904557826580059,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 384,
-        "k": 10,
-        "overlap": 0.3909,
-        "trustworthiness": 0.9183539091182666,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 384,
-        "k": 50,
-        "overlap": 0.265692,
-        "trustworthiness": 0.8060133146512336,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 384,
-        "k": 100,
-        "overlap": 0.238038,
-        "trustworthiness": 0.7616971984740695,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 768,
-        "k": 10,
-        "overlap": 0.9468200000000001,
-        "trustworthiness": 0.9999797813220985,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 768,
-        "k": 50,
-        "overlap": 0.94916,
-        "trustworthiness": 0.9999436978373439,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 768,
-        "k": 100,
-        "overlap": 0.951268,
-        "trustworthiness": 0.9999038746262501,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 768,
-        "k": 10,
-        "overlap": 0.74972,
-        "trustworthiness": 0.9994638900591835,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 768,
-        "k": 50,
-        "overlap": 0.746888,
-        "trustworthiness": 0.9978298280028429,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 768,
-        "k": 100,
-        "overlap": 0.7524379999999999,
-        "trustworthiness": 0.9960931753789051,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 768,
-        "k": 10,
-        "overlap": 0.6405,
-        "trustworthiness": 0.9982184170929883,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 768,
-        "k": 50,
-        "overlap": 0.62784,
-        "trustworthiness": 0.9929261853995329,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 768,
-        "k": 100,
-        "overlap": 0.634918,
-        "trustworthiness": 0.9882639191669245,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      }
-    ]
-  },
-  {
-    "dataset": "fiqa",
-    "n_corpus": 57638,
-    "seed": 42,
-    "results": [
-      {
-        "bit_depth": 4,
-        "dim": 64,
-        "k": 10,
-        "overlap": 0.84062,
-        "trustworthiness": 0.9998578072023272,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "k": 20,
+        "overlap": 0.9909801273393788,
+        "trustworthiness": 0.9999978543671352,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
         "bit_depth": 4,
         "dim": 64,
-        "k": 50,
-        "overlap": 0.8778400000000002,
-        "trustworthiness": 0.9996622698751142,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 5,
+        "overlap": 0.8538684159753037,
+        "trustworthiness": 0.9999287525829985,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 4,
         "dim": 64,
-        "k": 100,
-        "overlap": 0.88926,
-        "trustworthiness": 0.9994716176925457,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 10,
+        "overlap": 0.8650395523827898,
+        "trustworthiness": 0.9998984921584567,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 4,
+        "dim": 64,
+        "k": 20,
+        "overlap": 0.876085278796064,
+        "trustworthiness": 0.9998504329132593,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 2,
+        "dim": 64,
+        "k": 5,
+        "overlap": 0.39764615087787,
+        "trustworthiness": 0.9948633781379296,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 2,
         "dim": 64,
         "k": 10,
-        "overlap": 0.34538,
-        "trustworthiness": 0.9895973838900591,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.4229210881728728,
+        "trustworthiness": 0.9926219626311727,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 2,
         "dim": 64,
-        "k": 50,
-        "overlap": 0.443904,
-        "trustworthiness": 0.9794495806680882,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 64,
-        "k": 100,
-        "overlap": 0.49111800000000005,
-        "trustworthiness": 0.9722593747809053,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 20,
+        "overlap": 0.4480320277831372,
+        "trustworthiness": 0.9892555505846522,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
         "bit_depth": 1,
         "dim": 64,
-        "k": 10,
-        "overlap": 0.2488,
-        "trustworthiness": 0.9374381903902096,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 64,
-        "k": 50,
-        "overlap": 0.286396,
-        "trustworthiness": 0.8865090904660372,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 64,
-        "k": 100,
-        "overlap": 0.30280999999999997,
-        "trustworthiness": 0.8560352069285493,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 128,
-        "k": 10,
-        "overlap": 0.86836,
-        "trustworthiness": 0.999902983248069,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 128,
-        "k": 50,
-        "overlap": 0.894284,
-        "trustworthiness": 0.9997553424713169,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.9039380000000001,
-        "trustworthiness": 0.9996085237653366,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 128,
-        "k": 10,
-        "overlap": 0.4351,
-        "trustworthiness": 0.9940409348981843,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 128,
-        "k": 50,
-        "overlap": 0.5120600000000001,
-        "trustworthiness": 0.9863894340542187,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.549824,
-        "trustworthiness": 0.980554100422724,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 128,
-        "k": 10,
-        "overlap": 0.25966,
-        "trustworthiness": 0.919416414886147,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 128,
-        "k": 50,
-        "overlap": 0.25948000000000004,
-        "trustworthiness": 0.8529730709716723,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.264268,
-        "trustworthiness": 0.8180393772553871,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 256,
-        "k": 10,
-        "overlap": 0.8883200000000001,
-        "trustworthiness": 0.9999308014846022,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 256,
-        "k": 50,
-        "overlap": 0.9099,
-        "trustworthiness": 0.9998269217179409,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.916802,
-        "trustworthiness": 0.999711920816579,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 256,
-        "k": 10,
-        "overlap": 0.51628,
-        "trustworthiness": 0.9967537646704785,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 256,
-        "k": 50,
-        "overlap": 0.5825520000000001,
-        "trustworthiness": 0.9915194411615392,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.611872,
-        "trustworthiness": 0.9872132116713063,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 256,
-        "k": 10,
-        "overlap": 0.25134,
-        "trustworthiness": 0.8972336523221988,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 256,
-        "k": 50,
-        "overlap": 0.226084,
-        "trustworthiness": 0.8139398615087826,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.225004,
-        "trustworthiness": 0.7764345623260129,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 384,
-        "k": 10,
-        "overlap": 0.9018600000000002,
-        "trustworthiness": 0.9999467709900692,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 384,
-        "k": 50,
-        "overlap": 0.9208799999999999,
-        "trustworthiness": 0.9998670606152908,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 384,
-        "k": 100,
-        "overlap": 0.9269279999999999,
-        "trustworthiness": 0.9997795277863697,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 384,
-        "k": 10,
-        "overlap": 0.5714400000000001,
-        "trustworthiness": 0.99784674089678,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 384,
-        "k": 50,
-        "overlap": 0.627516,
-        "trustworthiness": 0.9940754829931973,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 384,
-        "k": 100,
-        "overlap": 0.6538360000000001,
-        "trustworthiness": 0.9908939989689659,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 384,
-        "k": 10,
-        "overlap": 0.2356,
-        "trustworthiness": 0.8776605035610392,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 384,
-        "k": 50,
-        "overlap": 0.202236,
-        "trustworthiness": 0.7854874582191085,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 384,
-        "k": 100,
-        "overlap": 0.19933599999999999,
-        "trustworthiness": 0.7472844511805341,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 4,
-        "dim": 768,
-        "k": 10,
-        "overlap": 0.9279400000000001,
-        "trustworthiness": 0.9999687431036213,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 768,
-        "k": 50,
-        "overlap": 0.9428919999999998,
-        "trustworthiness": 0.9999308015026906,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 768,
-        "k": 100,
-        "overlap": 0.9485540000000001,
-        "trustworthiness": 0.9998936719249407,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 768,
-        "k": 10,
-        "overlap": 0.67342,
-        "trustworthiness": 0.9990463998395025,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 768,
-        "k": 50,
-        "overlap": 0.7116319999999999,
-        "trustworthiness": 0.9970824587267743,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 768,
-        "k": 100,
-        "overlap": 0.7316739999999999,
-        "trustworthiness": 0.9953225532529126,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 1,
-        "dim": 768,
-        "k": 10,
-        "overlap": 0.5757800000000001,
-        "trustworthiness": 0.9978306550305949,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 1,
-        "dim": 768,
-        "k": 50,
-        "overlap": 0.6200559999999999,
-        "trustworthiness": 0.9937102243882627,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 768,
-        "k": 100,
-        "overlap": 0.645956,
-        "trustworthiness": 0.9904266386225384,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      }
-    ]
-  },
-  {
-    "dataset": "trec-covid",
-    "n_corpus": 171332,
-    "seed": 42,
-    "results": [
-      {
-        "bit_depth": 4,
-        "dim": 64,
-        "k": 10,
-        "overlap": 0.8530800000000001,
-        "trustworthiness": 0.9998813642291102,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 4,
-        "dim": 64,
-        "k": 50,
-        "overlap": 0.8866360000000001,
-        "trustworthiness": 0.9997161100619352,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 64,
-        "k": 100,
-        "overlap": 0.8976639999999999,
-        "trustworthiness": 0.9995529918548304,
-        "n_docs": 5000,
-        "random_baseline": 0.02
-      },
-      {
-        "bit_depth": 2,
-        "dim": 64,
-        "k": 10,
-        "overlap": 0.38251999999999997,
-        "trustworthiness": 0.9916805256294513,
-        "n_docs": 5000,
-        "random_baseline": 0.002
-      },
-      {
-        "bit_depth": 2,
-        "dim": 64,
-        "k": 50,
-        "overlap": 0.477376,
-        "trustworthiness": 0.9830355024875622,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 2,
-        "dim": 64,
-        "k": 100,
-        "overlap": 0.520538,
-        "trustworthiness": 0.9768737473966388,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 5,
+        "overlap": 0.34794520547945207,
+        "trustworthiness": 0.9704760397471854,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 1,
         "dim": 64,
         "k": 10,
-        "overlap": 0.29473999999999995,
-        "trustworthiness": 0.9412602989266727,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.35062704997105926,
+        "trustworthiness": 0.9574061716595909,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 1,
         "dim": 64,
-        "k": 50,
-        "overlap": 0.31076800000000004,
-        "trustworthiness": 0.8853180075134531,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.3449836002315262,
+        "trustworthiness": 0.9374956364174559,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 1,
-        "dim": 64,
-        "k": 100,
-        "overlap": 0.31606000000000006,
-        "trustworthiness": 0.851575321991958,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "bit_depth": 16,
+        "dim": 128,
+        "k": 5,
+        "overlap": 0.998186378545244,
+        "trustworthiness": 0.9999996495417479,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 16,
+        "dim": 128,
+        "k": 10,
+        "overlap": 0.9988230754389351,
+        "trustworthiness": 0.9999997722448841,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 16,
+        "dim": 128,
+        "k": 20,
+        "overlap": 0.9988809569747252,
+        "trustworthiness": 0.9999997771986816,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 8,
+        "dim": 128,
+        "k": 5,
+        "overlap": 0.9925139880378159,
+        "trustworthiness": 0.9999985161448474,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 8,
+        "dim": 128,
+        "k": 10,
+        "overlap": 0.9916264711557014,
+        "trustworthiness": 0.9999982414318105,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 8,
+        "dim": 128,
+        "k": 20,
+        "overlap": 0.992330696507814,
+        "trustworthiness": 0.9999982625241723,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 4,
+        "dim": 128,
+        "k": 5,
+        "overlap": 0.8868608913756513,
+        "trustworthiness": 0.99995130867263,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 4,
         "dim": 128,
         "k": 10,
-        "overlap": 0.8756200000000001,
-        "trustworthiness": 0.9999131467549404,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.8913370634767509,
+        "trustworthiness": 0.9999327786376155,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 4,
         "dim": 128,
-        "k": 50,
-        "overlap": 0.8998799999999999,
-        "trustworthiness": 0.9997784595390395,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.9078860000000001,
-        "trustworthiness": 0.9996380410351583,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 20,
+        "overlap": 0.8966332240015435,
+        "trustworthiness": 0.9998970938750887,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
         "bit_depth": 2,
         "dim": 128,
-        "k": 10,
-        "overlap": 0.4618799999999999,
-        "trustworthiness": 0.9950146494131809,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "k": 5,
+        "overlap": 0.5118271271464403,
+        "trustworthiness": 0.9972375389255659,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 2,
         "dim": 128,
-        "k": 50,
-        "overlap": 0.532292,
-        "trustworthiness": 0.9881404130368565,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 10,
+        "overlap": 0.518869380667567,
+        "trustworthiness": 0.9958870973086532,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 2,
         "dim": 128,
-        "k": 100,
-        "overlap": 0.5679460000000001,
-        "trustworthiness": 0.9831553974636561,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 20,
+        "overlap": 0.525873046498167,
+        "trustworthiness": 0.9934538220396001,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 1,
+        "dim": 128,
+        "k": 5,
+        "overlap": 0.4225737989581323,
+        "trustworthiness": 0.9704378397977036,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 1,
         "dim": 128,
         "k": 10,
-        "overlap": 0.31142,
-        "trustworthiness": 0.9292510141438459,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.396469226316805,
+        "trustworthiness": 0.952246573662305,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 1,
         "dim": 128,
-        "k": 50,
-        "overlap": 0.286976,
-        "trustworthiness": 0.8546613999390801,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.36757669303492185,
+        "trustworthiness": 0.9247236893876268,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 1,
-        "dim": 128,
-        "k": 100,
-        "overlap": 0.27979,
-        "trustworthiness": 0.8170788567893598,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "bit_depth": 16,
+        "dim": 256,
+        "k": 5,
+        "overlap": 0.9985336677599846,
+        "trustworthiness": 0.9999997166507749,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 16,
+        "dim": 256,
+        "k": 10,
+        "overlap": 0.998880956974725,
+        "trustworthiness": 0.9999997834459554,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 16,
+        "dim": 256,
+        "k": 20,
+        "overlap": 0.9989677792784101,
+        "trustworthiness": 0.9999997977937615,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 8,
+        "dim": 256,
+        "k": 5,
+        "overlap": 0.9942118464209917,
+        "trustworthiness": 0.9999988367768653,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 8,
+        "dim": 256,
+        "k": 10,
+        "overlap": 0.9938259695157244,
+        "trustworthiness": 0.9999986969420422,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 8,
+        "dim": 256,
+        "k": 20,
+        "overlap": 0.9935365618367741,
+        "trustworthiness": 0.9999985583444102,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 4,
+        "dim": 256,
+        "k": 5,
+        "overlap": 0.9091645765000964,
+        "trustworthiness": 0.9999666169873452,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 4,
         "dim": 256,
         "k": 10,
-        "overlap": 0.89736,
-        "trustworthiness": 0.9999396408867489,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.9117306579201235,
+        "trustworthiness": 0.9999547924763524,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 4,
         "dim": 256,
-        "k": 50,
-        "overlap": 0.9132959999999999,
-        "trustworthiness": 0.9998360223372931,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 4,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.91896,
-        "trustworthiness": 0.9997275727394577,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 20,
+        "overlap": 0.9143546208759407,
+        "trustworthiness": 0.999929252156141,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
         "bit_depth": 2,
         "dim": 256,
-        "k": 10,
-        "overlap": 0.54456,
-        "trustworthiness": 0.9970640706189187,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "k": 5,
+        "overlap": 0.6063669689369091,
+        "trustworthiness": 0.9987743952964029,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 2,
         "dim": 256,
-        "k": 50,
-        "overlap": 0.592708,
-        "trustworthiness": 0.992131156462585,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 10,
+        "overlap": 0.6093768087979934,
+        "trustworthiness": 0.9979148421755056,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 2,
         "dim": 256,
-        "k": 100,
-        "overlap": 0.618468,
-        "trustworthiness": 0.9881414455098464,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 20,
+        "overlap": 0.6070711942890218,
+        "trustworthiness": 0.9962880907172077,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 1,
+        "dim": 256,
+        "k": 5,
+        "overlap": 0.45348253907003666,
+        "trustworthiness": 0.9637209345677666,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 1,
         "dim": 256,
         "k": 10,
-        "overlap": 0.30884,
-        "trustworthiness": 0.9107857999799378,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.40605826741269535,
+        "trustworthiness": 0.9364762792580149,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 1,
         "dim": 256,
-        "k": 50,
-        "overlap": 0.251796,
-        "trustworthiness": 0.8183008752157579,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.3545147597916265,
+        "trustworthiness": 0.8984348169935246,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 1,
-        "dim": 256,
-        "k": 100,
-        "overlap": 0.238772,
-        "trustworthiness": 0.7774835826373853,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "bit_depth": 16,
+        "dim": 384,
+        "k": 5,
+        "overlap": 0.9989195446652517,
+        "trustworthiness": 0.9999997837598019,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 16,
+        "dim": 384,
+        "k": 10,
+        "overlap": 0.9984564923789311,
+        "trustworthiness": 0.9999996975710757,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 16,
+        "dim": 384,
+        "k": 20,
+        "overlap": 0.99879413467104,
+        "trustworthiness": 0.9999997622204417,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 8,
+        "dim": 384,
+        "k": 5,
+        "overlap": 0.994173258730465,
+        "trustworthiness": 0.9999987994940726,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 8,
+        "dim": 384,
+        "k": 10,
+        "overlap": 0.995080069457843,
+        "trustworthiness": 0.9999989881698952,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 8,
+        "dim": 384,
+        "k": 20,
+        "overlap": 0.9942407871888866,
+        "trustworthiness": 0.999998730594169,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 4,
+        "dim": 384,
+        "k": 5,
+        "overlap": 0.9189272622033572,
+        "trustworthiness": 0.9999726791694512,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 4,
         "dim": 384,
         "k": 10,
-        "overlap": 0.90864,
-        "trustworthiness": 0.9999509639883639,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.9224194481960256,
+        "trustworthiness": 0.999963331426351,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 4,
         "dim": 384,
-        "k": 50,
-        "overlap": 0.9230520000000001,
-        "trustworthiness": 0.9998718302365722,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.9220239243681266,
+        "trustworthiness": 0.9999408509306589,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 4,
+        "bit_depth": 2,
         "dim": 384,
-        "k": 100,
-        "overlap": 0.9278279999999999,
-        "trustworthiness": 0.9997868485410867,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 5,
+        "overlap": 0.6530580744742427,
+        "trustworthiness": 0.9992094109225533,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 2,
         "dim": 384,
         "k": 10,
-        "overlap": 0.59888,
-        "trustworthiness": 0.998065278362925,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.6520355006752846,
+        "trustworthiness": 0.9985862381211472,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 2,
         "dim": 384,
-        "k": 50,
-        "overlap": 0.635808,
-        "trustworthiness": 0.9943050218296273,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.6481960254678757,
+        "trustworthiness": 0.9974475656287963,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 2,
+        "bit_depth": 1,
         "dim": 384,
-        "k": 100,
-        "overlap": 0.658112,
-        "trustworthiness": 0.9912815956284153,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 5,
+        "overlap": 0.4523249083542351,
+        "trustworthiness": 0.9554052462481859,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 1,
         "dim": 384,
         "k": 10,
-        "overlap": 0.29228000000000004,
-        "trustworthiness": 0.8957434767780118,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.3918001157630716,
+        "trustworthiness": 0.9207741620408576,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 1,
         "dim": 384,
-        "k": 50,
-        "overlap": 0.227332,
-        "trustworthiness": 0.7908096383389176,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.330436040902952,
+        "trustworthiness": 0.8739176962568349,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 1,
-        "dim": 384,
-        "k": 100,
-        "overlap": 0.214898,
-        "trustworthiness": 0.7500987941024848,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "bit_depth": 16,
+        "dim": 768,
+        "k": 5,
+        "overlap": 0.9946748987073123,
+        "trustworthiness": 0.9999989187990094,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 16,
+        "dim": 768,
+        "k": 10,
+        "overlap": 0.9949064248504726,
+        "trustworthiness": 0.999998950832991,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 16,
+        "dim": 768,
+        "k": 20,
+        "overlap": 0.9949643063862628,
+        "trustworthiness": 0.9999988934825278,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 8,
+        "dim": 768,
+        "k": 5,
+        "overlap": 0.9964885201620681,
+        "trustworthiness": 0.9999993065400543,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
+      },
+      {
+        "bit_depth": 8,
+        "dim": 768,
+        "k": 10,
+        "overlap": 0.9962377001736447,
+        "trustworthiness": 0.999999242060844,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
+      },
+      {
+        "bit_depth": 8,
+        "dim": 768,
+        "k": 20,
+        "overlap": 0.9963727570904881,
+        "trustworthiness": 0.9999992361097654,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
+      },
+      {
+        "bit_depth": 4,
+        "dim": 768,
+        "k": 5,
+        "overlap": 0.945437005595215,
+        "trustworthiness": 0.9999847289680776,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 4,
         "dim": 768,
         "k": 10,
-        "overlap": 0.9347200000000001,
-        "trustworthiness": 0.9999728197411977,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.9466718116920703,
+        "trustworthiness": 0.999980286114564,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 4,
         "dim": 768,
-        "k": 50,
-        "overlap": 0.9450440000000001,
-        "trustworthiness": 0.9999359577622093,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.9467972216862821,
+        "trustworthiness": 0.9999716892543205,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 4,
+        "bit_depth": 2,
         "dim": 768,
-        "k": 100,
-        "overlap": 0.9493359999999998,
-        "trustworthiness": 0.9998968454479843,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 5,
+        "overlap": 0.7483696700752459,
+        "trustworthiness": 0.9997002090632605,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 2,
         "dim": 768,
         "k": 10,
-        "overlap": 0.69708,
-        "trustworthiness": 0.9992034346474069,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.7494694192552576,
+        "trustworthiness": 0.9994788925612845,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 2,
         "dim": 768,
-        "k": 50,
-        "overlap": 0.725188,
-        "trustworthiness": 0.9973725040105594,
-        "n_docs": 5000,
-        "random_baseline": 0.01
+        "k": 20,
+        "overlap": 0.7479259116341886,
+        "trustworthiness": 0.9990555545726085,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       },
       {
-        "bit_depth": 2,
+        "bit_depth": 1,
         "dim": 768,
-        "k": 100,
-        "overlap": 0.73874,
-        "trustworthiness": 0.9957297490462934,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 5,
+        "overlap": 0.6464981670846999,
+        "trustworthiness": 0.9990581770019229,
+        "n_docs": 5183,
+        "random_baseline": 0.0009646922631680494
       },
       {
         "bit_depth": 1,
         "dim": 768,
         "k": 10,
-        "overlap": 0.5996,
-        "trustworthiness": 0.9979626441970108,
-        "n_docs": 5000,
-        "random_baseline": 0.002
+        "overlap": 0.6405363688983213,
+        "trustworthiness": 0.9982818154061588,
+        "n_docs": 5183,
+        "random_baseline": 0.0019293845263360988
       },
       {
         "bit_depth": 1,
         "dim": 768,
-        "k": 50,
-        "overlap": 0.629508,
-        "trustworthiness": 0.9938984709107523,
-        "n_docs": 5000,
-        "random_baseline": 0.01
-      },
-      {
-        "bit_depth": 1,
-        "dim": 768,
-        "k": 100,
-        "overlap": 0.6491399999999999,
-        "trustworthiness": 0.9904127435818125,
-        "n_docs": 5000,
-        "random_baseline": 0.02
+        "k": 20,
+        "overlap": 0.6337352884429867,
+        "trustworthiness": 0.9968461200226958,
+        "n_docs": 5183,
+        "random_baseline": 0.0038587690526721975
       }
     ]
   }
