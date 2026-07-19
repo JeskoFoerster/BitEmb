@@ -1,0 +1,1157 @@
+[
+  {
+    "dataset": "scifact",
+    "sample": "max_docs=1000",
+    "max_docs": 1000,
+    "n_vectors": 1000,
+    "dim": 64,
+    "theoretical": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 32,
+        "bits_per_vector": 2048,
+        "bytes_per_vector": 256.0,
+        "total_bytes": 256000,
+        "compression_ratio_vs_float768": 12.0
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 16,
+        "bits_per_vector": 1024,
+        "bytes_per_vector": 128.0,
+        "total_bytes": 128000,
+        "compression_ratio_vs_float768": 24.0
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 8,
+        "bits_per_vector": 512,
+        "bytes_per_vector": 64.0,
+        "total_bytes": 64000,
+        "compression_ratio_vs_float768": 48.0
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 8,
+        "bits_per_vector": 512,
+        "bytes_per_vector": 64.0,
+        "total_bytes": 64000,
+        "compression_ratio_vs_float768": 48.0
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 4,
+        "bits_per_vector": 256,
+        "bytes_per_vector": 32.0,
+        "total_bytes": 32000,
+        "compression_ratio_vs_float768": 96.0
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 4,
+        "bits_per_vector": 256,
+        "bytes_per_vector": 32.0,
+        "total_bytes": 32000,
+        "compression_ratio_vs_float768": 96.0
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 2,
+        "bits_per_vector": 128,
+        "bytes_per_vector": 16.0,
+        "total_bytes": 16000,
+        "compression_ratio_vs_float768": 192.0
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 2,
+        "bits_per_vector": 128,
+        "bytes_per_vector": 16.0,
+        "total_bytes": 16000,
+        "compression_ratio_vs_float768": 192.0
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 1,
+        "bits_per_vector": 64,
+        "bytes_per_vector": 8.0,
+        "total_bytes": 8000,
+        "compression_ratio_vs_float768": 384.0
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "bit_depth": 1,
+        "bits_per_vector": 64,
+        "bytes_per_vector": 8.0,
+        "total_bytes": 8000,
+        "compression_ratio_vs_float768": 384.0
+      }
+    ],
+    "numpy_vectorized": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 256000,
+        "metadata_bytes": 0,
+        "total_bytes": 256000,
+        "bytes_per_vector": 256.0,
+        "compression_ratio_vs_float768": 12.0,
+        "notes": "contiguous NumPy float32 matrix"
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 128000,
+        "metadata_bytes": 0,
+        "total_bytes": 128000,
+        "bytes_per_vector": 128.0,
+        "compression_ratio_vs_float768": 24.0,
+        "notes": "contiguous NumPy float16 matrix"
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 8000,
+        "metadata_bytes": 0,
+        "total_bytes": 8000,
+        "bytes_per_vector": 8.0,
+        "compression_ratio_vs_float768": 384.0,
+        "notes": "NumPy packbits-compatible binary codes (naive)"
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 8000,
+        "metadata_bytes": 0,
+        "total_bytes": 8000,
+        "bytes_per_vector": 8.0,
+        "compression_ratio_vs_float768": 384.0,
+        "notes": "NumPy packbits-compatible binary codes (rotated)"
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 16000,
+        "metadata_bytes": 1024,
+        "total_bytes": 17024,
+        "bytes_per_vector": 17.024,
+        "compression_ratio_vs_float768": 180.45112781954887,
+        "notes": "packed 2-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 16000,
+        "metadata_bytes": 1024,
+        "total_bytes": 17024,
+        "bytes_per_vector": 17.024,
+        "compression_ratio_vs_float768": 180.45112781954887,
+        "notes": "packed 2-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 32000,
+        "metadata_bytes": 1024,
+        "total_bytes": 33024,
+        "bytes_per_vector": 33.024,
+        "compression_ratio_vs_float768": 93.02325581395348,
+        "notes": "packed 4-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 32000,
+        "metadata_bytes": 1024,
+        "total_bytes": 33024,
+        "bytes_per_vector": 33.024,
+        "compression_ratio_vs_float768": 93.02325581395348,
+        "notes": "packed 4-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 64000,
+        "metadata_bytes": 1024,
+        "total_bytes": 65024,
+        "bytes_per_vector": 65.024,
+        "compression_ratio_vs_float768": 47.24409448818898,
+        "notes": "packed 8-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 64,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 64000,
+        "metadata_bytes": 1024,
+        "total_bytes": 65024,
+        "bytes_per_vector": 65.024,
+        "compression_ratio_vs_float768": 47.24409448818898,
+        "notes": "packed 8-bit codes plus min/max metadata (rotated)"
+      }
+    ]
+  },
+  {
+    "dataset": "scifact",
+    "sample": "max_docs=1000",
+    "max_docs": 1000,
+    "n_vectors": 1000,
+    "dim": 128,
+    "theoretical": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 32,
+        "bits_per_vector": 4096,
+        "bytes_per_vector": 512.0,
+        "total_bytes": 512000,
+        "compression_ratio_vs_float768": 6.0
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 16,
+        "bits_per_vector": 2048,
+        "bytes_per_vector": 256.0,
+        "total_bytes": 256000,
+        "compression_ratio_vs_float768": 12.0
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 8,
+        "bits_per_vector": 1024,
+        "bytes_per_vector": 128.0,
+        "total_bytes": 128000,
+        "compression_ratio_vs_float768": 24.0
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 8,
+        "bits_per_vector": 1024,
+        "bytes_per_vector": 128.0,
+        "total_bytes": 128000,
+        "compression_ratio_vs_float768": 24.0
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 4,
+        "bits_per_vector": 512,
+        "bytes_per_vector": 64.0,
+        "total_bytes": 64000,
+        "compression_ratio_vs_float768": 48.0
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 4,
+        "bits_per_vector": 512,
+        "bytes_per_vector": 64.0,
+        "total_bytes": 64000,
+        "compression_ratio_vs_float768": 48.0
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 2,
+        "bits_per_vector": 256,
+        "bytes_per_vector": 32.0,
+        "total_bytes": 32000,
+        "compression_ratio_vs_float768": 96.0
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 2,
+        "bits_per_vector": 256,
+        "bytes_per_vector": 32.0,
+        "total_bytes": 32000,
+        "compression_ratio_vs_float768": 96.0
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 1,
+        "bits_per_vector": 128,
+        "bytes_per_vector": 16.0,
+        "total_bytes": 16000,
+        "compression_ratio_vs_float768": 192.0
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "bit_depth": 1,
+        "bits_per_vector": 128,
+        "bytes_per_vector": 16.0,
+        "total_bytes": 16000,
+        "compression_ratio_vs_float768": 192.0
+      }
+    ],
+    "numpy_vectorized": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 512000,
+        "metadata_bytes": 0,
+        "total_bytes": 512000,
+        "bytes_per_vector": 512.0,
+        "compression_ratio_vs_float768": 6.0,
+        "notes": "contiguous NumPy float32 matrix"
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 256000,
+        "metadata_bytes": 0,
+        "total_bytes": 256000,
+        "bytes_per_vector": 256.0,
+        "compression_ratio_vs_float768": 12.0,
+        "notes": "contiguous NumPy float16 matrix"
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 16000,
+        "metadata_bytes": 0,
+        "total_bytes": 16000,
+        "bytes_per_vector": 16.0,
+        "compression_ratio_vs_float768": 192.0,
+        "notes": "NumPy packbits-compatible binary codes (naive)"
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 16000,
+        "metadata_bytes": 0,
+        "total_bytes": 16000,
+        "bytes_per_vector": 16.0,
+        "compression_ratio_vs_float768": 192.0,
+        "notes": "NumPy packbits-compatible binary codes (rotated)"
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 32000,
+        "metadata_bytes": 2048,
+        "total_bytes": 34048,
+        "bytes_per_vector": 34.048,
+        "compression_ratio_vs_float768": 90.22556390977444,
+        "notes": "packed 2-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 32000,
+        "metadata_bytes": 2048,
+        "total_bytes": 34048,
+        "bytes_per_vector": 34.048,
+        "compression_ratio_vs_float768": 90.22556390977444,
+        "notes": "packed 2-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 64000,
+        "metadata_bytes": 2048,
+        "total_bytes": 66048,
+        "bytes_per_vector": 66.048,
+        "compression_ratio_vs_float768": 46.51162790697674,
+        "notes": "packed 4-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 64000,
+        "metadata_bytes": 2048,
+        "total_bytes": 66048,
+        "bytes_per_vector": 66.048,
+        "compression_ratio_vs_float768": 46.51162790697674,
+        "notes": "packed 4-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 128000,
+        "metadata_bytes": 2048,
+        "total_bytes": 130048,
+        "bytes_per_vector": 130.048,
+        "compression_ratio_vs_float768": 23.62204724409449,
+        "notes": "packed 8-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 128,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 128000,
+        "metadata_bytes": 2048,
+        "total_bytes": 130048,
+        "bytes_per_vector": 130.048,
+        "compression_ratio_vs_float768": 23.62204724409449,
+        "notes": "packed 8-bit codes plus min/max metadata (rotated)"
+      }
+    ]
+  },
+  {
+    "dataset": "scifact",
+    "sample": "max_docs=1000",
+    "max_docs": 1000,
+    "n_vectors": 1000,
+    "dim": 256,
+    "theoretical": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 32,
+        "bits_per_vector": 8192,
+        "bytes_per_vector": 1024.0,
+        "total_bytes": 1024000,
+        "compression_ratio_vs_float768": 3.0
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 16,
+        "bits_per_vector": 4096,
+        "bytes_per_vector": 512.0,
+        "total_bytes": 512000,
+        "compression_ratio_vs_float768": 6.0
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 8,
+        "bits_per_vector": 2048,
+        "bytes_per_vector": 256.0,
+        "total_bytes": 256000,
+        "compression_ratio_vs_float768": 12.0
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 8,
+        "bits_per_vector": 2048,
+        "bytes_per_vector": 256.0,
+        "total_bytes": 256000,
+        "compression_ratio_vs_float768": 12.0
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 4,
+        "bits_per_vector": 1024,
+        "bytes_per_vector": 128.0,
+        "total_bytes": 128000,
+        "compression_ratio_vs_float768": 24.0
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 4,
+        "bits_per_vector": 1024,
+        "bytes_per_vector": 128.0,
+        "total_bytes": 128000,
+        "compression_ratio_vs_float768": 24.0
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 2,
+        "bits_per_vector": 512,
+        "bytes_per_vector": 64.0,
+        "total_bytes": 64000,
+        "compression_ratio_vs_float768": 48.0
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 2,
+        "bits_per_vector": 512,
+        "bytes_per_vector": 64.0,
+        "total_bytes": 64000,
+        "compression_ratio_vs_float768": 48.0
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 1,
+        "bits_per_vector": 256,
+        "bytes_per_vector": 32.0,
+        "total_bytes": 32000,
+        "compression_ratio_vs_float768": 96.0
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "bit_depth": 1,
+        "bits_per_vector": 256,
+        "bytes_per_vector": 32.0,
+        "total_bytes": 32000,
+        "compression_ratio_vs_float768": 96.0
+      }
+    ],
+    "numpy_vectorized": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 1024000,
+        "metadata_bytes": 0,
+        "total_bytes": 1024000,
+        "bytes_per_vector": 1024.0,
+        "compression_ratio_vs_float768": 3.0,
+        "notes": "contiguous NumPy float32 matrix"
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 512000,
+        "metadata_bytes": 0,
+        "total_bytes": 512000,
+        "bytes_per_vector": 512.0,
+        "compression_ratio_vs_float768": 6.0,
+        "notes": "contiguous NumPy float16 matrix"
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 32000,
+        "metadata_bytes": 0,
+        "total_bytes": 32000,
+        "bytes_per_vector": 32.0,
+        "compression_ratio_vs_float768": 96.0,
+        "notes": "NumPy packbits-compatible binary codes (naive)"
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 32000,
+        "metadata_bytes": 0,
+        "total_bytes": 32000,
+        "bytes_per_vector": 32.0,
+        "compression_ratio_vs_float768": 96.0,
+        "notes": "NumPy packbits-compatible binary codes (rotated)"
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 64000,
+        "metadata_bytes": 4096,
+        "total_bytes": 68096,
+        "bytes_per_vector": 68.096,
+        "compression_ratio_vs_float768": 45.11278195488722,
+        "notes": "packed 2-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 64000,
+        "metadata_bytes": 4096,
+        "total_bytes": 68096,
+        "bytes_per_vector": 68.096,
+        "compression_ratio_vs_float768": 45.11278195488722,
+        "notes": "packed 2-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 128000,
+        "metadata_bytes": 4096,
+        "total_bytes": 132096,
+        "bytes_per_vector": 132.096,
+        "compression_ratio_vs_float768": 23.25581395348837,
+        "notes": "packed 4-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 128000,
+        "metadata_bytes": 4096,
+        "total_bytes": 132096,
+        "bytes_per_vector": 132.096,
+        "compression_ratio_vs_float768": 23.25581395348837,
+        "notes": "packed 4-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 256000,
+        "metadata_bytes": 4096,
+        "total_bytes": 260096,
+        "bytes_per_vector": 260.096,
+        "compression_ratio_vs_float768": 11.811023622047244,
+        "notes": "packed 8-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 256,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 256000,
+        "metadata_bytes": 4096,
+        "total_bytes": 260096,
+        "bytes_per_vector": 260.096,
+        "compression_ratio_vs_float768": 11.811023622047244,
+        "notes": "packed 8-bit codes plus min/max metadata (rotated)"
+      }
+    ]
+  },
+  {
+    "dataset": "scifact",
+    "sample": "max_docs=1000",
+    "max_docs": 1000,
+    "n_vectors": 1000,
+    "dim": 384,
+    "theoretical": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 32,
+        "bits_per_vector": 12288,
+        "bytes_per_vector": 1536.0,
+        "total_bytes": 1536000,
+        "compression_ratio_vs_float768": 2.0
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 16,
+        "bits_per_vector": 6144,
+        "bytes_per_vector": 768.0,
+        "total_bytes": 768000,
+        "compression_ratio_vs_float768": 4.0
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 8,
+        "bits_per_vector": 3072,
+        "bytes_per_vector": 384.0,
+        "total_bytes": 384000,
+        "compression_ratio_vs_float768": 8.0
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 8,
+        "bits_per_vector": 3072,
+        "bytes_per_vector": 384.0,
+        "total_bytes": 384000,
+        "compression_ratio_vs_float768": 8.0
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 4,
+        "bits_per_vector": 1536,
+        "bytes_per_vector": 192.0,
+        "total_bytes": 192000,
+        "compression_ratio_vs_float768": 16.0
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 4,
+        "bits_per_vector": 1536,
+        "bytes_per_vector": 192.0,
+        "total_bytes": 192000,
+        "compression_ratio_vs_float768": 16.0
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 2,
+        "bits_per_vector": 768,
+        "bytes_per_vector": 96.0,
+        "total_bytes": 96000,
+        "compression_ratio_vs_float768": 32.0
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 2,
+        "bits_per_vector": 768,
+        "bytes_per_vector": 96.0,
+        "total_bytes": 96000,
+        "compression_ratio_vs_float768": 32.0
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 1,
+        "bits_per_vector": 384,
+        "bytes_per_vector": 48.0,
+        "total_bytes": 48000,
+        "compression_ratio_vs_float768": 64.0
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "bit_depth": 1,
+        "bits_per_vector": 384,
+        "bytes_per_vector": 48.0,
+        "total_bytes": 48000,
+        "compression_ratio_vs_float768": 64.0
+      }
+    ],
+    "numpy_vectorized": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 1536000,
+        "metadata_bytes": 0,
+        "total_bytes": 1536000,
+        "bytes_per_vector": 1536.0,
+        "compression_ratio_vs_float768": 2.0,
+        "notes": "contiguous NumPy float32 matrix"
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 768000,
+        "metadata_bytes": 0,
+        "total_bytes": 768000,
+        "bytes_per_vector": 768.0,
+        "compression_ratio_vs_float768": 4.0,
+        "notes": "contiguous NumPy float16 matrix"
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 48000,
+        "metadata_bytes": 0,
+        "total_bytes": 48000,
+        "bytes_per_vector": 48.0,
+        "compression_ratio_vs_float768": 64.0,
+        "notes": "NumPy packbits-compatible binary codes (naive)"
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 48000,
+        "metadata_bytes": 0,
+        "total_bytes": 48000,
+        "bytes_per_vector": 48.0,
+        "compression_ratio_vs_float768": 64.0,
+        "notes": "NumPy packbits-compatible binary codes (rotated)"
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 96000,
+        "metadata_bytes": 6144,
+        "total_bytes": 102144,
+        "bytes_per_vector": 102.144,
+        "compression_ratio_vs_float768": 30.075187969924812,
+        "notes": "packed 2-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 96000,
+        "metadata_bytes": 6144,
+        "total_bytes": 102144,
+        "bytes_per_vector": 102.144,
+        "compression_ratio_vs_float768": 30.075187969924812,
+        "notes": "packed 2-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 192000,
+        "metadata_bytes": 6144,
+        "total_bytes": 198144,
+        "bytes_per_vector": 198.144,
+        "compression_ratio_vs_float768": 15.503875968992247,
+        "notes": "packed 4-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 192000,
+        "metadata_bytes": 6144,
+        "total_bytes": 198144,
+        "bytes_per_vector": 198.144,
+        "compression_ratio_vs_float768": 15.503875968992247,
+        "notes": "packed 4-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 384000,
+        "metadata_bytes": 6144,
+        "total_bytes": 390144,
+        "bytes_per_vector": 390.144,
+        "compression_ratio_vs_float768": 7.874015748031496,
+        "notes": "packed 8-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 384,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 384000,
+        "metadata_bytes": 6144,
+        "total_bytes": 390144,
+        "bytes_per_vector": 390.144,
+        "compression_ratio_vs_float768": 7.874015748031496,
+        "notes": "packed 8-bit codes plus min/max metadata (rotated)"
+      }
+    ]
+  },
+  {
+    "dataset": "scifact",
+    "sample": "max_docs=1000",
+    "max_docs": 1000,
+    "n_vectors": 1000,
+    "dim": 768,
+    "theoretical": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 32,
+        "bits_per_vector": 24576,
+        "bytes_per_vector": 3072.0,
+        "total_bytes": 3072000,
+        "compression_ratio_vs_float768": 1.0
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 16,
+        "bits_per_vector": 12288,
+        "bytes_per_vector": 1536.0,
+        "total_bytes": 1536000,
+        "compression_ratio_vs_float768": 2.0
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 8,
+        "bits_per_vector": 6144,
+        "bytes_per_vector": 768.0,
+        "total_bytes": 768000,
+        "compression_ratio_vs_float768": 4.0
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 8,
+        "bits_per_vector": 6144,
+        "bytes_per_vector": 768.0,
+        "total_bytes": 768000,
+        "compression_ratio_vs_float768": 4.0
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 4,
+        "bits_per_vector": 3072,
+        "bytes_per_vector": 384.0,
+        "total_bytes": 384000,
+        "compression_ratio_vs_float768": 8.0
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 4,
+        "bits_per_vector": 3072,
+        "bytes_per_vector": 384.0,
+        "total_bytes": 384000,
+        "compression_ratio_vs_float768": 8.0
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 2,
+        "bits_per_vector": 1536,
+        "bytes_per_vector": 192.0,
+        "total_bytes": 192000,
+        "compression_ratio_vs_float768": 16.0
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 2,
+        "bits_per_vector": 1536,
+        "bytes_per_vector": 192.0,
+        "total_bytes": 192000,
+        "compression_ratio_vs_float768": 16.0
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 1,
+        "bits_per_vector": 768,
+        "bytes_per_vector": 96.0,
+        "total_bytes": 96000,
+        "compression_ratio_vs_float768": 32.0
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "bit_depth": 1,
+        "bits_per_vector": 768,
+        "bytes_per_vector": 96.0,
+        "total_bytes": 96000,
+        "compression_ratio_vs_float768": 32.0
+      }
+    ],
+    "numpy_vectorized": [
+      {
+        "representation": "float32",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 3072000,
+        "metadata_bytes": 0,
+        "total_bytes": 3072000,
+        "bytes_per_vector": 3072.0,
+        "compression_ratio_vs_float768": 1.0,
+        "notes": "contiguous NumPy float32 matrix"
+      },
+      {
+        "representation": "16bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 1536000,
+        "metadata_bytes": 0,
+        "total_bytes": 1536000,
+        "bytes_per_vector": 1536.0,
+        "compression_ratio_vs_float768": 2.0,
+        "notes": "contiguous NumPy float16 matrix"
+      },
+      {
+        "representation": "naive_1bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 96000,
+        "metadata_bytes": 0,
+        "total_bytes": 96000,
+        "bytes_per_vector": 96.0,
+        "compression_ratio_vs_float768": 32.0,
+        "notes": "NumPy packbits-compatible binary codes (naive)"
+      },
+      {
+        "representation": "tq_1bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 96000,
+        "metadata_bytes": 0,
+        "total_bytes": 96000,
+        "bytes_per_vector": 96.0,
+        "compression_ratio_vs_float768": 32.0,
+        "notes": "NumPy packbits-compatible binary codes (rotated)"
+      },
+      {
+        "representation": "naive_2bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 192000,
+        "metadata_bytes": 12288,
+        "total_bytes": 204288,
+        "bytes_per_vector": 204.288,
+        "compression_ratio_vs_float768": 15.037593984962406,
+        "notes": "packed 2-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_2bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 192000,
+        "metadata_bytes": 12288,
+        "total_bytes": 204288,
+        "bytes_per_vector": 204.288,
+        "compression_ratio_vs_float768": 15.037593984962406,
+        "notes": "packed 2-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_4bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 384000,
+        "metadata_bytes": 12288,
+        "total_bytes": 396288,
+        "bytes_per_vector": 396.288,
+        "compression_ratio_vs_float768": 7.751937984496124,
+        "notes": "packed 4-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_4bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 384000,
+        "metadata_bytes": 12288,
+        "total_bytes": 396288,
+        "bytes_per_vector": 396.288,
+        "compression_ratio_vs_float768": 7.751937984496124,
+        "notes": "packed 4-bit codes plus min/max metadata (rotated)"
+      },
+      {
+        "representation": "naive_8bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 768000,
+        "metadata_bytes": 12288,
+        "total_bytes": 780288,
+        "bytes_per_vector": 780.288,
+        "compression_ratio_vs_float768": 3.937007874015748,
+        "notes": "packed 8-bit codes plus min/max metadata (naive)"
+      },
+      {
+        "representation": "tq_8bit",
+        "n_vectors": 1000,
+        "dim": 768,
+        "implementation": "numpy_vectorized",
+        "index_bytes": 768000,
+        "metadata_bytes": 12288,
+        "total_bytes": 780288,
+        "bytes_per_vector": 780.288,
+        "compression_ratio_vs_float768": 3.937007874015748,
+        "notes": "packed 8-bit codes plus min/max metadata (rotated)"
+      }
+    ]
+  }
+]
