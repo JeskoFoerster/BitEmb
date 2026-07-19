@@ -37,8 +37,8 @@ Wichtig: Die aktuelle Implementierung ist einheitlich Python/NumPy. Es gibt kein
 
 | Datei | Inhalt | Aussage |
 |---|---|---|
-| `results/phase5/scaling_n/memory.json` | Speicherwerte pro Datensatz, Korpusgröße, Dimension und Repräsentation | Wie stark wird das Speicherlayout komprimiert? |
-| `results/phase5/scaling_n/runtime.json` | Median-Laufzeiten und Durchsatz | Wie schnell sind Pairwise- und Top-k-Operationen? |
+| `results/phase5/scaling_n/memory_metrics.json` | Speicherwerte pro Datensatz, Korpusgröße, Dimension und Repräsentation | Wie stark wird das Speicherlayout komprimiert? |
+| `results/phase5/scaling_n/runtime_metrics.json` | Median-Laufzeiten und Durchsatz | Wie schnell sind Pairwise- und Top-k-Operationen? |
 | `results/phase5/scaling_n/figures/memory_theoretical_vs_numpy.pdf` | theoretischer vs. praktischer Speicher | Wie nah liegt NumPy am idealen Speicherbedarf? |
 | `results/phase5/scaling_n/figures/memory_compression_by_dim.pdf` | Kompression nach Dimension und Repräsentation | Wie wirken Dimensionsreduktion und Quantisierung zusammen? |
 | `results/phase5/scaling_n/figures/runtime_pairs_by_dim.pdf` | Pairwise-Distanzlaufzeit | Wie schnell sind einzelne Distanzberechnungen? |
