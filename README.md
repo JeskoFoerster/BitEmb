@@ -71,6 +71,8 @@ python scripts/phase4_retrieval.py --all --max-docs 10000
 python scripts/phase5_efficiency.py --synthetic --max-docs 1000 --dims 64
 
 # Run Phase 5 on a real dataset
+python scripts/phase5_efficiency.py --all
+python scripts/phase5_efficiency.py --all --max-docs 1000 # recommended
 python scripts/phase5_efficiency.py --dataset scifact --max-docs 5000
 ```
 

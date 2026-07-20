@@ -444,7 +444,12 @@ def main() -> None:
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--synthetic", action="store_true", help="Use synthetic " \
     "normalized embeddings")
-    parser.add_argument("--max-docs", type=int, default=1000)
+    parser.add_argument(
+        "--max-docs",
+        type=int,
+        default=None,
+        help="Max corpus docs (deterministic subsample for speed)",
+    )
     parser.add_argument(
         "--max-docs-list",
         type=int,
