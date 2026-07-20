@@ -3,7 +3,7 @@
 
 Calculates Relative Quality-to-Space Ratio (RQSR), Compression-Quality Score (CQ_beta),
 and Quality Elasticity of Storage (QES) for the SciFact dataset and generates
-publication-quality figures (PNG and PDF). All paths are resolved dynamically relative
+publication-quality figures (PDF). All paths are resolved dynamically relative
 to this script, making it fully portable and reproducible.
 """
 
@@ -212,12 +212,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 1
-    p1_png = output_dir / "tradeoff_cq1_by_dim.png"
     p1_pdf = output_dir / "tradeoff_cq1_by_dim.pdf"
-    fig.savefig(p1_png, bbox_inches="tight")
     fig.savefig(p1_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p1_png}")
+    print(f"Saved: {p1_pdf}")
 
     # ------------------ Plot 2: Elasticity (QES) by PCA Dimension ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -245,12 +243,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 2
-    p2_png = output_dir / "tradeoff_elasticity_by_dim.png"
     p2_pdf = output_dir / "tradeoff_elasticity_by_dim.pdf"
-    fig.savefig(p2_png, bbox_inches="tight")
     fig.savefig(p2_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p2_png}")
+    print(f"Saved: {p2_pdf}")
 
     # ------------------ Plot 3: Quality vs. Savings (Pareto Space) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -296,12 +292,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 3
-    p3_png = output_dir / "tradeoff_quality_vs_savings.png"
     p3_pdf = output_dir / "tradeoff_quality_vs_savings.pdf"
-    fig.savefig(p3_png, bbox_inches="tight")
     fig.savefig(p3_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p3_png}")
+    print(f"Saved: {p3_pdf}")
 
     # ------------------ Plot 4a: Zoomed Quality vs. Savings (TurboQuant Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -347,12 +341,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 4a
-    p4a_png = output_dir / "tradeoff_quality_vs_savings_zoomed_tq.png"
     p4a_pdf = output_dir / "tradeoff_quality_vs_savings_zoomed_tq.pdf"
-    fig.savefig(p4a_png, bbox_inches="tight")
     fig.savefig(p4a_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p4a_png}")
+    print(f"Saved: {p4a_pdf}")
 
     # ------------------ Plot 4b: Zoomed Quality vs. Savings (Naive Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -398,12 +390,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 4b
-    p4b_png = output_dir / "tradeoff_quality_vs_savings_zoomed_naive.png"
     p4b_pdf = output_dir / "tradeoff_quality_vs_savings_zoomed_naive.pdf"
-    fig.savefig(p4b_png, bbox_inches="tight")
     fig.savefig(p4b_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p4b_png}")
+    print(f"Saved: {p4b_pdf}")
 
     # ------------------ Plot 5a: Quality vs. Compression Ratio (TurboQuant Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -453,12 +443,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 5a
-    p5a_png = output_dir / "tradeoff_quality_vs_compression_ratio_tq.png"
     p5a_pdf = output_dir / "tradeoff_quality_vs_compression_ratio_tq.pdf"
-    fig.savefig(p5a_png, bbox_inches="tight")
     fig.savefig(p5a_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p5a_png}")
+    print(f"Saved: {p5a_pdf}")
 
     # ------------------ Plot 5b: Quality vs. Compression Ratio (Naive Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -508,19 +496,25 @@ def main():
     fig.tight_layout()
 
     # Save Plot 5b
-    p5b_png = output_dir / "tradeoff_quality_vs_compression_ratio_naive.png"
     p5b_pdf = output_dir / "tradeoff_quality_vs_compression_ratio_naive.pdf"
-    fig.savefig(p5b_png, bbox_inches="tight")
     fig.savefig(p5b_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p5b_png}")
+    print(f"Saved: {p5b_pdf}")
 
-    # Remove old combined files
+    # Remove old/obsolete files
     old_files = [
         "tradeoff_quality_vs_savings_zoomed.png",
         "tradeoff_quality_vs_savings_zoomed.pdf",
         "tradeoff_quality_vs_compression_ratio.png",
         "tradeoff_quality_vs_compression_ratio.pdf",
+        # Legacy PNG outputs (now PDF-only)
+        "tradeoff_cq1_by_dim.png",
+        "tradeoff_elasticity_by_dim.png",
+        "tradeoff_quality_vs_savings.png",
+        "tradeoff_quality_vs_savings_zoomed_tq.png",
+        "tradeoff_quality_vs_savings_zoomed_naive.png",
+        "tradeoff_quality_vs_compression_ratio_tq.png",
+        "tradeoff_quality_vs_compression_ratio_naive.png",
     ]
     for filename in old_files:
         filepath = output_dir / filename
