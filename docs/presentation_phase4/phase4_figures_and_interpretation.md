@@ -23,8 +23,8 @@ Erwartetes Muster im aktuellen SciFact-Run:
 
 - Float32 steigt von 64d bis 256d deutlich und saturiert danach.
 - 4-bit folgt Float32 fast deckungsgleich.
-- 2-bit steigt stark mit der Dimension und wird bei 768d deutlich stabiler.
-- 1-bit verbessert sich bis 384d, faellt bei 768d in NDCG@10 aber wieder leicht.
+- 2-bit steigt stark mit der Dimension und wird bei 1024d deutlich stabiler.
+- 1-bit verbessert sich bis 384d, faellt bei 1024d in NDCG@10 aber wieder leicht.
 
 Die wichtigste visuelle Aussage:
 
@@ -48,8 +48,8 @@ Y-Achse:
 
 Interpretation für NDCG@10:
 
-- 4-bit bei 256d/384d/768d bietet eine starke Qualität bei deutlich weniger Bits als Float32.
-- 2-bit bei 384d/768d kann ein sinnvoller Kompromiss sein, wenn etwas Qualitätsverlust akzeptiert wird.
+- 4-bit bei 256d/384d/1024d bietet eine starke Qualität bei deutlich weniger Bits als Float32.
+- 2-bit bei 384d/1024d kann ein sinnvoller Kompromiss sein, wenn etwas Qualitätsverlust akzeptiert wird.
 - 1-bit ist nur attraktiv, wenn Speicher die dominierende Nebenbedingung ist und Qualitätsverlust toleriert wird.
 
 Interpretation für Recall@100:
@@ -65,7 +65,7 @@ Phase 4 bestaetigt die Richtung der geometrischen Analysen:
 | Beobachtung aus Phase 2/3 | Phase-4-Entsprechung |
 |---|---|
 | 4-bit erhält Distanzen und Nachbarschaften gut | 4-bit erhält NDCG@10 und Recall fast vollständig |
-| 2-bit ist schlechter, aber nicht zerstoert | 2-bit verliert besonders bei kleinen Dimensionen, stabilisiert sich bei 768d |
+| 2-bit ist schlechter, aber nicht zerstoert | 2-bit verliert besonders bei kleinen Dimensionen, stabilisiert sich bei 1024d |
 | 1-bit verändert Nachbarschaften stark | 1-bit verliert signifikant in Retrieval-Metriken |
 
 Damit ist Phase 4 die Brücke von geometrischer Struktur zu praktischer
@@ -91,13 +91,13 @@ Suchqualität.
 ### Folie 3: Recall@100 für zweistufige Systeme
 
 - `retrieval_recall_at_100_by_dim.pdf`
-- 2-bit bei 768d nahe an Float32
+- 2-bit bei 1024d nahe an Float32
 - Qualitätsverlust bei Kandidatenmenge kleiner als im Top-10-Ranking
 
 ### Folie 4: Signifikanz
 
 - Float32 vs. 4-bit: kein signifikanter NDCG@10-Unterschied
-- Float32 vs. 2-bit: bei 768d nicht mehr signifikant für NDCG@10
+- Float32 vs. 2-bit: bei 1024d nicht mehr signifikant für NDCG@10
 - Float32 vs. 1-bit: immer signifikant schlechter
 
 ### Folie 5: Trade-off

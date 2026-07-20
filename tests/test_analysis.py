@@ -12,9 +12,9 @@ from bitemb.analysis import (
 
 @pytest.fixture
 def normalized_embs():
-    """100 normalized random 768-d vectors (enough for TwoNN)."""
+    """100 normalized random 1024-d vectors (enough for TwoNN)."""
     rng = np.random.default_rng(42)
-    embs = rng.normal(size=(100, 768)).astype(np.float32)
+    embs = rng.normal(size=(100, 1024)).astype(np.float32)
     embs /= np.linalg.norm(embs, axis=1, keepdims=True)
     return embs
 
@@ -28,7 +28,7 @@ class TestNormDistribution:
 
     def test_unnormalized_vectors_not_unit_sphere(self):
         rng = np.random.default_rng(99)
-        embs = rng.normal(size=(50, 768)).astype(np.float32)
+        embs = rng.normal(size=(50, 1024)).astype(np.float32)
         stats = compute_norm_distribution(embs)
         assert not stats.is_near_unit_sphere()
 
@@ -41,10 +41,10 @@ class TestNormDistribution:
 class TestDimensionStats:
     def test_output_shapes(self, normalized_embs):
         stats = compute_dimension_stats(normalized_embs)
-        assert stats.mean.shape == (768,)
-        assert stats.std.shape == (768,)
-        assert stats.skewness.shape == (768,)
-        assert stats.kurtosis.shape == (768,)
+        assert stats.mean.shape == (1024,)
+        assert stats.std.shape == (1024,)
+        assert stats.skewness.shape == (1024,)
+        assert stats.kurtosis.shape == (1024,)
 
     def test_std_positive(self, normalized_embs):
         stats = compute_dimension_stats(normalized_embs)
@@ -63,8 +63,8 @@ class TestIntrinsicDimensionality:
 
     def test_pca_95_within_bounds(self, normalized_embs):
         result = compute_intrinsic_dimensionality(normalized_embs)
-        # Must be between 1 and 768
-        assert 1 <= result.pca_95 <= 768
+        # Must be between 1 and 1024
+        assert 1 <= result.pca_95 <= 1024
 
     def test_cumulative_variance_monotonic(self, normalized_embs):
         result = compute_intrinsic_dimensionality(normalized_embs)

@@ -61,7 +61,7 @@ def compute_norm_distribution(embeddings: NDArray[np.float32]) -> NormStats:
 
 @dataclass
 class DimensionStats:
-    """Per-dimension statistics across the corpus (shape: (768,) each)."""
+    """Per-dimension statistics across the corpus (shape: (1024,) each)."""
 
     mean: NDArray[np.float64]
     std: NDArray[np.float64]

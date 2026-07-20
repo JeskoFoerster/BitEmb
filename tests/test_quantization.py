@@ -14,8 +14,8 @@ from bitemb.quantization import (
 class TestBinarize:
     def test_output_shape(self, random_float_embs):
         packed = binarize(random_float_embs)
-        # 768 bits → 96 bytes
-        assert packed.shape == (10, 96)
+        # 1024 bits → 128 bytes
+        assert packed.shape == (10, 128)
 
     def test_dtype(self, random_float_embs):
         packed = binarize(random_float_embs)
@@ -43,7 +43,7 @@ class TestTurboQuant:
     @pytest.mark.parametrize("bits", [2, 4])
     def test_encode_shape(self, random_float_embs, bits):
         index = turboquant_encode(random_float_embs, bits=bits)
-        assert index.codes.shape == (10, 768)
+        assert index.codes.shape == (10, 1024)
         assert index.bits == bits
 
     @pytest.mark.parametrize("bits", [2, 4])
@@ -61,7 +61,7 @@ class TestTurboQuant:
     def test_dequantize_shape(self, random_float_embs, bits):
         index = turboquant_encode(random_float_embs, bits=bits)
         recon = index.dequantize()
-        assert recon.shape == (10, 768)
+        assert recon.shape == (10, 1024)
 
     @pytest.mark.parametrize("bits", [2, 4])
     def test_distance_shape(self, random_float_embs, bits):

@@ -6,7 +6,7 @@ Examples:
     python scripts/phase5_efficiency.py --all --max-docs-list 250 500 1000 \
         --output results/phase5/scaling_n
     python scripts/phase5_efficiency.py --all --max-docs 1000 \
-        --dims 64 128 256 384 768 --output results/phase5/scaling_dim
+        --dims 64 128 256 384 1024 --output results/phase5/scaling_dim
     python scripts/phase5_efficiency.py --dataset scifact --full-corpus
 """
 
@@ -69,7 +69,7 @@ def _phase5_cache_path(dataset_name: str, max_docs: int) -> Path:
     return PHASE5_CACHE_DIR / filename
 
 
-def _synthetic_embeddings(n: int, dim: int = 768, seed: int = SEED) -> np.ndarray:
+def _synthetic_embeddings(n: int, dim: int = 1024, seed: int = SEED) -> np.ndarray:
     rng = np.random.default_rng(seed)
     embs = rng.normal(size=(n, dim)).astype(np.float32)
     norms = np.linalg.norm(embs, axis=1, keepdims=True)
@@ -444,7 +444,12 @@ def main() -> None:
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--synthetic", action="store_true", help="Use synthetic " \
     "normalized embeddings")
-    parser.add_argument("--max-docs", type=int, default=1000)
+    parser.add_argument(
+        "--max-docs",
+        type=int,
+        default=None,
+        help="Max corpus docs (deterministic subsample for speed)",
+    )
     parser.add_argument(
         "--max-docs-list",
         type=int,

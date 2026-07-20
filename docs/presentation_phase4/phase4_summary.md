@@ -20,7 +20,7 @@ Der aktuelle Run liegt für **SciFact** vor.
 | Dataset | SciFact |
 | Korpusgröße | 5.183 Dokumente |
 | Queries | 300 |
-| Dimensionen | 64, 128, 256, 384, 768 |
+| Dimensionen | 64, 128, 256, 384, 512, 768, 1024 |
 | Repräsentationen | Float32, 4-bit, 2-bit, 1-bit |
 | Suche | exakt, brute-force |
 | Signifikanztest | Wilcoxon Signed-Rank |
@@ -43,8 +43,8 @@ Bei 768 Dimensionen ist 4-bit sogar minimal höher als Float32:
 
 | Repräsentation | NDCG@10 | Recall@10 | Recall@100 | MRR |
 |---|---:|---:|---:|---:|
-| Float32, 768d | 0,7287 | 0,8566 | 0,9517 | 0,7001 |
-| 4-bit, 768d | 0,7291 | 0,8592 | 0,9517 | 0,7006 |
+| Float32, 1024d | 0,7287 | 0,8566 | 0,9517 | 0,7001 |
+| 4-bit, 1024d | 0,7291 | 0,8592 | 0,9517 | 0,7006 |
 
 Das ist keine belastbare Aussage, dass 4-bit besser ist als Float32. Der
 Wilcoxon-Test zeigt keinen signifikanten Unterschied. Methodisch ist die
@@ -126,7 +126,7 @@ Wichtig für die Interpretation:
 
 1. Phase 4 bestätigt die geometrischen Befunde aus Phase 2 und Phase 3.
 2. 4-bit ist auf SciFact nahezu retrieval-neutral.
-3. 2-bit ist dimensionssensitiv: bei 64d schlecht, bei 768d deutlich näher an Float32.
+3. 2-bit ist dimensionssensitiv: bei 64d schlecht, bei 1024d deutlich näher an Float32.
 4. 1-bit verliert deutlich und signifikant gegen Float32.
 5. Recall@100 faellt weniger stark als NDCG@10, besonders bei 2-bit.
 6. Für zweistufige Systeme ist 2-bit daher plausibler als für finales Single-stage-Ranking.

@@ -3,7 +3,7 @@
 
 Calculates Relative Quality-to-Space Ratio (RQSR), Compression-Quality Score (CQ_beta),
 and Quality Elasticity of Storage (QES) for the SciFact dataset and generates
-publication-quality figures (PNG and PDF). All paths are resolved dynamically relative
+publication-quality figures (PDF). All paths are resolved dynamically relative
 to this script, making it fully portable and reproducible.
 """
 
@@ -140,12 +140,12 @@ def main():
                 rep = nv["representation"]
                 memory_map[(rep, dim)] = nv["total_bytes"] / entry["n_vectors"]
 
-    # Baseline (float32, 768d)
-    q_baseline = quality_map.get(("float32", 768))
-    c_baseline = memory_map.get(("float32", 768))
+    # Baseline (float32, 1024d)
+    q_baseline = quality_map.get(("float32", 1024))
+    c_baseline = memory_map.get(("float32", 1024))
 
     if not q_baseline or not c_baseline:
-        print("Error: Baseline (float32, 768d) not found.")
+        print("Error: Baseline (float32, 1024d) not found.")
         sys.exit(1)
 
     # Calculate metrics
@@ -185,7 +185,7 @@ def main():
     # Output text results
     print(
         "Calculated trade-off metrics for SciFact dataset against baseline"
-        f" (float32, 768d, NDCG@10={q_baseline:.4f})."
+        f" (float32, 1024d, NDCG@10={q_baseline:.4f})."
     )
 
     # ------------------ Plot 1: CQ1-Score by PCA Dimension ------------------
@@ -206,18 +206,16 @@ def main():
     ax.set_xlabel("PCA Dimension")
     ax.set_ylabel("$CQ_1$-Score (Balanced Trade-off)")
     ax.set_title("Compression-Quality Score ($CQ_1$) by Dimension")
-    ax.set_xticks([64, 128, 256, 384, 768])
+    ax.set_xticks([64, 128, 256, 384, 512, 768, 1024])
     ax.set_ylim(0.5, 1.02)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
 
     # Save Plot 1
-    p1_png = output_dir / "tradeoff_cq1_by_dim.png"
     p1_pdf = output_dir / "tradeoff_cq1_by_dim.pdf"
-    fig.savefig(p1_png, bbox_inches="tight")
     fig.savefig(p1_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p1_png}")
+    print(f"Saved: {p1_pdf}")
 
     # ------------------ Plot 2: Elasticity (QES) by PCA Dimension ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -239,18 +237,16 @@ def main():
     ax.set_xlabel("PCA Dimension")
     ax.set_ylabel(r"Quality Elasticity of Storage ($\epsilon_{Q,C}$)")
     ax.set_title("Storage Quality Elasticity (QES) by Dimension")
-    ax.set_xticks([64, 128, 256, 384, 768])
+    ax.set_xticks([64, 128, 256, 384, 512, 768, 1024])
     ax.set_ylim(-0.05, 0.6)
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
 
     # Save Plot 2
-    p2_png = output_dir / "tradeoff_elasticity_by_dim.png"
     p2_pdf = output_dir / "tradeoff_elasticity_by_dim.pdf"
-    fig.savefig(p2_png, bbox_inches="tight")
     fig.savefig(p2_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p2_png}")
+    print(f"Saved: {p2_pdf}")
 
     # ------------------ Plot 3: Quality vs. Savings (Pareto Space) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -271,7 +267,7 @@ def main():
 
         # Annotate selected points with dimension
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (r["s_rel"], r["q_rel"]),
@@ -284,7 +280,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -296,12 +292,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 3
-    p3_png = output_dir / "tradeoff_quality_vs_savings.png"
     p3_pdf = output_dir / "tradeoff_quality_vs_savings.pdf"
-    fig.savefig(p3_png, bbox_inches="tight")
     fig.savefig(p3_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p3_png}")
+    print(f"Saved: {p3_pdf}")
 
     # ------------------ Plot 4a: Zoomed Quality vs. Savings (TurboQuant Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -322,7 +316,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (r["s_rel"], r["q_rel"]),
@@ -335,7 +329,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -347,12 +341,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 4a
-    p4a_png = output_dir / "tradeoff_quality_vs_savings_zoomed_tq.png"
     p4a_pdf = output_dir / "tradeoff_quality_vs_savings_zoomed_tq.pdf"
-    fig.savefig(p4a_png, bbox_inches="tight")
     fig.savefig(p4a_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p4a_png}")
+    print(f"Saved: {p4a_pdf}")
 
     # ------------------ Plot 4b: Zoomed Quality vs. Savings (Naive Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -373,7 +365,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (r["s_rel"], r["q_rel"]),
@@ -386,7 +378,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -398,12 +390,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 4b
-    p4b_png = output_dir / "tradeoff_quality_vs_savings_zoomed_naive.png"
     p4b_pdf = output_dir / "tradeoff_quality_vs_savings_zoomed_naive.pdf"
-    fig.savefig(p4b_png, bbox_inches="tight")
     fig.savefig(p4b_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p4b_png}")
+    print(f"Saved: {p4b_pdf}")
 
     # ------------------ Plot 5a: Quality vs. Compression Ratio (TurboQuant Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -424,7 +414,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (1.0 / r["c_rel"], r["q_rel"]),
@@ -437,10 +427,10 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
-    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 768d, Log-Scale)")
+    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 1024d, Log-Scale)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Quality vs. Compression Factor (TurboQuant Only)")
     ax.set_xscale("log")
@@ -453,12 +443,10 @@ def main():
     fig.tight_layout()
 
     # Save Plot 5a
-    p5a_png = output_dir / "tradeoff_quality_vs_compression_ratio_tq.png"
     p5a_pdf = output_dir / "tradeoff_quality_vs_compression_ratio_tq.pdf"
-    fig.savefig(p5a_png, bbox_inches="tight")
     fig.savefig(p5a_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p5a_png}")
+    print(f"Saved: {p5a_pdf}")
 
     # ------------------ Plot 5b: Quality vs. Compression Ratio (Naive Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
@@ -479,7 +467,7 @@ def main():
         )
 
         for r in rep_results:
-            if r["dim"] in [64, 256, 768]:
+            if r["dim"] in [64, 256, 768, 1024]:
                 ax.annotate(
                     f"{r['dim']}d",
                     (1.0 / r["c_rel"], r["q_rel"]),
@@ -492,10 +480,10 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 768d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
-    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 768d, Log-Scale)")
+    ax.set_xlabel("Compression Factor (Multiplier vs. Float32 1024d, Log-Scale)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
     ax.set_title("Quality vs. Compression Factor (Naive Only)")
     ax.set_xscale("log")
@@ -508,19 +496,25 @@ def main():
     fig.tight_layout()
 
     # Save Plot 5b
-    p5b_png = output_dir / "tradeoff_quality_vs_compression_ratio_naive.png"
     p5b_pdf = output_dir / "tradeoff_quality_vs_compression_ratio_naive.pdf"
-    fig.savefig(p5b_png, bbox_inches="tight")
     fig.savefig(p5b_pdf, bbox_inches="tight")
     plt.close(fig)
-    print(f"Saved: {p5b_png}")
+    print(f"Saved: {p5b_pdf}")
 
-    # Remove old combined files
+    # Remove old/obsolete files
     old_files = [
         "tradeoff_quality_vs_savings_zoomed.png",
         "tradeoff_quality_vs_savings_zoomed.pdf",
         "tradeoff_quality_vs_compression_ratio.png",
         "tradeoff_quality_vs_compression_ratio.pdf",
+        # Legacy PNG outputs (now PDF-only)
+        "tradeoff_cq1_by_dim.png",
+        "tradeoff_elasticity_by_dim.png",
+        "tradeoff_quality_vs_savings.png",
+        "tradeoff_quality_vs_savings_zoomed_tq.png",
+        "tradeoff_quality_vs_savings_zoomed_naive.png",
+        "tradeoff_quality_vs_compression_ratio_tq.png",
+        "tradeoff_quality_vs_compression_ratio_naive.png",
     ]
     for filename in old_files:
         filepath = output_dir / filename

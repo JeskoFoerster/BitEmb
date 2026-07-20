@@ -32,7 +32,7 @@ _QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
 
 class EmbeddingEngine:
-    """Generates normalized float embeddings using bge-large-en-v1.5 (768d).
+    """Generates normalized float embeddings using bge-large-en-v1.5 (1024d).
 
     This model was chosen because it is *not* trained with Matryoshka or binary
     objectives, making it suitable for studying post-hoc quantization effects
@@ -49,7 +49,7 @@ class EmbeddingEngine:
         batch_size: int = 64,
         show_progress: bool = False,
     ) -> NDArray[np.float32]:
-        """Encode corpus passages to L2-normalized float32 embeddings (n, 768).
+        """Encode corpus passages to L2-normalized float32 embeddings (n, 1024).
 
         No prefix is applied — BGE encodes passages as-is.
         """
@@ -67,7 +67,7 @@ class EmbeddingEngine:
         batch_size: int = 64,
         show_progress: bool = False,
     ) -> NDArray[np.float32]:
-        """Encode queries to L2-normalized float32 embeddings (n, 768).
+        """Encode queries to L2-normalized float32 embeddings (n, 1024).
 
         Prepends the BGE query instruction prefix automatically.
         """

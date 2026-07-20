@@ -23,11 +23,11 @@ def normalized_embs():
     return embs
 
 
-def test_theoretical_memory_float32_768():
-    mem = theoretical_memory(10, 768, "float32")
-    assert mem.bits_per_vector == 768 * 32
-    assert mem.total_bytes == 10 * 768 * 4
-    assert mem.compression_ratio_vs_float768 == pytest.approx(1.0)
+def test_theoretical_memory_float32_1024():
+    mem = theoretical_memory(10, 1024, "float32")
+    assert mem.bits_per_vector == 1024 * 32
+    assert mem.total_bytes == 10 * 1024 * 4
+    assert mem.compression_ratio_vs_float1024 == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize(("rep", "expected_ratio"), [
@@ -39,8 +39,8 @@ def test_theoretical_memory_float32_768():
     ("tq_1bit", 32.0),
 ])
 def test_theoretical_memory_compression_full_dim(rep, expected_ratio):
-    mem = theoretical_memory(10, 768, rep)
-    assert mem.compression_ratio_vs_float768 == pytest.approx(expected_ratio)
+    mem = theoretical_memory(10, 1024, rep)
+    assert mem.compression_ratio_vs_float1024 == pytest.approx(expected_ratio)
 
 
 @pytest.mark.parametrize("bits", [2, 4])

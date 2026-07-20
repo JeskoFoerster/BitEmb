@@ -302,7 +302,7 @@ def compute_retrieval_evaluation(
     query_embeddings: NDArray[np.float32],
     qrels: dict[int, dict[int, int]],
     *,
-    dim: int = 768,
+    dim: int = 1024,
     pca_reducer: PCAReducer | None = None,
     top_k: int = 100,
     batch_size: int = 32,
@@ -314,7 +314,7 @@ def compute_retrieval_evaluation(
         query_embeddings: L2-normalized float32 query embeddings.
         qrels: Mapping query index -> {corpus index: relevance_score}.
         dim: Target dimensionality after optional PCA.
-        pca_reducer: Fitted reducer for dim < 768.
+        pca_reducer: Fitted reducer for dim < 1024.
         top_k: Largest cutoff needed for top-k metrics.
         batch_size: Query batch size for dense score/distance matrices.
 

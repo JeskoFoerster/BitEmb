@@ -18,9 +18,9 @@ from bitemb.quantization import PCAReducer, binarize, turboquant_encode
 
 @pytest.fixture
 def corpus_embs():
-    """200 normalized random 768-d vectors (sufficient for 10k pair sampling)."""
+    """200 normalized random 1024-d vectors (sufficient for 10k pair sampling)."""
     rng = np.random.default_rng(42)
-    embs = rng.normal(size=(200, 768)).astype(np.float32)
+    embs = rng.normal(size=(200, 1024)).astype(np.float32)
     embs /= np.linalg.norm(embs, axis=1, keepdims=True)
     return embs
 
@@ -91,7 +91,7 @@ class TestHammingDistancePairs:
         d = _hamming_distance_pairs(packed, pairs)
         # Hamming is integer in [0, dim]
         assert d.min() >= 0
-        assert d.max() <= 768
+        assert d.max() <= 1024
 
 
 class TestTurboQuantDistancePairs:
@@ -128,13 +128,13 @@ class TestComputeMetrics:
 
 class TestComputeDistanceDistortion:
     def test_returns_three_results(self, corpus_embs):
-        results = compute_distance_distortion(corpus_embs, dim=768, n_pairs=500)
+        results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=500)
         assert len(results) == 5
         bit_depths = [r.bit_depth for r in results]
         assert sorted(bit_depths) == [1, 2, 4, 8, 16]
 
     def test_result_types(self, corpus_embs):
-        results = compute_distance_distortion(corpus_embs, dim=768, n_pairs=500)
+        results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=500)
         for r in results:
             assert isinstance(r, DistortionResult)
             assert 0 <= abs(r.pearson_r) <= 1.0 + 1e-6
@@ -144,7 +144,7 @@ class TestComputeDistanceDistortion:
             assert r.rmse >= r.mae  # RMSE ≥ MAE always
 
     def test_4bit_better_than_2bit(self, corpus_embs):
-        results = compute_distance_distortion(corpus_embs, dim=768, n_pairs=1000)
+        results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=1000)
         by_bits = {r.bit_depth: r for r in results}
         # 4-bit should correlate better than 2-bit
         assert by_bits[4].pearson_r >= by_bits[2].pearson_r - 0.05
@@ -159,8 +159,8 @@ class TestComputeDistanceDistortion:
             assert r.dim == 128
 
     def test_deterministic(self, corpus_embs):
-        r1 = compute_distance_distortion(corpus_embs, dim=768, n_pairs=500, seed=42)
-        r2 = compute_distance_distortion(corpus_embs, dim=768, n_pairs=500, seed=42)
+        r1 = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=500, seed=42)
+        r2 = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=500, seed=42)
         for a, b in zip(r1, r2):
             assert a.pearson_r == b.pearson_r
             assert a.mae == b.mae

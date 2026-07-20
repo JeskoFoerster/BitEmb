@@ -33,12 +33,12 @@ Principal Component Analysis. Verfahren zur Dimensionsreduktion, das die
 wichtigsten Varianzrichtungen beibehält.
 
 **PCA-Dimensionen**  
-Zieldimensionen nach PCA. Im Projekt: 64, 128, 256, 384 und 768. 768 bedeutet
+Zieldimensionen nach PCA. Im Projekt: 64, 128, 256, 384, 512, 768 und 1024. 1024 bedeutet
 keine Reduktion.
 
 **Kompressionsfaktor**  
-Gibt an, wie viel kleiner ein quantisierter Vektor gegenüber Float32 768d ist.
-Float32 768d entspricht `768 * 32 = 24576` Bits.
+Gibt an, wie viel kleiner ein quantisierter Vektor gegenüber Float32 1024d ist.
+Float32 1024d entspricht `1024 * 32 = 32768` Bits.
 
 **Bits per vector**  
 Speicherbedarf eines Vektors in Bits: `Dimensionen * Bit-Tiefe`.

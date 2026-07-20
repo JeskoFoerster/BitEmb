@@ -59,8 +59,8 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
     for dim in PCA_DIMS:
         print(f"\n  --- PCA dim = {dim} ---")
 
-        # Fit PCA if dim < 768
-        if dim < 768:
+        # Fit PCA if dim < 1024
+        if dim < 1024:
             pca = PCAReducer(n_components=dim).fit(corpus_embs)
         else:
             pca = None
@@ -146,23 +146,23 @@ def main():
             )
             print(f"  Heatmap ({label}) saved to {p}")
 
-    # Scatter plots and error histograms (full dim=768 only)
+    # Scatter plots and error histograms (full dim=1024 only)
     for ds_out in all_outputs:
         name = ds_out["dataset"]
-        raw = ds_out["_raw_distances"][768]
+        raw = ds_out["_raw_distances"][1024]
         d_quant = {4: raw.d_4bit, 2: raw.d_2bit, 1: raw.d_1bit}
 
         p = plot_distance_scatter(
             raw.d_float, d_quant,
             fig_dir / f"distance_scatter_{name}.pdf",
-            dataset_name=name, dim=768,
+            dataset_name=name, dim=1024,
         )
         print(f"  Scatter plot saved to {p}")
 
         p = plot_error_histogram(
             raw.d_float, d_quant,
             fig_dir / f"error_histogram_{name}.pdf",
-            dataset_name=name, dim=768,
+            dataset_name=name, dim=1024,
         )
         print(f"  Error histogram saved to {p}")
 

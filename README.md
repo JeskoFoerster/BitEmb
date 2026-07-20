@@ -70,8 +70,19 @@ python scripts/phase4_retrieval.py --all --max-docs 10000
 # Run Phase 5 smoke test (no dataset download)
 python scripts/phase5_efficiency.py --synthetic --max-docs 1000 --dims 64
 
-# Run Phase 5 on a real dataset
-python scripts/phase5_efficiency.py --dataset scifact --max-docs 5000
+# Run Phase 5 (requires model download + dataset)
+python scripts/phase5_efficiency.py --dataset scifact
+python scripts/phase5_efficiency.py --all
+python scripts/phase5_efficiency.py --all --max-docs 1000 # recommended
+
+# Phase 5 scaling analysis (corpus size and dimension)
+python scripts/phase5_efficiency.py --all --max-docs-list 250 500 1000 \
+    --output results/phase5/scaling_n
+python scripts/phase5_efficiency.py --all --max-docs 1000 \
+    --dims 64 128 256 384 1024 --output results/phase5/scaling_dim
+
+# Trade-off analysis (requires Phase 4 + Phase 5 results)
+python scripts/calculate_tradeoff_metrics.py
 ```
 
 ## Embedding Cache
@@ -97,7 +108,7 @@ Detailed documentation for each phase is in `docs/`:
 
 ## Methods
 
-- **Model**: `BAAI/bge-large-en-v1.5` (768d, not Matryoshka-trained)
+- **Model**: `BAAI/bge-large-en-v1.5` (1024d, not Matryoshka-trained)
 - **Datasets**: BEIR SciFact, FiQA, TREC-COVID
 - **Quantization**: Naive binary (1-bit), TurboQuant 2-bit, TurboQuant 4-bit
-- **Dimension Reduction**: PCA to d ∈ {64, 128, 256, 384, 768}
+- **Dimension Reduction**: PCA to d ∈ {64, 128, 256, 384, 512, 768, 1024}

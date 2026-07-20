@@ -57,7 +57,7 @@ Phase 4 nutzt dieselbe Matrix wie die vorherigen Phasen:
 - **Repräsentationen:** Float32, Float16, Naive 8-Bit, TurboQuant 8-Bit,
   Naive 4-Bit, TurboQuant 4-Bit, Naive 2-Bit, TurboQuant 2-Bit, Naive 1-Bit,
   TurboQuant 1-Bit
-- **Dimensionen:** 64, 128, 256, 384, 768
+- **Dimensionen:** 64, 128, 256, 384, 512, 768, 1024
 - **Datasets:** SciFact, FiQA, TREC-COVID
 
 PCA wird nur auf dem Korpus gefittet und danach auf Korpus und Queries

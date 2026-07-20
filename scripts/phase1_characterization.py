@@ -66,7 +66,7 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
     print(f"    Near unit sphere: {norms.is_near_unit_sphere()}")
 
     # 2. Dimension statistics
-    print("\n  [2/3] Dimension statistics (768 dims)")
+    print("\n  [2/3] Dimension statistics (1024 dims)")
     dimstats = compute_dimension_stats(corpus_embs)
     print(f"    Mean of means:     {dimstats.mean.mean():.6f}")
     print(f"    Mean of stds:      {dimstats.std.mean():.6f}")
@@ -76,16 +76,16 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
     print(f"    Max kurtosis:      {dimstats.kurtosis.max():.4f}")
     n_skewed = int((np.abs(dimstats.skewness) > 1.0).sum())
     n_heavy_tail = int((dimstats.kurtosis > 3.0).sum())
-    print(f"    Dims with |skew| > 1:    {n_skewed}/768")
-    print(f"    Dims with kurtosis > 3:  {n_heavy_tail}/768")
+    print(f"    Dims with |skew| > 1:    {n_skewed}/1024")
+    print(f"    Dims with kurtosis > 3:  {n_heavy_tail}/1024")
 
     # 3. Intrinsic dimensionality
     print("\n  [3/3] Intrinsic dimensionality")
     intdim = compute_intrinsic_dimensionality(corpus_embs)
     print(f"    TwoNN estimate:   {intdim.twonn:.1f}")
     print(f"    PCA (95% var):    {intdim.pca_95} components")
-    print("    Nominal dim:      768")
-    print(f"    Redundancy ratio: {1 - intdim.pca_95/768:.1%}")
+    print("    Nominal dim:      1024")
+    print(f"    Redundancy ratio: {1 - intdim.pca_95/1024:.1%}")
 
     # Assemble results
     return {
