@@ -125,7 +125,7 @@ def run(
         raise ValueError("No relevance judgments remain after corpus subsampling")
 
     all_results = []
-    all_significance = []
+    all_significance: list[dict] = []
     per_query_by_dim = {}
 
     for dim in PCA_DIMS:
