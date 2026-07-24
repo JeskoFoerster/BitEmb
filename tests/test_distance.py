@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 from bitemb.distance import (
-    REPRESENTATIONS,
     DistortionResult,
     _compute_metrics,
     _cosine_distance_pairs,
