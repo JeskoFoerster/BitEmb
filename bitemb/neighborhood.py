@@ -9,7 +9,7 @@ quantization. Two complementary metrics:
    introduced in the quantized space, weighted by their rank displacement.
 
 Both metrics are computed over the full 2D experimental matrix
-(bit_depth × PCA_dim) for k ∈ {5, 10, 20}.
+(representation × PCA_dim) for k ∈ {5, 10, 20}.
 
 Reference: chapMethodik.tex, Section "Phase 3: Nachbarschaftserhaltung".
 """
@@ -26,24 +26,51 @@ from bitemb.config import SEED
 from bitemb.quantization import (
     PCAReducer,
     binarize,
+    binarize_rotated,
     hamming_distance,
-    turboquant_encode,
+    quantize_encode,
 )
 
 K_VALUES = (5, 10, 20)
 
+# Canonical representation order (matches Phase 2/4/5)
+REPRESENTATIONS = [
+    "16bit",
+    "naive_8bit",
+    "tq_8bit",
+    "naive_4bit",
+    "tq_4bit",
+    "naive_2bit",
+    "tq_2bit",
+    "naive_1bit",
+    "tq_1bit",
+]
+
 
 @dataclass
 class NeighborhoodResult:
-    """Neighborhood preservation metrics for one (bit_depth, dim, k) combo."""
+    """Neighborhood preservation metrics for one (representation, dim, k) combo."""
 
-    bit_depth: int
+    representation: str
     dim: int
     k: int
     overlap: float  # mean neighborhood overlap ∈ [0, 1]
     trustworthiness: float  # T(k) ∈ [0, 1]
     n_docs: int
     random_baseline: float  # E[overlap] = k / N
+
+    # Backward compatibility property
+    @property
+    def bit_depth(self) -> int:
+        """Backward compatibility: derive bit_depth from representation."""
+        _map = {
+            "16bit": 16,
+            "naive_8bit": 8, "tq_8bit": 8,
+            "naive_4bit": 4, "tq_4bit": 4,
+            "naive_2bit": 2, "tq_2bit": 2,
+            "naive_1bit": 1, "tq_1bit": 1,
+        }
+        return _map.get(self.representation, 32)
 
 
 def _knn_cosine(embs: NDArray[Any], k: int) -> NDArray[np.int64]:
@@ -104,20 +131,21 @@ def _knn_hamming(packed: NDArray[np.uint8], k: int) -> NDArray[np.int64]:
     return knn
 
 
-def _knn_turboquant(
-    embs: NDArray[np.float32], bits: int, k: int
+def _knn_quantized(
+    embs: NDArray[np.float32], bits: int, is_rotated: bool, k: int
 ) -> NDArray[np.int64]:
-    """Compute exact k-NN indices in TurboQuant space (L2 on dequantized).
+    """Compute exact k-NN indices in quantized space (L2 on dequantized).
 
     Args:
         embs: L2-normalized embeddings (n, d) to quantize.
-        bits: Quantization depth (2 or 4).
+        bits: Quantization depth (2, 4, or 8).
+        is_rotated: Whether to apply random rotation (TurboQuant).
         k: Number of neighbors (excluding self).
 
     Returns:
         Indices array of shape (n, k).
     """
-    index = turboquant_encode(embs, bits=bits)
+    index = quantize_encode(embs, bits=bits, is_rotated=is_rotated)
     recon = index.dequantize().astype(np.float32)
     # L2 distance on reconstructed vectors; use dot-product trick
     # ||a-b||² = ||a||² + ||b||² - 2a·b
@@ -140,6 +168,13 @@ def _knn_turboquant(
             knn[start + i] = top_k_idx[i][order]
 
     return knn
+
+
+# Backward compatibility alias
+def _knn_turboquant(
+    embs: NDArray[np.float32], bits: int, k: int
+) -> NDArray[np.int64]:
+    return _knn_quantized(embs, bits=bits, is_rotated=True, k=k)
 
 
 def _compute_overlap(
@@ -271,7 +306,7 @@ def compute_neighborhood_preservation(
         seed: Random seed (unused here, kept for API consistency).
 
     Returns:
-        List of NeighborhoodResult (5 bit_depths × len(k_values)).
+        List of NeighborhoodResult (9 representations × len(k_values)).
     """
     # Apply PCA reduction if needed
     if pca_reducer is not None and dim < 1024:
@@ -291,24 +326,28 @@ def compute_neighborhood_preservation(
         float_ranks = _full_cosine_ranks(embs)
 
     # Compute k-NN in each quantized space
-    knn_by_bits: dict[int, NDArray[np.int64]] = {
-        16: _knn_cosine(embs.astype(np.float16), max_k),
-        8: _knn_turboquant(embs, bits=8, k=max_k),
-        4: _knn_turboquant(embs, bits=4, k=max_k),
-        2: _knn_turboquant(embs, bits=2, k=max_k),
-        1: _knn_hamming(binarize(embs), k=max_k),
+    knn_by_rep: dict[str, NDArray[np.int64]] = {
+        "16bit": _knn_cosine(embs.astype(np.float16), max_k),
+        "naive_8bit": _knn_quantized(embs, bits=8, is_rotated=False, k=max_k),
+        "tq_8bit": _knn_quantized(embs, bits=8, is_rotated=True, k=max_k),
+        "naive_4bit": _knn_quantized(embs, bits=4, is_rotated=False, k=max_k),
+        "tq_4bit": _knn_quantized(embs, bits=4, is_rotated=True, k=max_k),
+        "naive_2bit": _knn_quantized(embs, bits=2, is_rotated=False, k=max_k),
+        "tq_2bit": _knn_quantized(embs, bits=2, is_rotated=True, k=max_k),
+        "naive_1bit": _knn_hamming(binarize(embs), k=max_k),
+        "tq_1bit": _knn_hamming(binarize_rotated(embs), k=max_k),
     }
 
     results = []
-    for bit_depth in (16, 8, 4, 2, 1):
-        knn_quant = knn_by_bits[bit_depth]
+    for representation in REPRESENTATIONS:
+        knn_quant = knn_by_rep[representation]
         for k in k_values:
             overlap = _compute_overlap(knn_float, knn_quant, k)
             trust = _compute_trustworthiness(
                 knn_float, knn_quant, float_ranks, embs, k, n_docs,
             )
             results.append(NeighborhoodResult(
-                bit_depth=bit_depth,
+                representation=representation,
                 dim=dim,
                 k=k,
                 overlap=overlap,
