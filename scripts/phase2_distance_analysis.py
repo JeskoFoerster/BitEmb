@@ -1,6 +1,6 @@
 """Phase 2: Pairwise distance correlation and distortion analysis.
 
-Computes the full 2D experimental matrix (bit_depth × PCA_dim) for each dataset.
+Computes the full 2D experimental matrix (representation × PCA_dim) for each dataset.
 For each combination, 10,000 random pairs are drawn and distance preservation
 is measured via Pearson r, Spearman ρ, MAE, and RMSE.
 
@@ -25,6 +25,7 @@ from bitemb.distance import compute_distance_distortion, compute_raw_distances
 from bitemb.engine import EmbeddingEngine
 from bitemb.plotting import (
     plot_distance_scatter,
+    plot_distortion_by_dim,
     plot_distortion_heatmap,
     plot_distortion_pareto,
     plot_error_histogram,
@@ -73,10 +74,10 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
         )
 
         for r in results:
-            print(f"    {r.bit_depth}-bit: Pearson={r.pearson_r:.4f}  "
+            print(f"    {r.representation}: Pearson={r.pearson_r:.4f}  "
                   f"Spearman={r.spearman_rho:.4f}  MAE={r.mae:.4f}  RMSE={r.rmse:.4f}")
             all_results.append({
-                "bit_depth": r.bit_depth,
+                "representation": r.representation,
                 "dim": r.dim,
                 "pearson_r": r.pearson_r,
                 "pearson_p": r.pearson_p,
@@ -130,6 +131,14 @@ def main():
     p1 = plot_distortion_pareto(json_outputs, fig_dir / "distortion_pareto.pdf")
     print(f"  Pareto plot saved to {p1}")
 
+    # By-dimension plots: Spearman, Pearson
+    for metric, label in [("spearman_rho", "Spearman ρ"), ("pearson_r", "Pearson r")]:
+        p = plot_distortion_by_dim(
+            json_outputs, fig_dir / f"distortion_{metric}_by_dim.pdf",
+            metric=metric, ylabel=label,
+        )
+        print(f"  By-dim ({label}) saved to {p}")
+
     # Heatmaps: Spearman, Pearson, MAE, RMSE per dataset
     heatmap_metrics = [
         ("spearman_rho", "Spearman ρ"),
@@ -150,17 +159,29 @@ def main():
     for ds_out in all_outputs:
         name = ds_out["dataset"]
         raw = ds_out["_raw_distances"][1024]
-        d_quant = {4: raw.d_4bit, 2: raw.d_2bit, 1: raw.d_1bit}
+
+        # Build dict keyed by representation for all non-float32
+        d_quant: dict[str, np.ndarray] = {
+            "16bit": raw.d_16bit,
+            "naive_8bit": raw.d_naive_8bit,
+            "tq_8bit": raw.d_tq_8bit,
+            "naive_4bit": raw.d_naive_4bit,
+            "tq_4bit": raw.d_tq_4bit,
+            "naive_2bit": raw.d_naive_2bit,
+            "tq_2bit": raw.d_tq_2bit,
+            "naive_1bit": raw.d_naive_1bit,
+            "tq_1bit": raw.d_tq_1bit,
+        }
 
         p = plot_distance_scatter(
-            raw.d_float, d_quant,
+            raw.d_float32, d_quant,
             fig_dir / f"distance_scatter_{name}.pdf",
             dataset_name=name, dim=1024,
         )
         print(f"  Scatter plot saved to {p}")
 
         p = plot_error_histogram(
-            raw.d_float, d_quant,
+            raw.d_float32, d_quant,
             fig_dir / f"error_histogram_{name}.pdf",
             dataset_name=name, dim=1024,
         )

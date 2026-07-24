@@ -1,12 +1,13 @@
 """Phase 2: Pairwise distance correlation and distortion analysis.
 
 Measures how well quantized representations preserve pairwise distances
-from the float reference space. For each pair, four distance measures are
-computed (float cosine, TurboQuant 4-bit, TurboQuant 2-bit, binary Hamming)
-and compared via Pearson r, Spearman ρ, MAE, and RMSE.
+from the float reference space. For each pair, distances are computed under
+all 10 quantization representations and compared via Pearson r, Spearman ρ,
+MAE, and RMSE.
 
 The analysis spans a 2D experimental matrix:
-  - Bit depth: float32, 4-bit, 2-bit, 1-bit (binary)
+  - Representation: float32, 16bit, naive_8bit, tq_8bit, naive_4bit, tq_4bit,
+                    naive_2bit, tq_2bit, naive_1bit, tq_1bit
   - Dimensionality: 64, 128, 256, 384, 512, 768, 1024
 
 Reference: chapMethodik.tex, Section 5 (Phase 2).
@@ -23,19 +24,34 @@ from scipy.stats import pearsonr, spearmanr
 from bitemb.config import SEED
 from bitemb.quantization import (
     PCAReducer,
-    TurboQuantIndex,
+    QuantizedIndex,
     binarize,
-    turboquant_encode,
+    binarize_rotated,
+    quantize_encode,
 )
 
 N_PAIRS = 10_000
 
+# Canonical representation order (matches Phase 4/5)
+REPRESENTATIONS = [
+    "float32",
+    "16bit",
+    "naive_8bit",
+    "tq_8bit",
+    "naive_4bit",
+    "tq_4bit",
+    "naive_2bit",
+    "tq_2bit",
+    "naive_1bit",
+    "tq_1bit",
+]
+
 
 @dataclass
 class DistortionResult:
-    """Distance preservation metrics for one (bit_depth, dim) combination."""
+    """Distance preservation metrics for one (representation, dim) combination."""
 
-    bit_depth: int  # 1, 2, or 4
+    representation: str
     dim: int
     pearson_r: float
     pearson_p: float
@@ -44,6 +60,19 @@ class DistortionResult:
     mae: float
     rmse: float
     n_pairs: int
+
+    # Backward compatibility property
+    @property
+    def bit_depth(self) -> int:
+        """Backward compatibility: derive bit_depth from representation."""
+        _map = {
+            "16bit": 16,
+            "naive_8bit": 8, "tq_8bit": 8,
+            "naive_4bit": 4, "tq_4bit": 4,
+            "naive_2bit": 2, "tq_2bit": 2,
+            "naive_1bit": 1, "tq_1bit": 1,
+        }
+        return _map.get(self.representation, 32)
 
 
 def _normalize_to_unit(d: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -107,17 +136,22 @@ def _hamming_distance_pairs(
     return popcount_table[xor].sum(axis=1).astype(np.float64)
 
 
-def _turboquant_distance_pairs(
-    index: TurboQuantIndex, pairs: NDArray[np.int64]
+def _quantized_distance_pairs(
+    index: QuantizedIndex, pairs: NDArray[np.int64]
 ) -> NDArray[np.float64]:
     """Compute L2² distance between dequantized vectors for given pairs.
 
     Uses symmetric comparison (both vectors from the quantized index).
+    Works for both naive and TurboQuant (rotated) quantization.
     """
     recon = index.dequantize()
     a = recon[pairs[:, 0]]
     b = recon[pairs[:, 1]]
     return ((a - b) ** 2).sum(axis=1)
+
+
+# Backward compatibility alias
+_turboquant_distance_pairs = _quantized_distance_pairs
 
 
 def _compute_metrics(
@@ -145,12 +179,37 @@ class RawDistances:
     """Raw normalized distance arrays for visualization (scatter/histogram)."""
 
     dim: int
-    d_float: NDArray[np.float64]  # (n_pairs,) normalized [0,1]
+    d_float32: NDArray[np.float64]  # (n_pairs,) normalized [0,1]
     d_16bit: NDArray[np.float64]
-    d_8bit: NDArray[np.float64]
-    d_4bit: NDArray[np.float64]
-    d_2bit: NDArray[np.float64]
-    d_1bit: NDArray[np.float64]
+    d_naive_8bit: NDArray[np.float64]
+    d_tq_8bit: NDArray[np.float64]
+    d_naive_4bit: NDArray[np.float64]
+    d_tq_4bit: NDArray[np.float64]
+    d_naive_2bit: NDArray[np.float64]
+    d_tq_2bit: NDArray[np.float64]
+    d_naive_1bit: NDArray[np.float64]
+    d_tq_1bit: NDArray[np.float64]
+
+    # Backward compatibility properties
+    @property
+    def d_float(self) -> NDArray[np.float64]:
+        return self.d_float32
+
+    @property
+    def d_8bit(self) -> NDArray[np.float64]:
+        return self.d_tq_8bit
+
+    @property
+    def d_4bit(self) -> NDArray[np.float64]:
+        return self.d_tq_4bit
+
+    @property
+    def d_2bit(self) -> NDArray[np.float64]:
+        return self.d_tq_2bit
+
+    @property
+    def d_1bit(self) -> NDArray[np.float64]:
+        return self.d_naive_1bit
 
 
 def compute_raw_distances(
@@ -171,21 +230,61 @@ def compute_raw_distances(
         embs = embeddings
 
     pairs = _sample_pairs(embs.shape[0], n_pairs, seed)
-    d_float = _cosine_distance_pairs(embs, pairs)
+
+    # Float32 reference
+    d_float32 = _cosine_distance_pairs(embs, pairs)
+
+    # Float16
     d_16bit = _cosine_distance_pairs(embs.astype(np.float16), pairs)
-    d_8bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=8), pairs)
-    d_4bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=4), pairs)
-    d_2bit = _turboquant_distance_pairs(turboquant_encode(embs, bits=2), pairs)
-    d_1bit = _hamming_distance_pairs(binarize(embs), pairs)
+
+    # Naive 8-bit (no rotation)
+    d_naive_8bit = _quantized_distance_pairs(
+        quantize_encode(embs, bits=8, is_rotated=False), pairs
+    )
+
+    # TurboQuant 8-bit (rotated)
+    d_tq_8bit = _quantized_distance_pairs(
+        quantize_encode(embs, bits=8, is_rotated=True), pairs
+    )
+
+    # Naive 4-bit (no rotation)
+    d_naive_4bit = _quantized_distance_pairs(
+        quantize_encode(embs, bits=4, is_rotated=False), pairs
+    )
+
+    # TurboQuant 4-bit (rotated)
+    d_tq_4bit = _quantized_distance_pairs(
+        quantize_encode(embs, bits=4, is_rotated=True), pairs
+    )
+
+    # Naive 2-bit (no rotation)
+    d_naive_2bit = _quantized_distance_pairs(
+        quantize_encode(embs, bits=2, is_rotated=False), pairs
+    )
+
+    # TurboQuant 2-bit (rotated)
+    d_tq_2bit = _quantized_distance_pairs(
+        quantize_encode(embs, bits=2, is_rotated=True), pairs
+    )
+
+    # Naive 1-bit (sign binarization)
+    d_naive_1bit = _hamming_distance_pairs(binarize(embs), pairs)
+
+    # TurboQuant 1-bit (rotated binarization)
+    d_tq_1bit = _hamming_distance_pairs(binarize_rotated(embs), pairs)
 
     return RawDistances(
         dim=dim,
-        d_float=_normalize_to_unit(d_float),
+        d_float32=_normalize_to_unit(d_float32),
         d_16bit=_normalize_to_unit(d_16bit),
-        d_8bit=_normalize_to_unit(d_8bit),
-        d_4bit=_normalize_to_unit(d_4bit),
-        d_2bit=_normalize_to_unit(d_2bit),
-        d_1bit=_normalize_to_unit(d_1bit),
+        d_naive_8bit=_normalize_to_unit(d_naive_8bit),
+        d_tq_8bit=_normalize_to_unit(d_tq_8bit),
+        d_naive_4bit=_normalize_to_unit(d_naive_4bit),
+        d_tq_4bit=_normalize_to_unit(d_tq_4bit),
+        d_naive_2bit=_normalize_to_unit(d_naive_2bit),
+        d_tq_2bit=_normalize_to_unit(d_tq_2bit),
+        d_naive_1bit=_normalize_to_unit(d_naive_1bit),
+        d_tq_1bit=_normalize_to_unit(d_tq_1bit),
     )
 
 
@@ -206,7 +305,7 @@ def compute_distance_distortion(
         seed: Random seed for pair sampling.
 
     Returns:
-        List of 5 DistortionResult (one per bit depth: 16, 8, 4, 2, 1).
+        List of 9 DistortionResult (one per non-float32 representation).
     """
     # Apply PCA reduction if needed
     if pca_reducer is not None and dim < 1024:
@@ -217,7 +316,7 @@ def compute_distance_distortion(
     # Sample pairs
     pairs = _sample_pairs(embs.shape[0], n_pairs, seed)
 
-    # Ground truth: float cosine distance
+    # Ground truth: float32 cosine distance
     d_float = _cosine_distance_pairs(embs, pairs)
 
     results = []
@@ -226,43 +325,79 @@ def compute_distance_distortion(
     d_16 = _cosine_distance_pairs(embs.astype(np.float16), pairs)
     pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_16)
     results.append(DistortionResult(
-        bit_depth=16, dim=dim, pearson_r=pr, pearson_p=pp,
+        representation="16bit", dim=dim, pearson_r=pr, pearson_p=pp,
         spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
     ))
 
-    # TurboQuant 8-bit
-    tq8 = turboquant_encode(embs, bits=8)
-    d_tq8 = _turboquant_distance_pairs(tq8, pairs)
+    # Naive 8-bit (no rotation)
+    naive8 = quantize_encode(embs, bits=8, is_rotated=False)
+    d_naive8 = _quantized_distance_pairs(naive8, pairs)
+    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_naive8)
+    results.append(DistortionResult(
+        representation="naive_8bit", dim=dim, pearson_r=pr, pearson_p=pp,
+        spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
+    ))
+
+    # TurboQuant 8-bit (rotated)
+    tq8 = quantize_encode(embs, bits=8, is_rotated=True)
+    d_tq8 = _quantized_distance_pairs(tq8, pairs)
     pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_tq8)
     results.append(DistortionResult(
-        bit_depth=8, dim=dim, pearson_r=pr, pearson_p=pp,
+        representation="tq_8bit", dim=dim, pearson_r=pr, pearson_p=pp,
         spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
     ))
 
-    # TurboQuant 4-bit
-    tq4 = turboquant_encode(embs, bits=4)
-    d_tq4 = _turboquant_distance_pairs(tq4, pairs)
+    # Naive 4-bit (no rotation)
+    naive4 = quantize_encode(embs, bits=4, is_rotated=False)
+    d_naive4 = _quantized_distance_pairs(naive4, pairs)
+    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_naive4)
+    results.append(DistortionResult(
+        representation="naive_4bit", dim=dim, pearson_r=pr, pearson_p=pp,
+        spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
+    ))
+
+    # TurboQuant 4-bit (rotated)
+    tq4 = quantize_encode(embs, bits=4, is_rotated=True)
+    d_tq4 = _quantized_distance_pairs(tq4, pairs)
     pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_tq4)
     results.append(DistortionResult(
-        bit_depth=4, dim=dim, pearson_r=pr, pearson_p=pp,
+        representation="tq_4bit", dim=dim, pearson_r=pr, pearson_p=pp,
         spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
     ))
 
-    # TurboQuant 2-bit
-    tq2 = turboquant_encode(embs, bits=2)
-    d_tq2 = _turboquant_distance_pairs(tq2, pairs)
+    # Naive 2-bit (no rotation)
+    naive2 = quantize_encode(embs, bits=2, is_rotated=False)
+    d_naive2 = _quantized_distance_pairs(naive2, pairs)
+    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_naive2)
+    results.append(DistortionResult(
+        representation="naive_2bit", dim=dim, pearson_r=pr, pearson_p=pp,
+        spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
+    ))
+
+    # TurboQuant 2-bit (rotated)
+    tq2 = quantize_encode(embs, bits=2, is_rotated=True)
+    d_tq2 = _quantized_distance_pairs(tq2, pairs)
     pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_tq2)
     results.append(DistortionResult(
-        bit_depth=2, dim=dim, pearson_r=pr, pearson_p=pp,
+        representation="tq_2bit", dim=dim, pearson_r=pr, pearson_p=pp,
         spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
     ))
 
-    # Binary (1-bit)
-    packed = binarize(embs)
-    d_bin = _hamming_distance_pairs(packed, pairs)
-    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_bin)
+    # Naive 1-bit (sign binarization)
+    packed_naive = binarize(embs)
+    d_naive1 = _hamming_distance_pairs(packed_naive, pairs)
+    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_naive1)
     results.append(DistortionResult(
-        bit_depth=1, dim=dim, pearson_r=pr, pearson_p=pp,
+        representation="naive_1bit", dim=dim, pearson_r=pr, pearson_p=pp,
+        spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
+    ))
+
+    # TurboQuant 1-bit (rotated binarization)
+    packed_tq = binarize_rotated(embs)
+    d_tq1 = _hamming_distance_pairs(packed_tq, pairs)
+    pr, pp, sr, sp, mae, rmse = _compute_metrics(d_float, d_tq1)
+    results.append(DistortionResult(
+        representation="tq_1bit", dim=dim, pearson_r=pr, pearson_p=pp,
         spearman_rho=sr, spearman_p=sp, mae=mae, rmse=rmse, n_pairs=n_pairs,
     ))
 

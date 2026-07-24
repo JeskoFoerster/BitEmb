@@ -221,6 +221,7 @@ def generate_phase1_table(results: list[dict], output_path: Path) -> Path:
 
 # ---------- Phase 2: Distance Distortion ----------
 
+# Phase 3 uses these (do NOT remove)
 _BIT_COLORS = {
     16: "#aec7e8",
     8: "#9467bd",
@@ -236,39 +237,115 @@ _BIT_LABELS = {
     1: "Binary (1-bit)",
 }
 
+# Phase 2 representation-based constants (matching Phase 4/5 style)
+_DIST_REP_ORDER = [
+    "float32", "16bit", "naive_8bit", "tq_8bit", "naive_4bit", "tq_4bit",
+    "naive_2bit", "tq_2bit", "naive_1bit", "tq_1bit",
+]
+_DIST_REP_COLORS = {
+    "float32": "#1f77b4",
+    "16bit": "#aec7e8",
+    "naive_8bit": "#c5b0d5",
+    "tq_8bit": "#9467bd",
+    "naive_4bit": "#98df8a",
+    "tq_4bit": "#2ca02c",
+    "naive_2bit": "#ffbb78",
+    "tq_2bit": "#ff7f0e",
+    "naive_1bit": "#ff9896",
+    "tq_1bit": "#d62728",
+}
+_DIST_REP_LABELS = {
+    "float32": "Float32",
+    "16bit": "Naive 16-bit",
+    "naive_8bit": "Naive 8-bit",
+    "tq_8bit": "TurboQuant 8-bit",
+    "naive_4bit": "Naive 4-bit",
+    "tq_4bit": "TurboQuant 4-bit",
+    "naive_2bit": "Naive 2-bit",
+    "tq_2bit": "TurboQuant 2-bit",
+    "naive_1bit": "Naive 1-bit",
+    "tq_1bit": "TurboQuant 1-bit",
+}
+
+
+def _dist_bits_per_vector(representation: str, dim: int) -> int:
+    """Compute total bits per vector for a given representation and dimension."""
+    if representation == "float32":
+        return dim * 32
+    if representation == "16bit":
+        return dim * 16
+    if representation in ("naive_8bit", "tq_8bit"):
+        return dim * 8
+    if representation in ("naive_4bit", "tq_4bit"):
+        return dim * 4
+    if representation in ("naive_2bit", "tq_2bit"):
+        return dim * 2
+    if representation in ("naive_1bit", "tq_1bit"):
+        return dim
+    raise ValueError(f"Unknown representation: {representation}")
+
+
+def _dist_legend_below(ax: plt.Axes, ncol: int = 3) -> float:
+    """Place a compact legend below a Phase 2 plot and return the needed bottom margin."""
+    _, labels = ax.get_legend_handles_labels()
+    rows = max(1, (len(labels) + ncol - 1) // ncol)
+    bottom_margin = min(0.46, 0.18 + 0.06 * (rows - 1))
+    anchor_y = -0.24 - 0.08 * (rows - 1)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, anchor_y),
+        ncol=ncol,
+        fontsize=7,
+        frameon=False,
+        borderaxespad=0.0,
+    )
+    return bottom_margin
+
 
 # ---------- Phase 2: Scatter Plot (Float vs. Quantized Distance) ----------
 
 
 def plot_distance_scatter(
     d_float: NDArray[np.float64],
-    d_quant: dict[int, NDArray[np.float64]],
+    d_quant: dict[str, NDArray[np.float64]],
     output_path: Path,
     dataset_name: str = "",
     dim: int = 1024,
 ) -> Path:
-    """Scatter plot: float distance vs. quantized distance for each bit depth.
+    """Scatter plot: float distance vs. quantized distance for each representation.
 
     Args:
         d_float: Normalized float distances (n_pairs,).
-        d_quant: {bit_depth: normalized quantized distances}.
+        d_quant: {representation: normalized quantized distances} (9 non-float32).
         output_path: Path for the output PDF.
         dataset_name: Dataset label for title.
         dim: PCA dimension used.
     """
     _apply_style()
-    fig, axes = plt.subplots(1, 3, figsize=(_FIG_WIDTH * 1.3, _FIG_HEIGHT), sharey=True)
+    # 3x3 grid for 9 non-float32 representations
+    reps = [r for r in _DIST_REP_ORDER if r != "float32"]
+    fig, axes = plt.subplots(
+        3, 3, figsize=(_FIG_WIDTH * 1.6, _FIG_HEIGHT * 2.4), squeeze=False
+    )
 
-    for ax, bit_depth in zip(axes, [4, 2, 1]):
-        ax.scatter(d_float, d_quant[bit_depth], s=1, alpha=0.15, color=_BIT_COLORS[bit_depth])
+    for idx, rep in enumerate(reps):
+        row, col = divmod(idx, 3)
+        ax = axes[row, col]
+        if rep in d_quant:
+            ax.scatter(
+                d_float, d_quant[rep], s=1, alpha=0.15,
+                color=_DIST_REP_COLORS[rep],
+            )
         ax.plot([0, 1], [0, 1], "k--", linewidth=0.8, alpha=0.6)
-        ax.set_xlabel("Float distance (norm.)")
-        ax.set_title(_BIT_LABELS[bit_depth])
+        ax.set_title(_DIST_REP_LABELS[rep], fontsize=8)
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
         ax.set_aspect("equal")
+        if col == 0:
+            ax.set_ylabel("Quantized dist. (norm.)")
+        if row == 2:
+            ax.set_xlabel("Float distance (norm.)")
 
-    axes[0].set_ylabel("Quantized distance (norm.)")
     title = f"{dataset_name} (d={dim})" if dataset_name else f"d={dim}"
     fig.suptitle(title, fontsize=10)
     fig.tight_layout()
@@ -283,34 +360,63 @@ def plot_distance_scatter(
 
 def plot_error_histogram(
     d_float: NDArray[np.float64],
-    d_quant: dict[int, NDArray[np.float64]],
+    d_quant: dict[str, NDArray[np.float64]],
     output_path: Path,
     dataset_name: str = "",
     dim: int = 1024,
 ) -> Path:
-    """Histogram of absolute errors |d_float - d_quant| per bit depth.
+    """3×3 grid of error histograms |d_float - d_quant| per representation.
+
+    Each subplot shows one representation's error distribution, making
+    individual shapes clearly visible without overlap clutter.
 
     Args:
         d_float: Normalized float distances (n_pairs,).
-        d_quant: {bit_depth: normalized quantized distances}.
+        d_quant: {representation: normalized quantized distances} (9 non-float32).
         output_path: Path for the output PDF.
         dataset_name: Dataset label for title.
         dim: PCA dimension used.
     """
     _apply_style()
-    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+    reps = [r for r in _DIST_REP_ORDER if r != "float32"]
+    fig, axes = plt.subplots(
+        3, 3, figsize=(_FIG_WIDTH * 1.6, _FIG_HEIGHT * 2.4), squeeze=False
+    )
 
-    for bit_depth in [4, 2, 1]:
-        errors = np.abs(d_float - d_quant[bit_depth])
-        ax.hist(errors, bins=60, alpha=0.5, color=_BIT_COLORS[bit_depth],
-                label=_BIT_LABELS[bit_depth], density=True)
+    # Compute global x-range for consistent axes
+    all_errors = []
+    for rep in reps:
+        if rep in d_quant:
+            all_errors.append(np.abs(d_float - d_quant[rep]))
+    x_max = max(e.max() for e in all_errors) if all_errors else 1.0
 
-    ax.set_xlabel("Absolute error |d_float − d_quant|")
-    ax.set_ylabel("Density")
+    for idx, rep in enumerate(reps):
+        row, col = divmod(idx, 3)
+        ax = axes[row, col]
+        if rep in d_quant:
+            errors = np.abs(d_float - d_quant[rep])
+            ax.hist(
+                errors, bins=50, alpha=0.7, color=_DIST_REP_COLORS[rep],
+                density=True, edgecolor="none",
+            )
+            # Annotate with MAE
+            mae = float(errors.mean())
+            ax.text(
+                0.95, 0.92, f"MAE={mae:.4f}",
+                transform=ax.transAxes, fontsize=7,
+                ha="right", va="top",
+                bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8),
+            )
+        ax.set_title(_DIST_REP_LABELS[rep], fontsize=8)
+        ax.set_xlim(0, x_max * 1.05)
+        if col == 0:
+            ax.set_ylabel("Density")
+        if row == 2:
+            ax.set_xlabel("|d_float − d_quant|")
+
     title = f"{dataset_name} (d={dim})" if dataset_name else f"d={dim}"
-    ax.set_title(title)
-    ax.legend()
-
+    fig.suptitle(title, fontsize=10)
+    fig.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
     plt.close(fig)
@@ -325,7 +431,7 @@ def plot_distortion_pareto(
 ) -> Path:
     """Pareto plot: distortion metric vs. total bits per vector.
 
-    Shows the compression–quality trade-off across all (bit_depth, dim)
+    Shows the compression–quality trade-off across all (representation, dim)
     combinations. Each dataset gets its own line style.
 
     Args:
@@ -339,34 +445,40 @@ def plot_distortion_pareto(
 
     markers = ["o", "s", "^"]
     linestyles = ["-", "--", ":"]
+    reps = [r for r in _DIST_REP_ORDER if r != "float32"]
 
     for ds_idx, ds in enumerate(results):
-        name = ds["dataset"]
-        for bit_depth in [16, 8, 4, 2, 1]:
-            entries = [r for r in ds["results"] if r["bit_depth"] == bit_depth]
+        for representation in reps:
+            entries = [r for r in ds["results"] if r["representation"] == representation]
             entries.sort(key=lambda r: r["dim"])
-            bits_per_vec = [r["dim"] * bit_depth for r in entries]
+            bits_per_vec = [
+                _dist_bits_per_vector(representation, r["dim"]) for r in entries
+            ]
             values = [r[metric] for r in entries]
             ax.plot(
                 bits_per_vec,
                 values,
-                color=_BIT_COLORS[bit_depth],
-                linestyle=linestyles[ds_idx],
-                marker=markers[ds_idx],
+                color=_DIST_REP_COLORS[representation],
+                linestyle=linestyles[ds_idx % len(linestyles)],
+                marker=markers[ds_idx % len(markers)],
                 markersize=4,
-                label=f"{_BIT_LABELS[bit_depth]} ({name})" if ds_idx == 0 else None,
+                label=_DIST_REP_LABELS[representation] if ds_idx == 0 else None,
             )
-
-    # Dataset legend (linestyle only)
-    for ds_idx, ds in enumerate(results):
-        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx], label=ds["dataset"])
+        ax.plot(
+            [], [],
+            color="gray",
+            linestyle=linestyles[ds_idx % len(linestyles)],
+            label=ds["dataset"],
+        )
 
     ax.set_xlabel("Bits per vector")
     ax.set_ylabel(ylabel)
     ax.set_xscale("log", base=2)
-    ax.set_xlim(32, 4096)
+    ax.set_xlim(32, 16384 * 1.2)
     ax.set_ylim(0.0, 1.05)
-    ax.legend(loc="lower right", ncol=2, fontsize=7)
+    ax.set_title(f"Distance Distortion — {ylabel} vs. Compression")
+    bottom_margin = _dist_legend_below(ax, ncol=4)
+    fig.subplots_adjust(left=0.12, right=0.98, bottom=bottom_margin, top=0.88)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
@@ -380,7 +492,7 @@ def plot_distortion_heatmap(
     metric: str = "spearman_rho",
     title: str | None = None,
 ) -> Path:
-    """Heatmap of distortion metric across (bit_depth × PCA_dim).
+    """Heatmap of distortion metric across (representation × PCA_dim).
 
     Args:
         results: Single dataset result dict from phase2 JSON.
@@ -391,15 +503,17 @@ def plot_distortion_heatmap(
     _apply_style()
 
     dims = sorted({r["dim"] for r in results["results"]})
-    bits = [16, 8, 4, 2, 1]
+    reps = [r for r in _DIST_REP_ORDER if r != "float32"]
 
-    matrix = np.zeros((len(bits), len(dims)))
+    matrix = np.zeros((len(reps), len(dims)))
     for r in results["results"]:
-        row = bits.index(r["bit_depth"])
-        col = dims.index(r["dim"])
-        matrix[row, col] = r[metric]
+        rep = r["representation"]
+        if rep in reps:
+            row = reps.index(rep)
+            col = dims.index(r["dim"])
+            matrix[row, col] = r[metric]
 
-    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 3.2))
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 4.5))
 
     # For error metrics (lower is better), invert colormap and auto-scale
     is_error_metric = metric in ("mae", "rmse")
@@ -411,19 +525,83 @@ def plot_distortion_heatmap(
     # Labels
     ax.set_xticks(range(len(dims)))
     ax.set_xticklabels([str(d) for d in dims])
-    ax.set_yticks(range(len(bits)))
-    ax.set_yticklabels([_BIT_LABELS[b] for b in bits])
+    ax.set_yticks(range(len(reps)))
+    ax.set_yticklabels([_DIST_REP_LABELS[r] for r in reps])
     ax.set_xlabel("PCA dimensions")
 
     # Annotate cells
-    for i in range(len(bits)):
+    for i in range(len(reps)):
         for j in range(len(dims)):
             val = matrix[i, j]
             color = "white" if val < 0.5 else "black"
-            ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=8, color=color)
+            ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=7, color=color)
 
     fig.colorbar(im, ax=ax, shrink=0.8, label=metric.replace("_", " ").title())
     ax.set_title(title or results["dataset"])
+
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+# ---------- Phase 2: Distortion by PCA Dimension ----------
+
+
+def plot_distortion_by_dim(
+    results: list[dict],
+    output_path: Path,
+    metric: str = "spearman_rho",
+    ylabel: str = "Spearman ρ",
+) -> Path:
+    """Line plot of distortion metric as function of PCA dimension.
+
+    One line per (dataset, representation) combination.
+
+    Args:
+        results: List of dataset result dicts from phase2 JSON.
+        output_path: Path for the output PDF.
+        metric: Key in result dict to plot on y-axis.
+        ylabel: Label for y-axis.
+    """
+    _apply_style()
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
+
+    linestyles = ["-", "--", ":"]
+    reps = [r for r in _DIST_REP_ORDER if r != "float32"]
+
+    for ds_idx, ds in enumerate(results):
+        for representation in reps:
+            entries = sorted(
+                [r for r in ds["results"] if r["representation"] == representation],
+                key=lambda r: r["dim"],
+            )
+            dims = [r["dim"] for r in entries]
+            values = [r[metric] for r in entries]
+            ax.plot(
+                dims,
+                values,
+                color=_DIST_REP_COLORS[representation],
+                linestyle=linestyles[ds_idx % len(linestyles)],
+                marker="o",
+                markersize=4,
+                label=_DIST_REP_LABELS[representation] if ds_idx == 0 else None,
+            )
+        ax.plot(
+            [], [],
+            color="gray",
+            linestyle=linestyles[ds_idx % len(linestyles)],
+            label=ds["dataset"],
+        )
+
+    ax.set_xlabel("PCA dimensions")
+    ax.set_ylabel(ylabel)
+    ax.set_ylim(0.0, 1.05)
+    ax.set_xticks(sorted({r["dim"] for ds in results for r in ds["results"]}))
+    ax.set_title(f"Distance Distortion — {ylabel} by Dimension")
+    bottom_margin = _dist_legend_below(ax, ncol=4)
+    fig.subplots_adjust(left=0.12, right=0.98, bottom=bottom_margin, top=0.88)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)

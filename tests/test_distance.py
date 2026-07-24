@@ -4,16 +4,18 @@ import numpy as np
 import pytest
 
 from bitemb.distance import (
+    REPRESENTATIONS,
     DistortionResult,
     _compute_metrics,
     _cosine_distance_pairs,
     _hamming_distance_pairs,
     _normalize_to_unit,
+    _quantized_distance_pairs,
     _sample_pairs,
     _turboquant_distance_pairs,
     compute_distance_distortion,
 )
-from bitemb.quantization import PCAReducer, binarize, turboquant_encode
+from bitemb.quantization import PCAReducer, binarize, quantize_encode, turboquant_encode
 
 
 @pytest.fixture
@@ -66,7 +68,6 @@ class TestCosineDistancePairs:
     def test_self_pair_zero(self, corpus_embs):
         # Distance to self should be ~0
         pairs = np.array([[0, 0]], dtype=np.int64)
-        # Can't use i==j in _sample_pairs, but test the math directly
         d = _cosine_distance_pairs(corpus_embs, pairs)
         assert abs(d[0]) < 1e-5
 
@@ -94,7 +95,37 @@ class TestHammingDistancePairs:
         assert d.max() <= 1024
 
 
+class TestQuantizedDistancePairs:
+    """Tests for _quantized_distance_pairs (renamed from _turboquant_distance_pairs)."""
+
+    def test_self_near_zero(self, corpus_embs):
+        idx = quantize_encode(corpus_embs, bits=4, is_rotated=True)
+        pairs = np.array([[0, 0]], dtype=np.int64)
+        d = _quantized_distance_pairs(idx, pairs)
+        assert d[0] < 1e-6
+
+    def test_nonnegative(self, corpus_embs):
+        idx = quantize_encode(corpus_embs, bits=2, is_rotated=True)
+        pairs = _sample_pairs(200, n_pairs=100, seed=42)
+        d = _quantized_distance_pairs(idx, pairs)
+        assert (d >= -1e-10).all()
+
+    def test_naive_self_near_zero(self, corpus_embs):
+        idx = quantize_encode(corpus_embs, bits=4, is_rotated=False)
+        pairs = np.array([[0, 0]], dtype=np.int64)
+        d = _quantized_distance_pairs(idx, pairs)
+        assert d[0] < 1e-6
+
+    def test_naive_nonnegative(self, corpus_embs):
+        idx = quantize_encode(corpus_embs, bits=2, is_rotated=False)
+        pairs = _sample_pairs(200, n_pairs=100, seed=42)
+        d = _quantized_distance_pairs(idx, pairs)
+        assert (d >= -1e-10).all()
+
+
 class TestTurboQuantDistancePairs:
+    """Tests for backward-compatible _turboquant_distance_pairs alias."""
+
     def test_self_near_zero(self, corpus_embs):
         idx = turboquant_encode(corpus_embs, bits=4)
         pairs = np.array([[0, 0]], dtype=np.int64)
@@ -127,11 +158,16 @@ class TestComputeMetrics:
 
 
 class TestComputeDistanceDistortion:
-    def test_returns_three_results(self, corpus_embs):
+    def test_returns_nine_results(self, corpus_embs):
+        """Now returns 9 results (one per non-float32 representation)."""
         results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=500)
-        assert len(results) == 5
-        bit_depths = [r.bit_depth for r in results]
-        assert sorted(bit_depths) == [1, 2, 4, 8, 16]
+        assert len(results) == 9
+        representations = [r.representation for r in results]
+        expected = [
+            "16bit", "naive_8bit", "tq_8bit", "naive_4bit", "tq_4bit",
+            "naive_2bit", "tq_2bit", "naive_1bit", "tq_1bit",
+        ]
+        assert representations == expected
 
     def test_result_types(self, corpus_embs):
         results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=500)
@@ -143,18 +179,28 @@ class TestComputeDistanceDistortion:
             assert r.rmse >= 0
             assert r.rmse >= r.mae  # RMSE ≥ MAE always
 
-    def test_4bit_better_than_2bit(self, corpus_embs):
+    def test_backward_compat_bit_depth(self, corpus_embs):
+        """Backward compatibility: bit_depth property still works."""
+        results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=500)
+        by_rep = {r.representation: r for r in results}
+        assert by_rep["16bit"].bit_depth == 16
+        assert by_rep["tq_8bit"].bit_depth == 8
+        assert by_rep["tq_4bit"].bit_depth == 4
+        assert by_rep["tq_2bit"].bit_depth == 2
+        assert by_rep["naive_1bit"].bit_depth == 1
+
+    def test_tq_4bit_better_than_tq_2bit(self, corpus_embs):
         results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=1000)
-        by_bits = {r.bit_depth: r for r in results}
+        by_rep = {r.representation: r for r in results}
         # 4-bit should correlate better than 2-bit
-        assert by_bits[4].pearson_r >= by_bits[2].pearson_r - 0.05
+        assert by_rep["tq_4bit"].pearson_r >= by_rep["tq_2bit"].pearson_r - 0.05
 
     def test_with_pca(self, corpus_embs):
         pca = PCAReducer(n_components=128).fit(corpus_embs)
         results = compute_distance_distortion(
             corpus_embs, dim=128, pca_reducer=pca, n_pairs=500,
         )
-        assert len(results) == 5
+        assert len(results) == 9
         for r in results:
             assert r.dim == 128
 
@@ -164,3 +210,11 @@ class TestComputeDistanceDistortion:
         for a, b in zip(r1, r2):
             assert a.pearson_r == b.pearson_r
             assert a.mae == b.mae
+
+    def test_tq_better_than_naive_at_same_bits(self, corpus_embs):
+        """TurboQuant (rotated) should generally correlate as well or better than naive."""
+        results = compute_distance_distortion(corpus_embs, dim=1024, n_pairs=1000)
+        by_rep = {r.representation: r for r in results}
+        # TQ 4-bit should be at least close to naive 4-bit (usually better)
+        # Allow small tolerance since random data may vary
+        assert by_rep["tq_4bit"].pearson_r >= by_rep["naive_4bit"].pearson_r - 0.1
