@@ -16,6 +16,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import cast
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -36,6 +37,8 @@ from bitemb.config import DATASETS, MODEL_NAME, PCA_DIMS, SEED  # noqa: E402
 from bitemb.distance import _sample_pairs  # noqa: E402
 from bitemb.efficiency import (  # noqa: E402
     REPRESENTATIONS,
+    PackedTurboQuantIndex,
+    Representation,
     build_numpy_layouts,
     cosine_distance_pairs_numpy,
     dataclasses_to_dicts,
@@ -180,10 +183,10 @@ def _numpy_runtime_records(
 
     # Multi-bit Naive
     for b in (8, 4, 2):
-        layout_name = f"naive_{b}bit"
-        layout_obj = getattr(layouts, f"naive_{b}bit")
+        layout_name = cast(Representation, f"naive_{b}bit")
+        layout_obj = cast(PackedTurboQuantIndex, getattr(layouts, f"naive_{b}bit"))
         runtime.append(measure_runtime(
-            lambda lo=layout_obj: turboquant_distance_pairs_numpy(lo, pairs),
+            lambda lo=layout_obj: turboquant_distance_pairs_numpy(lo, pairs),  # type: ignore[misc]
             representation=layout_name,
             operation="pairwise_distance",
             implementation="numpy_vectorized",
@@ -198,10 +201,10 @@ def _numpy_runtime_records(
 
     # Multi-bit TurboQuant
     for b in (8, 4, 2):
-        layout_name = f"tq_{b}bit"
-        layout_obj = getattr(layouts, f"tq_{b}bit")
+        layout_name = cast(Representation, f"tq_{b}bit")
+        layout_obj = cast(PackedTurboQuantIndex, getattr(layouts, f"tq_{b}bit"))
         runtime.append(measure_runtime(
-            lambda lo=layout_obj: turboquant_distance_pairs_numpy(lo, pairs),
+            lambda lo=layout_obj: turboquant_distance_pairs_numpy(lo, pairs),  # type: ignore[misc]
             representation=layout_name,
             operation="pairwise_distance",
             implementation="numpy_vectorized",
@@ -275,10 +278,10 @@ def _numpy_runtime_records(
 
     # Multi-bit Naive
     for b in (8, 4, 2):
-        layout_name = f"naive_{b}bit"
-        layout_obj = getattr(layouts, f"naive_{b}bit")
+        layout_name = cast(Representation, f"naive_{b}bit")
+        layout_obj = cast(PackedTurboQuantIndex, getattr(layouts, f"naive_{b}bit"))
         runtime.append(measure_runtime(
-            lambda lo=layout_obj: knn_turboquant_numpy(lo, k),
+            lambda lo=layout_obj: knn_turboquant_numpy(lo, k),  # type: ignore[misc]
             representation=layout_name,
             operation="top_k",
             implementation="numpy_vectorized",
@@ -293,10 +296,10 @@ def _numpy_runtime_records(
 
     # Multi-bit TurboQuant
     for b in (8, 4, 2):
-        layout_name = f"tq_{b}bit"
-        layout_obj = getattr(layouts, f"tq_{b}bit")
+        layout_name = cast(Representation, f"tq_{b}bit")
+        layout_obj = cast(PackedTurboQuantIndex, getattr(layouts, f"tq_{b}bit"))
         runtime.append(measure_runtime(
-            lambda lo=layout_obj: knn_turboquant_numpy(lo, k),
+            lambda lo=layout_obj: knn_turboquant_numpy(lo, k),  # type: ignore[misc]
             representation=layout_name,
             operation="top_k",
             implementation="numpy_vectorized",
@@ -406,7 +409,7 @@ def run(args: argparse.Namespace) -> tuple[list[dict], list[dict]]:
                     "numpy_vectorized": numpy_mem,
                 })
 
-                runtime_records = []
+                runtime_records: list[dict] = []
                 runtime_records.extend({
                     "representation": rec["representation"],
                     "operation": "pairwise_distance",
