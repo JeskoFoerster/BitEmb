@@ -1,8 +1,7 @@
 """Phase 3: Neighborhood preservation analysis.
 
 Computes neighborhood overlap and trustworthiness across the full 2D
-
-experimental matrix (bit_depth × PCA_dim) for k ∈ {5, 10, 20}.
+experimental matrix (representation × PCA_dim) for k ∈ {5, 10, 20}.
 
 Usage:
     python scripts/phase3_neighborhood.py --dataset scifact
@@ -70,11 +69,11 @@ def run(
 
         for r in results:
             print(
-                f"    {r.bit_depth}-bit k={r.k:3d}: "
+                f"    {r.representation}: k={r.k:3d}  "
                 f"overlap={r.overlap:.4f}  T={r.trustworthiness:.4f}"
             )
             all_results.append({
-                "bit_depth": r.bit_depth,
+                "representation": r.representation,
                 "dim": r.dim,
                 "k": r.k,
                 "overlap": r.overlap,

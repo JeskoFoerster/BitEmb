@@ -221,22 +221,6 @@ def generate_phase1_table(results: list[dict], output_path: Path) -> Path:
 
 # ---------- Phase 2: Distance Distortion ----------
 
-# Phase 3 uses these (do NOT remove)
-_BIT_COLORS = {
-    16: "#aec7e8",
-    8: "#9467bd",
-    4: "#2ca02c",
-    2: "#ff7f0e",
-    1: "#d62728",
-}
-_BIT_LABELS = {
-    16: "Float16 (16-bit)",
-    8: "TurboQuant 8-bit",
-    4: "TurboQuant 4-bit",
-    2: "TurboQuant 2-bit",
-    1: "Binary (1-bit)",
-}
-
 # Phase 2 representation-based constants (matching Phase 4/5 style)
 _DIST_REP_ORDER = [
     "float32", "16bit", "naive_8bit", "tq_8bit", "naive_4bit", "tq_4bit",
@@ -611,6 +595,66 @@ def plot_distortion_by_dim(
 
 # ---------- Phase 3: Neighborhood Preservation ----------
 
+# Phase 3 representation-based constants (matching Phase 2/4/5 style)
+_NEIGH_REP_ORDER = [
+    "16bit", "naive_8bit", "tq_8bit", "naive_4bit", "tq_4bit",
+    "naive_2bit", "tq_2bit", "naive_1bit", "tq_1bit",
+]
+_NEIGH_REP_COLORS = {
+    "16bit": "#aec7e8",
+    "naive_8bit": "#c5b0d5",
+    "tq_8bit": "#9467bd",
+    "naive_4bit": "#98df8a",
+    "tq_4bit": "#2ca02c",
+    "naive_2bit": "#ffbb78",
+    "tq_2bit": "#ff7f0e",
+    "naive_1bit": "#ff9896",
+    "tq_1bit": "#d62728",
+}
+_NEIGH_REP_LABELS = {
+    "16bit": "Naive 16-bit",
+    "naive_8bit": "Naive 8-bit",
+    "tq_8bit": "TurboQuant 8-bit",
+    "naive_4bit": "Naive 4-bit",
+    "tq_4bit": "TurboQuant 4-bit",
+    "naive_2bit": "Naive 2-bit",
+    "tq_2bit": "TurboQuant 2-bit",
+    "naive_1bit": "Naive 1-bit",
+    "tq_1bit": "TurboQuant 1-bit",
+}
+
+
+def _neigh_bits_per_vector(representation: str, dim: int) -> int:
+    """Compute total bits per vector for a given representation and dimension."""
+    if representation == "16bit":
+        return dim * 16
+    if representation in ("naive_8bit", "tq_8bit"):
+        return dim * 8
+    if representation in ("naive_4bit", "tq_4bit"):
+        return dim * 4
+    if representation in ("naive_2bit", "tq_2bit"):
+        return dim * 2
+    if representation in ("naive_1bit", "tq_1bit"):
+        return dim
+    raise ValueError(f"Unknown representation: {representation}")
+
+
+def _neigh_legend_below(ax: plt.Axes, ncol: int = 3) -> float:
+    """Place a compact legend below a Phase 3 plot and return the needed bottom margin."""
+    _, labels = ax.get_legend_handles_labels()
+    rows = max(1, (len(labels) + ncol - 1) // ncol)
+    bottom_margin = min(0.46, 0.18 + 0.06 * (rows - 1))
+    anchor_y = -0.24 - 0.08 * (rows - 1)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, anchor_y),
+        ncol=ncol,
+        fontsize=7,
+        frameon=False,
+        borderaxespad=0.0,
+    )
+    return bottom_margin
+
 
 def plot_neighborhood_heatmap(
     results: dict,
@@ -619,7 +663,7 @@ def plot_neighborhood_heatmap(
     k: int = 10,
     title: str | None = None,
 ) -> Path:
-    """Heatmap of neighborhood metric across (bit_depth × PCA_dim).
+    """Heatmap of neighborhood metric across (representation × PCA_dim).
 
     Args:
         results: Single dataset result dict from phase3 JSON.
@@ -632,34 +676,36 @@ def plot_neighborhood_heatmap(
 
     entries = [r for r in results["results"] if r["k"] == k]
     dims = sorted({r["dim"] for r in entries})
-    bits = [16, 8, 4, 2, 1]
 
-    matrix = np.zeros((len(bits), len(dims)))
+    matrix = np.zeros((len(_NEIGH_REP_ORDER), len(dims)))
     for r in entries:
-        row = bits.index(r["bit_depth"])
-        col = dims.index(r["dim"])
-        matrix[row, col] = r[metric]
+        rep = r["representation"]
+        if rep in _NEIGH_REP_ORDER:
+            row = _NEIGH_REP_ORDER.index(rep)
+            col = dims.index(r["dim"])
+            matrix[row, col] = r[metric]
 
-    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 3.2))
+    fig, ax = plt.subplots(figsize=(_FIG_WIDTH, 4.5))
     im = ax.imshow(matrix, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
 
     ax.set_xticks(range(len(dims)))
     ax.set_xticklabels([str(d) for d in dims])
-    ax.set_yticks(range(len(bits)))
-    ax.set_yticklabels([_BIT_LABELS[b] for b in bits])
+    ax.set_yticks(range(len(_NEIGH_REP_ORDER)))
+    ax.set_yticklabels([_NEIGH_REP_LABELS[r] for r in _NEIGH_REP_ORDER])
     ax.set_xlabel("PCA dimensions")
 
-    for i in range(len(bits)):
+    for i in range(len(_NEIGH_REP_ORDER)):
         for j in range(len(dims)):
             val = matrix[i, j]
             color = "white" if val < 0.5 else "black"
             ax.text(j, i, f"{val:.3f}", ha="center", va="center",
-                    fontsize=8, color=color)
+                    fontsize=7, color=color)
 
     label = metric.replace("_", " ").title()
     fig.colorbar(im, ax=ax, shrink=0.8, label=label)
     ax.set_title(title or f"{results['dataset']} — {label} (k={k})")
 
+    fig.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
     plt.close(fig)
@@ -673,9 +719,9 @@ def plot_neighborhood_overlap_by_k(
     metric: str = "overlap",
     ylabel: str | None = None,
 ) -> Path:
-    """Line plot: neighborhood metric as function of k for each bit depth.
+    """Line plot: neighborhood metric as function of k for each representation.
 
-    One line per (dataset, bit_depth) combination at fixed PCA dim.
+    One line per (dataset, representation) combination at fixed PCA dim.
 
     Args:
         results: List of dataset result dicts from phase3 JSON.
@@ -691,24 +737,24 @@ def plot_neighborhood_overlap_by_k(
 
     for ds_idx, ds in enumerate(results):
         entries = [r for r in ds["results"] if r["dim"] == dim]
-        for bit_depth in [16, 8, 4, 2, 1]:
-            bit_entries = sorted(
-                [r for r in entries if r["bit_depth"] == bit_depth],
+        for representation in _NEIGH_REP_ORDER:
+            rep_entries = sorted(
+                [r for r in entries if r["representation"] == representation],
                 key=lambda r: r["k"],
             )
-            ks = [r["k"] for r in bit_entries]
-            values = [r[metric] for r in bit_entries]
+            ks = [r["k"] for r in rep_entries]
+            values = [r[metric] for r in rep_entries]
             ax.plot(
                 ks, values,
-                color=_BIT_COLORS[bit_depth],
-                linestyle=linestyles[ds_idx],
+                color=_NEIGH_REP_COLORS[representation],
+                linestyle=linestyles[ds_idx % len(linestyles)],
                 marker="o", markersize=4,
-                label=f"{_BIT_LABELS[bit_depth]}" if ds_idx == 0 else None,
+                label=_NEIGH_REP_LABELS[representation] if ds_idx == 0 else None,
             )
 
     # Dataset legend
     for ds_idx, ds in enumerate(results):
-        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx],
+        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx % len(linestyles)],
                 label=ds["dataset"])
 
     label = ylabel or metric.replace("_", " ").title()
@@ -716,8 +762,9 @@ def plot_neighborhood_overlap_by_k(
     ax.set_ylabel(label)
     ax.set_ylim(0.0, 1.05)
     ax.set_xticks([5, 10, 20])
-    ax.legend(loc="lower right", ncol=2, fontsize=7)
     ax.set_title(f"{label} (d={dim})")
+    bottom_margin = _neigh_legend_below(ax, ncol=4)
+    fig.subplots_adjust(left=0.12, right=0.98, bottom=bottom_margin, top=0.88)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
@@ -751,33 +798,38 @@ def plot_neighborhood_pareto(
     linestyles = ["-", "--", ":"]
 
     for ds_idx, ds in enumerate(results):
-        for bit_depth in [16, 8, 4, 2, 1]:
+        for representation in _NEIGH_REP_ORDER:
             entries = sorted(
-                [r for r in ds["results"] if r["bit_depth"] == bit_depth and r["k"] == k],
+                [r for r in ds["results"]
+                 if r["representation"] == representation and r["k"] == k],
                 key=lambda r: r["dim"],
             )
-            bits_per_vec = [r["dim"] * bit_depth for r in entries]
+            bits_per_vec = [
+                _neigh_bits_per_vector(representation, r["dim"]) for r in entries
+            ]
             values = [r[metric] for r in entries]
             ax.plot(
                 bits_per_vec, values,
-                color=_BIT_COLORS[bit_depth],
-                linestyle=linestyles[ds_idx],
-                marker=markers[ds_idx],
+                color=_NEIGH_REP_COLORS[representation],
+                linestyle=linestyles[ds_idx % len(linestyles)],
+                marker=markers[ds_idx % len(markers)],
                 markersize=4,
-                label=f"{_BIT_LABELS[bit_depth]}" if ds_idx == 0 else None,
+                label=_NEIGH_REP_LABELS[representation] if ds_idx == 0 else None,
             )
 
     for ds_idx, ds in enumerate(results):
-        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx], label=ds["dataset"])
+        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx % len(linestyles)],
+                label=ds["dataset"])
 
     label = ylabel or metric.replace("_", " ").title()
     ax.set_xlabel("Bits per vector")
     ax.set_ylabel(label)
     ax.set_xscale("log", base=2)
-    ax.set_xlim(32, 4096)
+    ax.set_xlim(32, 16384 * 1.2)
     ax.set_ylim(0.0, 1.05)
-    ax.legend(loc="lower right", ncol=2, fontsize=7)
     ax.set_title(f"{label} vs. Compression (k={k})")
+    bottom_margin = _neigh_legend_below(ax, ncol=4)
+    fig.subplots_adjust(left=0.12, right=0.98, bottom=bottom_margin, top=0.88)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
@@ -810,31 +862,34 @@ def plot_neighborhood_by_dim(
     linestyles = ["-", "--", ":"]
 
     for ds_idx, ds in enumerate(results):
-        for bit_depth in [16, 8, 4, 2, 1]:
+        for representation in _NEIGH_REP_ORDER:
             entries = sorted(
-                [r for r in ds["results"] if r["bit_depth"] == bit_depth and r["k"] == k],
+                [r for r in ds["results"]
+                 if r["representation"] == representation and r["k"] == k],
                 key=lambda r: r["dim"],
             )
             dims = [r["dim"] for r in entries]
             values = [r[metric] for r in entries]
             ax.plot(
                 dims, values,
-                color=_BIT_COLORS[bit_depth],
-                linestyle=linestyles[ds_idx],
+                color=_NEIGH_REP_COLORS[representation],
+                linestyle=linestyles[ds_idx % len(linestyles)],
                 marker="o", markersize=4,
-                label=f"{_BIT_LABELS[bit_depth]}" if ds_idx == 0 else None,
+                label=_NEIGH_REP_LABELS[representation] if ds_idx == 0 else None,
             )
 
     for ds_idx, ds in enumerate(results):
-        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx], label=ds["dataset"])
+        ax.plot([], [], color="gray", linestyle=linestyles[ds_idx % len(linestyles)],
+                label=ds["dataset"])
 
     label = ylabel or metric.replace("_", " ").title()
     ax.set_xlabel("PCA dimensions")
     ax.set_ylabel(label)
     ax.set_ylim(0.0, 1.05)
     ax.set_xticks([64, 128, 256, 384, 512, 768, 1024])
-    ax.legend(loc="lower right", ncol=2, fontsize=7)
     ax.set_title(f"{label} vs. Dimension (k={k})")
+    bottom_margin = _neigh_legend_below(ax, ncol=4)
+    fig.subplots_adjust(left=0.12, right=0.98, bottom=bottom_margin, top=0.88)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)

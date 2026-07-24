@@ -117,11 +117,11 @@ class TestTrustworthiness:
 
 class TestComputeNeighborhoodPreservation:
     def test_returns_correct_count(self, small_embeddings):
-        """Should return 5 bit_depths × 2 k_values = 10 results."""
+        """Should return 9 representations × 2 k_values = 18 results."""
         results = compute_neighborhood_preservation(
             small_embeddings, dim=32, k_values=(5, 10),
         )
-        assert len(results) == 10  # 5 bit_depths × 2 k_values
+        assert len(results) == 18  # 9 representations × 2 k_values
 
     def test_result_type(self, small_embeddings):
         results = compute_neighborhood_preservation(
@@ -144,14 +144,14 @@ class TestComputeNeighborhoodPreservation:
             assert 0.0 <= r.trustworthiness <= 1.0
 
     def test_4bit_better_than_1bit(self, small_embeddings):
-        """4-bit should generally preserve neighbors better than 1-bit."""
+        """TQ 4-bit should generally preserve neighbors better than naive 1-bit."""
         results = compute_neighborhood_preservation(
             small_embeddings, dim=32, k_values=(5,),
         )
-        overlap_4bit = next(r.overlap for r in results if r.bit_depth == 4)
-        overlap_1bit = next(r.overlap for r in results if r.bit_depth == 1)
+        overlap_tq4 = next(r.overlap for r in results if r.representation == "tq_4bit")
+        overlap_naive1 = next(r.overlap for r in results if r.representation == "naive_1bit")
         # 4-bit should be >= 1-bit (may not always hold for tiny data)
-        assert overlap_4bit >= overlap_1bit * 0.8  # relaxed bound
+        assert overlap_tq4 >= overlap_naive1 * 0.8  # relaxed bound
 
     def test_random_baseline(self, small_embeddings):
         results = compute_neighborhood_preservation(
