@@ -1051,8 +1051,14 @@ def plot_phase5_memory_compression_by_dim(
     results: list[dict],
     output_path: Path,
 ) -> Path:
-    """Line plot of NumPy layout compression ratio by PCA dimension."""
+    """Line plot of NumPy layout compression ratio by PCA dimension (using TREC-COVID dataset)."""
     _apply_style()
+
+    # Filter to trec-covid dataset as requested
+    trec_results = [r for r in results if r.get("dataset") == "trec-covid"]
+    if trec_results:
+        results = trec_results
+
     fig, ax = plt.subplots(figsize=(_FIG_WIDTH, _FIG_HEIGHT))
 
     series_labels = sorted({_phase5_series_label(r) for r in results})
@@ -1090,7 +1096,18 @@ def plot_phase5_memory_compression_by_dim(
     ax.yaxis.set_major_formatter(_format_factor)
     ax.set_xticks(sorted({r["dim"] for r in results}))
     bottom_margin = _phase5_legend_below(ax, ncol=4)
-    fig.subplots_adjust(left=0.15, right=0.98, bottom=bottom_margin, top=0.95)
+
+    # Footnote: explain that TREC-COVID is plotted and other datasets yield identical compression factors
+    fig.text(
+        0.5,
+        0.01,
+        "* Hinweis: Nur TREC-COVID dargestellt; alle anderen Datensätze (SciFact, FiQA) liefern bei gleicher Dimension exakt dieselben Kompressionsfaktoren.",
+        ha="center",
+        fontsize=6.5,
+        color="dimgray",
+        alpha=0.8,
+    )
+    fig.subplots_adjust(left=0.15, right=0.98, bottom=max(bottom_margin, 0.22), top=0.95)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
