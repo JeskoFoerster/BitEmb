@@ -1097,11 +1097,14 @@ def plot_phase5_memory_compression_by_dim(
     ax.set_xticks(sorted({r["dim"] for r in results}))
     bottom_margin = _phase5_legend_below(ax, ncol=4)
 
-    # Footnote: explain that TREC-COVID is plotted and other datasets yield identical compression factors
+    # Footnote: explain that TREC-COVID is plotted and other datasets
+    # yield identical compression factors
     fig.text(
         0.5,
         0.01,
-        "* Hinweis: Nur TREC-COVID dargestellt; alle anderen Datensätze (SciFact, FiQA) liefern bei gleicher Dimension exakt dieselben Kompressionsfaktoren.",
+        "* Hinweis: Nur TREC-COVID dargestellt; alle anderen Datensätze "
+        "(SciFact, FiQA) liefern bei gleicher Dimension exakt dieselben "
+        "Kompressionsfaktoren.",
         ha="center",
         fontsize=6.5,
         color="dimgray",
