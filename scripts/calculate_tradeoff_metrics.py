@@ -280,7 +280,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 768d -> 512d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -329,7 +329,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 768d -> 512d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -378,7 +378,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 768d -> 512d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Relative Storage Savings ($S_{rel}$)")
@@ -427,7 +427,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 768d -> 512d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Compression Factor (Multiplier vs. Float32 1024d, Log-Scale)")
@@ -480,7 +480,7 @@ def main():
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 1024d -> 384d -> 256d -> 128d -> 64d",
+        "Points on curve (L to R): 1024d -> 768d -> 512d -> 384d -> 256d -> 128d -> 64d",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Compression Factor (Multiplier vs. Float32 1024d, Log-Scale)")
