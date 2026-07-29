@@ -75,15 +75,16 @@ _REP_LABELS = {
 }
 
 # AWS EC2 On-Demand Instance Pricing (us-east-1 / eu-central-1 estimates)
-# Baseline (41 GB RAM for 10M vecs): r6i.2xlarge (64 GB RAM) -> ~$0.504/hr = ~$368/mo
-# Enterprise (5.28 GB RAM): m6g.large / t4g.large (8 GB RAM) -> ~$0.0672/hr = ~$49/mo
-# Business Sweet Spot (2.72 GB RAM): t4g.medium (4 GB RAM) -> ~$0.0336/hr = ~$24.50/mo
-# Edge / Mobile (0.96 GB RAM): t4g.small (2 GB RAM) -> ~$0.0168/hr = ~$12.25/mo
+# Footprints are reported as binary units (MiB/GiB), matching the calculations below.
+# Baseline (38.15 GiB RAM for 10M vecs): r6i.2xlarge (64 GiB RAM) -> ~$0.504/hr = ~$368/mo
+# Enterprise (4.92 GiB RAM): m6g.large / t4g.large (8 GiB RAM) -> ~$0.0672/hr = ~$49/mo
+# Business Sweet Spot (2.54 GiB RAM): t4g.medium (4 GiB RAM) -> ~$0.0336/hr = ~$24.50/mo
+# Edge / Mobile (0.89 GiB RAM): t4g.small (2 GiB RAM) -> ~$0.0168/hr = ~$12.25/mo
 AWS_PRICING = {
-    "baseline": {"instance": "r6i.2xlarge (64 GB RAM)", "monthly_usd": 368.0},
-    "enterprise": {"instance": "m6g.large (8 GB RAM)", "monthly_usd": 49.0},
-    "business": {"instance": "t4g.medium (4 GB RAM)", "monthly_usd": 24.50},
-    "edge": {"instance": "t4g.small (2 GB RAM)", "monthly_usd": 12.25},
+    "baseline": {"instance": "r6i.2xlarge (64 GiB RAM)", "monthly_usd": 368.0},
+    "enterprise": {"instance": "m6g.large (8 GiB RAM)", "monthly_usd": 49.0},
+    "business": {"instance": "t4g.medium (4 GiB RAM)", "monthly_usd": 24.50},
+    "edge": {"instance": "t4g.small (2 GiB RAM)", "monthly_usd": 12.25},
 }
 
 
@@ -163,10 +164,10 @@ def main() -> None:
         q_rel = (q_val / q_base) * 100.0
         comp_ratio = c_base / b_val
 
-        # Scaling RAM for 100k, 1M, 10M
-        ram_100k_mb = (b_val * 100_000) / (1024 * 1024)
-        ram_1m_gb = (b_val * 1_000_000) / (1024 * 1024 * 1024)
-        ram_10m_gb = (b_val * 10_000_000) / (1024 * 1024 * 1024)
+        # Scaling RAM for 100k, 1M, 10M in binary units.
+        ram_100k_mib = (b_val * 100_000) / (1024 * 1024)
+        ram_1m_gib = (b_val * 1_000_000) / (1024 * 1024 * 1024)
+        ram_10m_gib = (b_val * 10_000_000) / (1024 * 1024 * 1024)
 
         aws_cost = s_info["aws"]["monthly_usd"]
         base_aws_cost = AWS_PRICING["baseline"]["monthly_usd"]
@@ -183,9 +184,9 @@ def main() -> None:
             "quality_loss_pct": 100.0 - q_rel,
             "bytes_per_vector": b_val,
             "compression_ratio": comp_ratio,
-            "ram_100k_mb": ram_100k_mb,
-            "ram_1m_gb": ram_1m_gb,
-            "ram_10m_gb": ram_10m_gb,
+            "ram_100k_mib": ram_100k_mib,
+            "ram_1m_gib": ram_1m_gib,
+            "ram_10m_gib": ram_10m_gib,
             "aws_instance": s_info["aws"]["instance"],
             "aws_monthly_usd": aws_cost,
             "aws_annual_usd": aws_cost * 12,
@@ -202,11 +203,11 @@ def main() -> None:
     # ------------------ Plot 1: RAM Footprint Comparison (10M Vectors) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.2))
     names = list(scenarios.keys())
-    ram_vals = [results[n]["ram_10m_gb"] for n in names]
+    ram_vals = [results[n]["ram_10m_gib"] for n in names]
     colors = ["#1f77b4", "#2ca02c", "#ff7f0e", "#d62728"]
 
     bars = ax.bar(names, ram_vals, color=colors, width=0.55, edgecolor="black", linewidth=0.8)
-    ax.set_ylabel("RAM Footprint for 10M Vectors (GB)")
+    ax.set_ylabel("RAM Footprint for 10M Vectors (GiB)")
     ax.set_title("Memory Footprint Comparison across Application Scenarios (10M Vectors)")
     ax.set_ylim(0, 48)
 
@@ -215,7 +216,7 @@ def main() -> None:
         ax.text(
             bar.get_x() + bar.get_width() / 2.0,
             height + 1.2,
-            f"{val:.2f} GB",
+            f"{val:.2f} GiB",
             ha="center",
             va="bottom",
             fontsize=8,

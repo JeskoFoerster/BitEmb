@@ -19,10 +19,10 @@ Dafür wird der Indexbedarf für drei typische Korpusgrößen hochgerechnet:
 
 | Anwendungsfall | Empfohlene Konfiguration | NDCG@10 | Relative Qualität | Speicher / Vektor | Kompressionsfaktor | RAM bei 1 Mio. Vektoren | RAM bei 10 Mio. Vektoren |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Float32 Baseline** | `float32 1024d` | 0.7463 | 100.0% | 4096.0 B | 1.0x | 4.10 GB | 41.00 GB |
-| **Szenario 1: Edge / Mobile** | `tq_1bit 768d` | 0.7007 | **93.9%** | 96.0 B | **42.7x** | **96 MB** | 0.96 GB |
-| **Szenario 2: Business Sweet Spot** | `tq_2bit 1024d` | 0.7318 | **98.1%** | 272.4 B | **15.0x** | **272 MB** | 2.72 GB |
-| **Szenario 3: Enterprise Precision** | `tq_4bit 1024d` | 0.7422 | **99.5%** | 528.4 B | **7.8x** | 528 MB | **5.28 GB** |
+| **Float32 Baseline** | `float32 1024d` | 0.7463 | 100.0% | 4096.0 B | 1.0x | 3.81 GiB | 38.15 GiB |
+| **Szenario 1: Edge / Mobile** | `tq_1bit 768d` | 0.7007 | **93.9%** | 96.0 B | **42.7x** | **91.6 MiB** | 0.89 GiB |
+| **Szenario 2: Business Sweet Spot** | `tq_2bit 1024d` | 0.7318 | **98.1%** | 272.4 B | **15.0x** | **259.8 MiB** | 2.54 GiB |
+| **Szenario 3: Enterprise Precision** | `tq_4bit 1024d` | 0.7422 | **99.5%** | 528.4 B | **7.8x** | 503.9 MiB | **4.92 GiB** |
 
 ---
 
@@ -33,21 +33,21 @@ Dafür wird der Indexbedarf für drei typische Korpusgrößen hochgerechnet:
 - **Empfehlung:** `tq_1bit` bei 768d (oder 384d).
 - **Leistung:** Erreicht **93.9%** der unkomprimierten Float32-Baseline (NDCG@10 = `0.7007` vs. `0.7463`).
 - **Speicher:** Benötigt nur **96 Bytes pro Vektor** (Kompressionsfaktor **42.7x**).
-- **Praxisnutzen:** Ein Index aus 100.000 Vektoren belegt lediglich **9.6 MB** RAM (1 Mio. Vektoren nur **96 MB**). Damit passt der Suchindex vollständig in den L3-Cache oder den mobilen Arbeitsspeicher.
+- **Praxisnutzen:** Ein Index aus 100.000 Vektoren belegt lediglich **9.16 MiB** RAM (1 Mio. Vektoren nur **91.6 MiB**). Damit passt der Suchindex vollständig in den mobilen Arbeitsspeicher; für L3-Cache-Größen ist der 100k-Index plausibler als der 1M-Index.
 
 ### Szenario 2: Business Sweet Spot (Kostenoptimierte SaaS)
 - **Ziel:** Ein kostenempfindliches SaaS-Unternehmen möchte Server-RAM-Kosten massiv senken, ohne dass Kunden eine Verschlechterung der Suchergebnisse wahrnehmen.
 - **Empfehlung:** `tq_2bit` bei 1024d.
 - **Leistung:** Erreicht **98.1%** der Float32-Qualität (NDCG@10 = `0.7318` $\rightarrow$ **nur 1.9% Qualitätsverlust!**).
 - **Speicher:** Benötigt **272.4 Bytes pro Vektor** (Kompressionsfaktor **15.0x**).
-- **Praxisnutzen:** Ein Index aus 1 Million Dokumenten schrumpft von **4.1 GB** auf **272 MB**. Pro Million Vektoren werden **3.8 GB High-Speed RAM** eingespart.
+- **Praxisnutzen:** Ein Index aus 1 Million Dokumenten schrumpft von **3.81 GiB** auf **259.8 MiB**. Pro Million Vektoren werden **3.56 GiB High-Speed RAM** eingespart.
 
 ### Szenario 3: Enterprise-Optimierung (High Precision / Low Loss)
 - **Ziel:** Große Enterprise-Systeme (Legal, Medizintechnik, Finanzen), bei denen kein nennenswerter Qualitätsverlust akzeptabel ist ($\le 1\%$ Abweichung), die jedoch bei vielen Millionen Vektoren Serverkosten und Latenzen optimieren wollen.
 - **Empfehlung:** `tq_4bit` bei 1024d.
 - **Leistung:** Hält **99.5%** der Float32-Baseline-Qualität (NDCG@10 = `0.7422` vs. `0.7463` $\rightarrow$ **nur 0.5% Abweichung!**).
 - **Speicher:** Benötigt **528.4 Bytes pro Vektor** (Kompressionsfaktor **7.8x**).
-- **Praxisnutzen:** Bei 10 Millionen Dokumenten sinkt der Speicherbedarf von **41.0 GB** auf **5.28 GB**. Über **35 GB teurer Server-RAM** werden frei.
+- **Praxisnutzen:** Bei 10 Millionen Dokumenten sinkt der Speicherbedarf von **38.15 GiB** auf **4.92 GiB**. Über **33 GiB teurer Server-RAM** werden frei.
 
 ---
 
@@ -90,14 +90,14 @@ Für den Serverbetrieb von In-Memory-Vektorindizes im Cloud-Hosting (AWS EC2 mit
 
 | Szenario | Benötigte AWS-Instanz | RAM-Kapazität | Monatl. Kosten (USD) | Ersparnis (monatl.) | Ersparnis (jährlich) | Prozentuale Ersparnis |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Float32 Baseline** | `r6i.2xlarge` | 64 GB | $368.00 | - | - | Baseline (0.0%) |
-| **Szenario 3: Enterprise** | `m6g.large` | 8 GB | **$49.00** | **+$319.00 / Mo.** | **+$3,828.00 / Jahr** | **86.7% günstiger** |
-| **Szenario 2: Business** | `t4g.medium` | 4 GB | **$24.50** | **+$343.50 / Mo.** | **+$4,122.00 / Jahr** | **93.3% günstiger** |
+| **Float32 Baseline** | `r6i.2xlarge` | 64 GiB | $368.00 | - | - | Baseline (0.0%) |
+| **Szenario 3: Enterprise** | `m6g.large` | 8 GiB | **$49.00** | **+$319.00 / Mo.** | **+$3,828.00 / Jahr** | **86.7% günstiger** |
+| **Szenario 2: Business** | `t4g.medium` | 4 GiB | **$24.50** | **+$343.50 / Mo.** | **+$4,122.00 / Jahr** | **93.3% günstiger** |
 
 > **Hinweis:** *Szenario 1 (Edge / Mobile)* wird hier nicht aufgeführt, da der Vektorindex lokal auf Endgeräten (Smartphone/Laptop) betrieben wird und somit **0 USD Cloud-Hosting-Kosten** verursacht.
 
 > **Fußnote zur AWS-Kostenrechnung:**  
-> Die Berechnung basiert auf aktuellen AWS EC2 On-Demand-Tarifen (eu-central-1 / us-east-1). Unkomprimiertes Float32 (1024d) benötigt bei 10M Vektoren mindestens eine `r6i.2xlarge`-Instanz ($368.00 USD/Monat). Durch `tq_2bit` sinkt der RAM-Bedarf auf 2.72 GB, was auf einer `t4g.medium`-Instanz ($24.50 USD/Monat) betrieben werden kann. Das entspricht einer **Betriebskostenersparnis von 93.3%** bei vernachlässigbarem Qualitätsverlust (1.9%).
+> Die Berechnung basiert auf aktuellen AWS EC2 On-Demand-Tarifen (eu-central-1 / us-east-1). Unkomprimiertes Float32 (1024d) benötigt bei 10M Vektoren mindestens eine `r6i.2xlarge`-Instanz ($368.00 USD/Monat). Durch `tq_2bit` sinkt der RAM-Bedarf auf 2.54 GiB, was auf einer `t4g.medium`-Instanz ($24.50 USD/Monat) betrieben werden kann. Das entspricht einer **Betriebskostenersparnis von 93.3%** bei vernachlässigbarem Qualitätsverlust (1.9%).
 
 ---
 
