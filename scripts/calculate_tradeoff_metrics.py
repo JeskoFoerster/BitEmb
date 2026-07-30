@@ -406,33 +406,48 @@ def main():
         comp_ratios = [1.0 / r["c_rel"] for r in rep_results]
         quality = [r["q_rel"] for r in rep_results]
         ax.plot(
-            comp_ratios, quality,
+            comp_ratios,
+            quality,
             color=_REP_COLORS[rep],
             marker=_REP_MARKERS[rep],
             linestyle="-",
             label=_REP_LABELS[rep]
         )
 
+        # Use the 1024d full-space points as the readable operating-point comparison.
         for r in rep_results:
-            if r["dim"] in [64, 256, 768, 1024]:
-                ax.annotate(
-                    f"{r['dim']}d",
-                    (1.0 / r["c_rel"], r["q_rel"]),
-                    textcoords="offset points",
-                    xytext=(0, 6),
-                    ha="center",
-                    fontsize=7,
-                    alpha=0.8
-                )
+            if r["dim"] != 1024:
+                continue
+            comp_ratio = 1.0 / r["c_rel"]
+            ax.scatter(
+                [comp_ratio],
+                [r["q_rel"]],
+                s=72,
+                facecolors="white",
+                edgecolors="black",
+                linewidths=1.2,
+                zorder=5,
+            )
+            ax.annotate(
+                f"1024d\n{comp_ratio:.1f}x",
+                (comp_ratio, r["q_rel"]),
+                textcoords="offset points",
+                xytext=(0, 10),
+                ha="center",
+                fontsize=7,
+                fontweight="bold",
+                alpha=0.95,
+            )
 
     ax.text(
         0.02, 0.02,
-        "Points on curve (L to R): 1024d -> 768d -> 512d -> 384d -> 256d -> 128d -> 64d",
+        "Curves include all PCA dimensions; highlighted markers show the "
+        "1024d full-space TQ points.",
         transform=ax.transAxes, fontsize=6.5, color="dimgray", alpha=0.8,
     )
     ax.set_xlabel("Compression Factor (Multiplier vs. Float32 1024d, Log-Scale)")
     ax.set_ylabel("Relative Quality ($Q_{rel}$)")
-    ax.set_title("Quality vs. Compression Factor (TurboQuant Only)")
+    ax.set_title("Quality vs. Compression Factor (TurboQuant, 1024d Highlighted)", pad=18)
     ax.set_xscale("log")
     ax.set_xlim(3, 450)
     ax.set_ylim(0.43, 1.03)
@@ -447,7 +462,6 @@ def main():
     fig.savefig(p5a_pdf, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {p5a_pdf}")
-
     # ------------------ Plot 5b: Quality vs. Compression Ratio (Naive Only) ------------------
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
     for rep in _REP_ORDER:
