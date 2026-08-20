@@ -143,5 +143,5 @@ Für den Serverbetrieb von In-Memory-Vektorindizes im Cloud-Hosting (AWS EC2 mit
 - `results/phase6/figures/phase6_scenario_memory_comparison.pdf` (Vergleich des Speicherbedarfs bei 10M Vektoren)
 - `results/phase6/figures/phase6_tradeoff_scenarios_highlighted.pdf` (3-Zonen Trade-off-Diagramm mit Highlighted Scenarios)
 - `results/phase6/figures/phase6_aws_cost_savings.pdf` (Monatliche AWS-Hostingkosten im Vergleich)
-- `results/phase6/figures/phase6_mobile_sub10m_scaling.pdf` (gruppierte Handy-Balken je Vektoranzahl und Dimension unter 10M Vektoren)
+- `results/phase6/figures/phase6_mobile_sub10m_scaling.pdf` (gestapelte TurboQuant-Varianten `tq_1bit` bis `tq_8bit`, jeweils mit gruppierten Balken nach Dimension und Vektoranzahl)
 - `results/phase6/scenarios_summary.json` (Vollständige strukturierte Ergebnis-Matrix)

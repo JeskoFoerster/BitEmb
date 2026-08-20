@@ -98,6 +98,7 @@ MOBILE_VECTOR_COUNTS = [
 ]
 
 MOBILE_DIMS = [64, 128, 256, 384, 512, 768, 1024]
+MOBILE_TQ_REPS = ["tq_1bit", "tq_2bit", "tq_4bit", "tq_8bit"]
 
 
 def apply_style() -> None:
@@ -243,6 +244,35 @@ def main() -> None:
             ],
         }
         results["Edge / Mobile"]["sub_10m_by_dim"].append(dim_entry)
+
+    results["Edge / Mobile"]["sub_10m_by_turboquant"] = []
+    for rep in MOBILE_TQ_REPS:
+        rep_entry = {
+            "representation": rep,
+            "dimensions": [],
+        }
+        for dim in MOBILE_DIMS:
+            q_val = quality_map[(rep, dim)]
+            b_val = memory_map[(rep, dim)]
+            rep_entry["dimensions"].append(
+                {
+                    "dim": dim,
+                    "ndcg_at_10": q_val,
+                    "relative_quality_pct": (q_val / q_base) * 100.0,
+                    "quality_loss_pct": 100.0 - ((q_val / q_base) * 100.0),
+                    "bytes_per_vector": b_val,
+                    "compression_ratio": c_base / b_val,
+                    "scaling": [
+                        {
+                            "n_vectors": n_vectors,
+                            "ram_mib": (b_val * n_vectors) / (1024 * 1024),
+                            "ram_gib": (b_val * n_vectors) / (1024 * 1024 * 1024),
+                        }
+                        for n_vectors in MOBILE_VECTOR_COUNTS
+                    ],
+                }
+            )
+        results["Edge / Mobile"]["sub_10m_by_turboquant"].append(rep_entry)
 
     # Save JSON summary
     json_path = base_dir / "results/phase6/scenarios_summary.json"
@@ -400,42 +430,69 @@ def main() -> None:
     plt.close(fig)
     print(f"Saved: {p3_pdf}")
 
-    # ------------------ Plot 4: Edge / Mobile Scaling below 10M Vectors ------------------
-    fig, ax = plt.subplots(figsize=(8.2, 4.6))
-    dim_scaling = results["Edge / Mobile"]["sub_10m_by_dim"]
+    # ------------------ Plot 4: Edge / Mobile Scaling by TurboQuant Variant ------------------
+    tq_scaling = results["Edge / Mobile"]["sub_10m_by_turboquant"]
     x_labels = ["10k", "50k", "100k", "250k", "500k", "1M", "5M"]
     x_pos = list(range(len(x_labels)))
     bar_width = 0.11
     cmap = plt.get_cmap("viridis")
+    fig, axes = plt.subplots(
+        len(tq_scaling),
+        1,
+        figsize=(8.4, 14.0),
+        sharex=False,
+    )
 
-    for idx, dim_entry in enumerate(dim_scaling):
-        dim = dim_entry["dim"]
-        rel_q = dim_entry["relative_quality_pct"]
-        ram_vals = [row["mobile_ram_mib"] for row in dim_entry["scaling"]]
-        offset = (idx - (len(dim_scaling) - 1) / 2.0) * bar_width
-        bar_x = [x_val + offset for x_val in x_pos]
-        ax.bar(
-            bar_x,
-            ram_vals,
-            width=bar_width,
-            color=cmap(idx / max(1, len(dim_scaling) - 1)),
-            edgecolor="black",
-            linewidth=0.35,
-            label=f"{dim}d ({rel_q:.1f}% Q)",
+    for ax, rep_entry in zip(axes, tq_scaling):
+        rep = rep_entry["representation"]
+        dim_entries = rep_entry["dimensions"]
+
+        for idx, dim_entry in enumerate(dim_entries):
+            dim = dim_entry["dim"]
+            rel_q = dim_entry["relative_quality_pct"]
+            ram_vals = [row["ram_mib"] for row in dim_entry["scaling"]]
+            offset = (idx - (len(dim_entries) - 1) / 2.0) * bar_width
+            bar_x = [x_val + offset for x_val in x_pos]
+            ax.bar(
+                bar_x,
+                ram_vals,
+                width=bar_width,
+                color=cmap(idx / max(1, len(dim_entries) - 1)),
+                edgecolor="black",
+                linewidth=0.35,
+                label=f"{dim}d ({rel_q:.1f}% Q)",
+            )
+
+        y_max = max(
+            row["ram_mib"]
+            for dim_entry in dim_entries
+            for row in dim_entry["scaling"]
+        )
+        ax.set_ylim(0, y_max * 1.18)
+        if 128 < y_max * 1.18:
+            ax.axhline(128, color="dimgray", linestyle="--", linewidth=0.8, alpha=0.75)
+        if 512 < y_max * 1.18:
+            ax.axhline(512, color="dimgray", linestyle=":", linewidth=0.8, alpha=0.75)
+        ax.set_ylabel("RAM Footprint (MiB)")
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(x_labels)
+        ax.tick_params(axis="x", labelbottom=True, pad=3)
+        ax.set_title(
+            f"{_REP_LABELS[rep]} - grouped by dimension",
+            loc="left",
+            fontsize=9.0,
+            fontweight="bold",
         )
 
-    ax.axhline(128, color="dimgray", linestyle="--", linewidth=1.0)
-    ax.axhline(512, color="dimgray", linestyle=":", linewidth=1.0)
-    ax.text(-0.42, 128 + 8, "128 MiB", color="dimgray", fontsize=7.5)
-    ax.text(-0.42, 512 - 34, "512 MiB", color="dimgray", fontsize=7.5)
-    ax.set_xticks(x_pos)
-    ax.set_xticklabels(x_labels)
-    ax.set_ylabel("RAM Footprint (MiB)")
-    ax.set_xlabel("Number of Embedding Vectors")
-    ax.set_title("Edge / Mobile Memory Scaling below 10M Vectors by Dimension (tq_1bit)")
-    ax.set_ylim(0, 700)
-    ax.legend(loc="upper left", ncol=2, fontsize=7.0)
+    fig.supxlabel("Number of Embedding Vectors", y=0.035, fontsize=9.5)
+    axes[0].legend(loc="upper left", ncol=2, fontsize=6.7)
 
+
+    fig.suptitle(
+        "Edge / Mobile Memory Scaling below 10M Vectors by TurboQuant Variant",
+        fontsize=11,
+        fontweight="bold",
+    )
     fig.text(
         0.5,
         0.01,
@@ -446,7 +503,8 @@ def main() -> None:
         color="dimgray",
         alpha=0.9,
     )
-    fig.subplots_adjust(bottom=0.16)
+    fig.tight_layout(rect=(0.0, 0.06, 1.0, 0.965), h_pad=2.4)
+    fig.subplots_adjust(hspace=0.55)
 
     p4_pdf = output_dir / "phase6_mobile_sub10m_scaling.pdf"
     fig.savefig(p4_pdf, bbox_inches="tight")
