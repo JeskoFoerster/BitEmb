@@ -13,6 +13,8 @@ Dafür wird der Indexbedarf für drei typische Korpusgrößen hochgerechnet:
 - $N = 1.000.000$ Vektoren (1 Million) (Mittelständischer SaaS-Vektorindex)
 - $N = 10.000.000$ Vektoren (10 Millionen) (Enterprise-Suche / Cloud-Infrastruktur)
 
+Zusätzlich wird für das Handy-Szenario eine feinere Skalierung unterhalb von 10 Millionen Vektoren betrachtet, weil dort Speicherbudgets im zweistelligen bis niedrigen dreistelligen MiB-Bereich praktisch relevant sind.
+
 ---
 
 ## 1. Übersicht der Anwendungsfälle
@@ -34,6 +36,41 @@ Dafür wird der Indexbedarf für drei typische Korpusgrößen hochgerechnet:
 - **Leistung:** Erreicht **93.9%** der unkomprimierten Float32-Baseline (NDCG@10 = `0.7007` vs. `0.7463`).
 - **Speicher:** Benötigt nur **96 Bytes pro Vektor** (Kompressionsfaktor **42.7x**).
 - **Praxisnutzen:** Ein Index aus 100.000 Vektoren belegt lediglich **9.16 MiB** RAM (1 Mio. Vektoren nur **91.6 MiB**). Damit passt der Suchindex vollständig in den mobilen Arbeitsspeicher; für L3-Cache-Größen ist der 100k-Index plausibler als der 1M-Index.
+
+#### Skalierung unter 10M Vektoren im Handy-Szenario
+
+Für Smartphones ist ein 10M-Index eher eine Obergrenze als ein typischer lokaler Bestand. Interessanter sind kleinere On-Device-Korpora wie persönliche Notizen, lokale Produktkataloge, App-Hilfen oder ausgewählte PDF-Sammlungen. Bei `tq_1bit 768d` skaliert der reine Vektorspeicher linear mit **96 Bytes pro Vektor**:
+
+| Vektoren | `tq_1bit 768d` RAM | Float32-Baseline RAM | Einordnung für Handy / On-Device |
+| :---: | :---: | :---: | :--- |
+| 10.000 | **0.92 MiB** | 39.1 MiB | Sehr kleiner lokaler Suchindex, praktisch unkritisch. |
+| 50.000 | **4.58 MiB** | 195.3 MiB | Realistisch für App-Hilfen, FAQs oder kuratierte Dokumentsets. |
+| 100.000 | **9.16 MiB** | 390.6 MiB | Guter Zielbereich für lokale Fachsuche mit vielen Chunks. |
+| 250.000 | **22.9 MiB** | 976.6 MiB | Noch klar mobil nutzbar; Metadaten werden wichtiger als der Vektoranteil. |
+| 500.000 | **45.8 MiB** | 1.91 GiB | Für leistungsfähigere Geräte plausibel, Float32 wäre bereits unpraktisch. |
+| 1.000.000 | **91.6 MiB** | 3.81 GiB | Oberer mobiler Arbeitsbereich, abhängig von ANN-Index und Metadaten. |
+| 5.000.000 | **457.8 MiB** | 19.07 GiB | Eher Tablet/Laptop oder Spezialfall; für typische Smartphones schon budgetrelevant. |
+
+> **Interpretation:** Unterhalb von 1M Embeddings ist das Handy-Szenario mit TurboQuant nicht durch den Vektorspeicher limitiert, sondern eher durch Zusatzstrukturen: ANN-Index, Text-/Metadaten, App-Runtime und verfügbare Speicherlimits des Betriebssystems. Der Bereich **100k bis 500k Embeddings** wirkt deshalb als besonders realistischer On-Device-Korridor.
+
+#### Dimensionsvergleich im Handy-Szenario
+
+Zusätzlich lohnt sich eine Betrachtung der Dimensionszahl. Bei `tq_1bit` wächst der Speicher linear mit der Dimension: 64d benötigt 8 Bytes pro Vektor, 768d benötigt 96 Bytes und 1024d benötigt 128 Bytes. Die Qualitätswerte sind empirische `NDCG@10`-Ergebnisse auf `scifact`, relativ zur Float32-1024d-Baseline:
+
+| Dimension | Speicher / Vektor | RAM bei 100k | RAM bei 500k | RAM bei 1M | Relative Qualität |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| 64d | 8 B | 0.76 MiB | 3.8 MiB | 7.6 MiB | 44.7% |
+| 128d | 16 B | 1.53 MiB | 7.6 MiB | 15.3 MiB | 72.6% |
+| 256d | 32 B | 3.05 MiB | 15.3 MiB | 30.5 MiB | 84.7% |
+| 384d | 48 B | 4.58 MiB | 22.9 MiB | 45.8 MiB | 90.5% |
+| 512d | 64 B | 6.10 MiB | 30.5 MiB | 61.0 MiB | 90.4% |
+| 768d | 96 B | 9.16 MiB | 45.8 MiB | 91.6 MiB | **93.9%** |
+| 1024d | 128 B | 12.21 MiB | 61.0 MiB | 122.1 MiB | 90.3% |
+
+> **Interpretation:** Für sehr kleine Speicherbudgets sind 384d oder 512d attraktiv, weil sie bei 1M Embeddings unter 64 MiB bleiben und noch etwa 90% der Float32-Qualität erreichen. Die beste gemessene Mobile-Konfiguration bleibt in diesen Ergebnissen jedoch **768d**, weil sie trotz höherem Speicherbedarf den besten Qualitätswert liefert. 1024d bringt bei `tq_1bit` auf `scifact` keinen zusätzlichen Qualitätsgewinn gegenüber 768d.
+
+> Die zugehörige gestapelte PDF ist nach **Dimensionen** aufgebaut: Für jede Dimension von 64d bis 1024d zeigt ein eigener Teilplot die Speicherskalierung über **10k, 50k, 100k, 250k, 500k, 1M und 5M Embeddings**.
+
 
 ### Szenario 2: Business Sweet Spot (Kostenoptimierte SaaS)
 - **Ziel:** Ein kostenempfindliches SaaS-Unternehmen möchte Server-RAM-Kosten massiv senken, ohne dass Kunden eine Verschlechterung der Suchergebnisse wahrnehmen.
@@ -106,4 +143,5 @@ Für den Serverbetrieb von In-Memory-Vektorindizes im Cloud-Hosting (AWS EC2 mit
 - `results/phase6/figures/phase6_scenario_memory_comparison.pdf` (Vergleich des Speicherbedarfs bei 10M Vektoren)
 - `results/phase6/figures/phase6_tradeoff_scenarios_highlighted.pdf` (3-Zonen Trade-off-Diagramm mit Highlighted Scenarios)
 - `results/phase6/figures/phase6_aws_cost_savings.pdf` (Monatliche AWS-Hostingkosten im Vergleich)
+- `results/phase6/figures/phase6_mobile_sub10m_scaling.pdf` (gruppierte Handy-Balken je Vektoranzahl und Dimension unter 10M Vektoren)
 - `results/phase6/scenarios_summary.json` (Vollständige strukturierte Ergebnis-Matrix)

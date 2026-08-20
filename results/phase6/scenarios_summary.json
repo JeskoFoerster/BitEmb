@@ -65,6 +65,388 @@
     "aws_monthly_usd": 12.25,
     "aws_annual_usd": 147.0,
     "aws_savings_monthly_usd": 355.75,
-    "aws_savings_pct": 96.6711956521739
+    "aws_savings_pct": 96.6711956521739,
+    "sub_10m_scaling": [
+      {
+        "n_vectors": 10000,
+        "mobile_ram_mib": 0.91552734375,
+        "mobile_ram_gib": 0.0008940696716308594,
+        "float32_ram_mib": 39.0625,
+        "float32_ram_gib": 0.03814697265625,
+        "compression_ratio": 42.666666666666664
+      },
+      {
+        "n_vectors": 50000,
+        "mobile_ram_mib": 4.57763671875,
+        "mobile_ram_gib": 0.004470348358154297,
+        "float32_ram_mib": 195.3125,
+        "float32_ram_gib": 0.19073486328125,
+        "compression_ratio": 42.666666666666664
+      },
+      {
+        "n_vectors": 100000,
+        "mobile_ram_mib": 9.1552734375,
+        "mobile_ram_gib": 0.008940696716308594,
+        "float32_ram_mib": 390.625,
+        "float32_ram_gib": 0.3814697265625,
+        "compression_ratio": 42.666666666666664
+      },
+      {
+        "n_vectors": 250000,
+        "mobile_ram_mib": 22.88818359375,
+        "mobile_ram_gib": 0.022351741790771484,
+        "float32_ram_mib": 976.5625,
+        "float32_ram_gib": 0.95367431640625,
+        "compression_ratio": 42.666666666666664
+      },
+      {
+        "n_vectors": 500000,
+        "mobile_ram_mib": 45.7763671875,
+        "mobile_ram_gib": 0.04470348358154297,
+        "float32_ram_mib": 1953.125,
+        "float32_ram_gib": 1.9073486328125,
+        "compression_ratio": 42.666666666666664
+      },
+      {
+        "n_vectors": 1000000,
+        "mobile_ram_mib": 91.552734375,
+        "mobile_ram_gib": 0.08940696716308594,
+        "float32_ram_mib": 3906.25,
+        "float32_ram_gib": 3.814697265625,
+        "compression_ratio": 42.666666666666664
+      },
+      {
+        "n_vectors": 5000000,
+        "mobile_ram_mib": 457.763671875,
+        "mobile_ram_gib": 0.4470348358154297,
+        "float32_ram_mib": 19531.25,
+        "float32_ram_gib": 19.073486328125,
+        "compression_ratio": 42.666666666666664
+      }
+    ],
+    "sub_10m_by_dim": [
+      {
+        "dim": 64,
+        "representation": "tq_1bit",
+        "ndcg_at_10": 0.3335447995103464,
+        "relative_quality_pct": 44.69283301220729,
+        "quality_loss_pct": 55.30716698779271,
+        "bytes_per_vector": 8.0,
+        "compression_ratio": 512.0,
+        "scaling": [
+          {
+            "n_vectors": 10000,
+            "mobile_ram_mib": 0.0762939453125,
+            "mobile_ram_gib": 7.450580596923828e-05
+          },
+          {
+            "n_vectors": 50000,
+            "mobile_ram_mib": 0.3814697265625,
+            "mobile_ram_gib": 0.0003725290298461914
+          },
+          {
+            "n_vectors": 100000,
+            "mobile_ram_mib": 0.762939453125,
+            "mobile_ram_gib": 0.0007450580596923828
+          },
+          {
+            "n_vectors": 250000,
+            "mobile_ram_mib": 1.9073486328125,
+            "mobile_ram_gib": 0.001862645149230957
+          },
+          {
+            "n_vectors": 500000,
+            "mobile_ram_mib": 3.814697265625,
+            "mobile_ram_gib": 0.003725290298461914
+          },
+          {
+            "n_vectors": 1000000,
+            "mobile_ram_mib": 7.62939453125,
+            "mobile_ram_gib": 0.007450580596923828
+          },
+          {
+            "n_vectors": 5000000,
+            "mobile_ram_mib": 38.14697265625,
+            "mobile_ram_gib": 0.03725290298461914
+          }
+        ]
+      },
+      {
+        "dim": 128,
+        "representation": "tq_1bit",
+        "ndcg_at_10": 0.5418075909251808,
+        "relative_quality_pct": 72.59869205430167,
+        "quality_loss_pct": 27.401307945698335,
+        "bytes_per_vector": 16.0,
+        "compression_ratio": 256.0,
+        "scaling": [
+          {
+            "n_vectors": 10000,
+            "mobile_ram_mib": 0.152587890625,
+            "mobile_ram_gib": 0.00014901161193847656
+          },
+          {
+            "n_vectors": 50000,
+            "mobile_ram_mib": 0.762939453125,
+            "mobile_ram_gib": 0.0007450580596923828
+          },
+          {
+            "n_vectors": 100000,
+            "mobile_ram_mib": 1.52587890625,
+            "mobile_ram_gib": 0.0014901161193847656
+          },
+          {
+            "n_vectors": 250000,
+            "mobile_ram_mib": 3.814697265625,
+            "mobile_ram_gib": 0.003725290298461914
+          },
+          {
+            "n_vectors": 500000,
+            "mobile_ram_mib": 7.62939453125,
+            "mobile_ram_gib": 0.007450580596923828
+          },
+          {
+            "n_vectors": 1000000,
+            "mobile_ram_mib": 15.2587890625,
+            "mobile_ram_gib": 0.014901161193847656
+          },
+          {
+            "n_vectors": 5000000,
+            "mobile_ram_mib": 76.2939453125,
+            "mobile_ram_gib": 0.07450580596923828
+          }
+        ]
+      },
+      {
+        "dim": 256,
+        "representation": "tq_1bit",
+        "ndcg_at_10": 0.6318790550371677,
+        "relative_quality_pct": 84.6676822188363,
+        "quality_loss_pct": 15.332317781163695,
+        "bytes_per_vector": 32.0,
+        "compression_ratio": 128.0,
+        "scaling": [
+          {
+            "n_vectors": 10000,
+            "mobile_ram_mib": 0.30517578125,
+            "mobile_ram_gib": 0.0002980232238769531
+          },
+          {
+            "n_vectors": 50000,
+            "mobile_ram_mib": 1.52587890625,
+            "mobile_ram_gib": 0.0014901161193847656
+          },
+          {
+            "n_vectors": 100000,
+            "mobile_ram_mib": 3.0517578125,
+            "mobile_ram_gib": 0.0029802322387695312
+          },
+          {
+            "n_vectors": 250000,
+            "mobile_ram_mib": 7.62939453125,
+            "mobile_ram_gib": 0.007450580596923828
+          },
+          {
+            "n_vectors": 500000,
+            "mobile_ram_mib": 15.2587890625,
+            "mobile_ram_gib": 0.014901161193847656
+          },
+          {
+            "n_vectors": 1000000,
+            "mobile_ram_mib": 30.517578125,
+            "mobile_ram_gib": 0.029802322387695312
+          },
+          {
+            "n_vectors": 5000000,
+            "mobile_ram_mib": 152.587890625,
+            "mobile_ram_gib": 0.14901161193847656
+          }
+        ]
+      },
+      {
+        "dim": 384,
+        "representation": "tq_1bit",
+        "ndcg_at_10": 0.675570501274189,
+        "relative_quality_pct": 90.52205174760618,
+        "quality_loss_pct": 9.477948252393816,
+        "bytes_per_vector": 48.0,
+        "compression_ratio": 85.33333333333333,
+        "scaling": [
+          {
+            "n_vectors": 10000,
+            "mobile_ram_mib": 0.457763671875,
+            "mobile_ram_gib": 0.0004470348358154297
+          },
+          {
+            "n_vectors": 50000,
+            "mobile_ram_mib": 2.288818359375,
+            "mobile_ram_gib": 0.0022351741790771484
+          },
+          {
+            "n_vectors": 100000,
+            "mobile_ram_mib": 4.57763671875,
+            "mobile_ram_gib": 0.004470348358154297
+          },
+          {
+            "n_vectors": 250000,
+            "mobile_ram_mib": 11.444091796875,
+            "mobile_ram_gib": 0.011175870895385742
+          },
+          {
+            "n_vectors": 500000,
+            "mobile_ram_mib": 22.88818359375,
+            "mobile_ram_gib": 0.022351741790771484
+          },
+          {
+            "n_vectors": 1000000,
+            "mobile_ram_mib": 45.7763671875,
+            "mobile_ram_gib": 0.04470348358154297
+          },
+          {
+            "n_vectors": 5000000,
+            "mobile_ram_mib": 228.8818359375,
+            "mobile_ram_gib": 0.22351741790771484
+          }
+        ]
+      },
+      {
+        "dim": 512,
+        "representation": "tq_1bit",
+        "ndcg_at_10": 0.6743510084382611,
+        "relative_quality_pct": 90.35864764190367,
+        "quality_loss_pct": 9.641352358096327,
+        "bytes_per_vector": 64.0,
+        "compression_ratio": 64.0,
+        "scaling": [
+          {
+            "n_vectors": 10000,
+            "mobile_ram_mib": 0.6103515625,
+            "mobile_ram_gib": 0.0005960464477539062
+          },
+          {
+            "n_vectors": 50000,
+            "mobile_ram_mib": 3.0517578125,
+            "mobile_ram_gib": 0.0029802322387695312
+          },
+          {
+            "n_vectors": 100000,
+            "mobile_ram_mib": 6.103515625,
+            "mobile_ram_gib": 0.0059604644775390625
+          },
+          {
+            "n_vectors": 250000,
+            "mobile_ram_mib": 15.2587890625,
+            "mobile_ram_gib": 0.014901161193847656
+          },
+          {
+            "n_vectors": 500000,
+            "mobile_ram_mib": 30.517578125,
+            "mobile_ram_gib": 0.029802322387695312
+          },
+          {
+            "n_vectors": 1000000,
+            "mobile_ram_mib": 61.03515625,
+            "mobile_ram_gib": 0.059604644775390625
+          },
+          {
+            "n_vectors": 5000000,
+            "mobile_ram_mib": 305.17578125,
+            "mobile_ram_gib": 0.2980232238769531
+          }
+        ]
+      },
+      {
+        "dim": 768,
+        "representation": "tq_1bit",
+        "ndcg_at_10": 0.7006680760873617,
+        "relative_quality_pct": 93.88496348175154,
+        "quality_loss_pct": 6.115036518248459,
+        "bytes_per_vector": 96.0,
+        "compression_ratio": 42.666666666666664,
+        "scaling": [
+          {
+            "n_vectors": 10000,
+            "mobile_ram_mib": 0.91552734375,
+            "mobile_ram_gib": 0.0008940696716308594
+          },
+          {
+            "n_vectors": 50000,
+            "mobile_ram_mib": 4.57763671875,
+            "mobile_ram_gib": 0.004470348358154297
+          },
+          {
+            "n_vectors": 100000,
+            "mobile_ram_mib": 9.1552734375,
+            "mobile_ram_gib": 0.008940696716308594
+          },
+          {
+            "n_vectors": 250000,
+            "mobile_ram_mib": 22.88818359375,
+            "mobile_ram_gib": 0.022351741790771484
+          },
+          {
+            "n_vectors": 500000,
+            "mobile_ram_mib": 45.7763671875,
+            "mobile_ram_gib": 0.04470348358154297
+          },
+          {
+            "n_vectors": 1000000,
+            "mobile_ram_mib": 91.552734375,
+            "mobile_ram_gib": 0.08940696716308594
+          },
+          {
+            "n_vectors": 5000000,
+            "mobile_ram_mib": 457.763671875,
+            "mobile_ram_gib": 0.4470348358154297
+          }
+        ]
+      },
+      {
+        "dim": 1024,
+        "representation": "tq_1bit",
+        "ndcg_at_10": 0.6737122943394697,
+        "relative_quality_pct": 90.27306410829219,
+        "quality_loss_pct": 9.72693589170781,
+        "bytes_per_vector": 128.0,
+        "compression_ratio": 32.0,
+        "scaling": [
+          {
+            "n_vectors": 10000,
+            "mobile_ram_mib": 1.220703125,
+            "mobile_ram_gib": 0.0011920928955078125
+          },
+          {
+            "n_vectors": 50000,
+            "mobile_ram_mib": 6.103515625,
+            "mobile_ram_gib": 0.0059604644775390625
+          },
+          {
+            "n_vectors": 100000,
+            "mobile_ram_mib": 12.20703125,
+            "mobile_ram_gib": 0.011920928955078125
+          },
+          {
+            "n_vectors": 250000,
+            "mobile_ram_mib": 30.517578125,
+            "mobile_ram_gib": 0.029802322387695312
+          },
+          {
+            "n_vectors": 500000,
+            "mobile_ram_mib": 61.03515625,
+            "mobile_ram_gib": 0.059604644775390625
+          },
+          {
+            "n_vectors": 1000000,
+            "mobile_ram_mib": 122.0703125,
+            "mobile_ram_gib": 0.11920928955078125
+          },
+          {
+            "n_vectors": 5000000,
+            "mobile_ram_mib": 610.3515625,
+            "mobile_ram_gib": 0.5960464477539062
+          }
+        ]
+      }
+    ]
   }
 }

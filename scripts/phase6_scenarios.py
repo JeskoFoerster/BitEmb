@@ -87,6 +87,18 @@ AWS_PRICING = {
     "edge": {"instance": "t4g.small (2 GiB RAM)", "monthly_usd": 12.25},
 }
 
+MOBILE_VECTOR_COUNTS = [
+    10_000,
+    50_000,
+    100_000,
+    250_000,
+    500_000,
+    1_000_000,
+    5_000_000,
+]
+
+MOBILE_DIMS = [64, 128, 256, 384, 512, 768, 1024]
+
 
 def apply_style() -> None:
     plt.rcParams.update(_STYLE)
@@ -193,6 +205,44 @@ def main() -> None:
             "aws_savings_monthly_usd": aws_savings_mo,
             "aws_savings_pct": aws_savings_pct,
         }
+
+    edge_bytes = results["Edge / Mobile"]["bytes_per_vector"]
+    baseline_bytes = results["Baseline"]["bytes_per_vector"]
+    results["Edge / Mobile"]["sub_10m_scaling"] = [
+        {
+            "n_vectors": n_vectors,
+            "mobile_ram_mib": (edge_bytes * n_vectors) / (1024 * 1024),
+            "mobile_ram_gib": (edge_bytes * n_vectors) / (1024 * 1024 * 1024),
+            "float32_ram_mib": (baseline_bytes * n_vectors) / (1024 * 1024),
+            "float32_ram_gib": (baseline_bytes * n_vectors) / (1024 * 1024 * 1024),
+            "compression_ratio": baseline_bytes / edge_bytes,
+        }
+        for n_vectors in MOBILE_VECTOR_COUNTS
+    ]
+
+    results["Edge / Mobile"]["sub_10m_by_dim"] = []
+    for dim in MOBILE_DIMS:
+        rep = "tq_1bit"
+        q_val = quality_map[(rep, dim)]
+        b_val = memory_map[(rep, dim)]
+        dim_entry = {
+            "dim": dim,
+            "representation": rep,
+            "ndcg_at_10": q_val,
+            "relative_quality_pct": (q_val / q_base) * 100.0,
+            "quality_loss_pct": 100.0 - ((q_val / q_base) * 100.0),
+            "bytes_per_vector": b_val,
+            "compression_ratio": c_base / b_val,
+            "scaling": [
+                {
+                    "n_vectors": n_vectors,
+                    "mobile_ram_mib": (b_val * n_vectors) / (1024 * 1024),
+                    "mobile_ram_gib": (b_val * n_vectors) / (1024 * 1024 * 1024),
+                }
+                for n_vectors in MOBILE_VECTOR_COUNTS
+            ],
+        }
+        results["Edge / Mobile"]["sub_10m_by_dim"].append(dim_entry)
 
     # Save JSON summary
     json_path = base_dir / "results/phase6/scenarios_summary.json"
@@ -349,6 +399,60 @@ def main() -> None:
     fig.savefig(p3_pdf, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {p3_pdf}")
+
+    # ------------------ Plot 4: Edge / Mobile Scaling below 10M Vectors ------------------
+    fig, ax = plt.subplots(figsize=(8.2, 4.6))
+    dim_scaling = results["Edge / Mobile"]["sub_10m_by_dim"]
+    x_labels = ["10k", "50k", "100k", "250k", "500k", "1M", "5M"]
+    x_pos = list(range(len(x_labels)))
+    bar_width = 0.11
+    cmap = plt.get_cmap("viridis")
+
+    for idx, dim_entry in enumerate(dim_scaling):
+        dim = dim_entry["dim"]
+        rel_q = dim_entry["relative_quality_pct"]
+        ram_vals = [row["mobile_ram_mib"] for row in dim_entry["scaling"]]
+        offset = (idx - (len(dim_scaling) - 1) / 2.0) * bar_width
+        bar_x = [x_val + offset for x_val in x_pos]
+        ax.bar(
+            bar_x,
+            ram_vals,
+            width=bar_width,
+            color=cmap(idx / max(1, len(dim_scaling) - 1)),
+            edgecolor="black",
+            linewidth=0.35,
+            label=f"{dim}d ({rel_q:.1f}% Q)",
+        )
+
+    ax.axhline(128, color="dimgray", linestyle="--", linewidth=1.0)
+    ax.axhline(512, color="dimgray", linestyle=":", linewidth=1.0)
+    ax.text(-0.42, 128 + 8, "128 MiB", color="dimgray", fontsize=7.5)
+    ax.text(-0.42, 512 - 34, "512 MiB", color="dimgray", fontsize=7.5)
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(x_labels)
+    ax.set_ylabel("RAM Footprint (MiB)")
+    ax.set_xlabel("Number of Embedding Vectors")
+    ax.set_title("Edge / Mobile Memory Scaling below 10M Vectors by Dimension (tq_1bit)")
+    ax.set_ylim(0, 700)
+    ax.legend(loc="upper left", ncol=2, fontsize=7.0)
+
+    fig.text(
+        0.5,
+        0.01,
+        "* Values include only the raw vector representation, excluding metadata, text chunks, "
+        "ANN structures, and runtime overhead.",
+        ha="center",
+        fontsize=6.2,
+        color="dimgray",
+        alpha=0.9,
+    )
+    fig.subplots_adjust(bottom=0.16)
+
+    p4_pdf = output_dir / "phase6_mobile_sub10m_scaling.pdf"
+    fig.savefig(p4_pdf, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved: {p4_pdf}")
+
 
 
 if __name__ == "__main__":
