@@ -24,7 +24,7 @@ from bitemb.analysis import (
     compute_norm_distribution,
 )
 from bitemb.cache import load_or_encode
-from bitemb.config import DATASETS
+from bitemb.config import DATASETS, PCA_DIMS
 from bitemb.dataset import load_beir
 from bitemb.engine import EmbeddingEngine
 from bitemb.plotting import (
@@ -86,6 +86,9 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
     print(f"    PCA (95% var):    {intdim.pca_95} components")
     print("    Nominal dim:      1024")
     print(f"    Redundancy ratio: {1 - intdim.pca_95/1024:.1%}")
+    print("    Cumulative explained variance at PCA targets:")
+    for d in PCA_DIMS:
+        print(f"      V({d:>4}) = {intdim.pca_cumulative_variance[d - 1]:.1%}")
 
     # Assemble results
     return {
@@ -114,6 +117,12 @@ def run(dataset_name: str, engine: EmbeddingEngine, max_docs: int | None = None)
             "pca_cumulative_variance_50": float(intdim.pca_cumulative_variance[49]),
             "pca_cumulative_variance_100": float(intdim.pca_cumulative_variance[99]),
             "pca_cumulative_variance_256": float(intdim.pca_cumulative_variance[255]),
+            # Exakte kumulative Varianz an den tatsächlich evaluierten
+            # PCA-Reduktionszielen (Index d-1 = kumulative Varianz nach d Komponenten).
+            # Ersetzt die frühere Interpolation für d = 64 und d = 384 im Bericht.
+            "pca_cumulative_variance_at_targets": {
+                str(d): float(intdim.pca_cumulative_variance[d - 1]) for d in PCA_DIMS
+            },
         },
         "_pca_cumulative_variance": intdim.pca_cumulative_variance,
         "_dimstats": {"skewness": dimstats.skewness, "kurtosis": dimstats.kurtosis},
