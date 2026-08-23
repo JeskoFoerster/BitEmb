@@ -1,5 +1,7 @@
 # Wissenschaftliche Metriken für den Trade-off zwischen Qualität und Speicherbedarf (BitEmb)
 
+> **Hinweis (Stand der Daten):** Dieses Dokument ist ein internes Konzept- und Explorationsdokument. Die hier gezeigten konkreten Zahlen (Tabellen, CQ_1-/RQSR-/QES-Werte, Empfehlungen) beruhen auf einem **früheren Auswertungslauf mit `float32` bei `768d` als Baseline** (NDCG@10 = 0,7287, 3072 Bytes/Vektor). Die finale Arbeit verwendet dagegen **`float32` bei `1024d` als Baseline** (NDCG@10 = 0,7463, 4096 Bytes/Vektor). Dadurch weichen die absoluten Kennzahlen hier von den finalen Ergebnissen ab (z. B. Baseline-NDCG, relative Qualität, Kompressionsfaktoren). Die **methodischen Definitionen** (RQSR, CQ_β, QES) und die **qualitativen Erkenntnisse** (Bittiefe schlägt reine PCA-Reduktion, TurboQuant als Wegbereiter, CQ_1-Optimum bei mittleren Dimensionen) bleiben gültig und sind mit den korrekten, aktuellen Daten in der Methodik und im Ergebnisteil der Ausarbeitung dokumentiert. Für zitierfähige Zahlen sind die dortigen Werte bzw. `results/phase4/` und `results/phase5/` maßgeblich.
+
 Dieses Dokument beschreibt wissenschaftlich fundierte Metriken zur Quantifizierung des Trade-offs zwischen der Ergebnisqualität (z. B. NDCG@10, Recall) und dem Speicherbedarf von Vektorembeddings bei der Quantisierung und Dimensionsreduktion. 
 
 Zusätzlich werden diese Metriken auf die tatsächlichen experimentellen Ergebnisse des **BitEmb**-Projekts auf dem **SciFact**-Dataset angewendet und visuell dargestellt.
