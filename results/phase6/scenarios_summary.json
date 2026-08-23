@@ -14,7 +14,9 @@
     "aws_monthly_usd": 368.0,
     "aws_annual_usd": 4416.0,
     "aws_savings_monthly_usd": 0.0,
-    "aws_savings_pct": 0.0
+    "aws_savings_pct": 0.0,
+    "aws_pricing_region": "eu-central-1",
+    "aws_pricing_retrieved": "2026-08-23"
   },
   "Enterprise Precision": {
     "representation": "tq_4bit",
@@ -31,7 +33,9 @@
     "aws_monthly_usd": 49.0,
     "aws_annual_usd": 588.0,
     "aws_savings_monthly_usd": 319.0,
-    "aws_savings_pct": 86.68478260869566
+    "aws_savings_pct": 86.68478260869566,
+    "aws_pricing_region": "eu-central-1",
+    "aws_pricing_retrieved": "2026-08-23"
   },
   "Business Sweet Spot": {
     "representation": "tq_2bit",
@@ -48,7 +52,9 @@
     "aws_monthly_usd": 24.5,
     "aws_annual_usd": 294.0,
     "aws_savings_monthly_usd": 343.5,
-    "aws_savings_pct": 93.34239130434783
+    "aws_savings_pct": 93.34239130434783,
+    "aws_pricing_region": "eu-central-1",
+    "aws_pricing_retrieved": "2026-08-23"
   },
   "Edge / Mobile": {
     "representation": "tq_1bit",
@@ -66,6 +72,8 @@
     "aws_annual_usd": 147.0,
     "aws_savings_monthly_usd": 355.75,
     "aws_savings_pct": 96.6711956521739,
+    "aws_pricing_region": "eu-central-1",
+    "aws_pricing_retrieved": "2026-08-23",
     "sub_10m_scaling": [
       {
         "n_vectors": 10000,
