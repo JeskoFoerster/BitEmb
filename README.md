@@ -27,7 +27,8 @@ scripts/             Experiment runners
 ├── phase2_distance_analysis.py
 ├── phase3_neighborhood.py
 ├── phase4_retrieval.py
-└── phase5_efficiency.py
+├── phase5_efficiency.py
+└── verify_turboquant_equivalence.py   Rotation equivalence check (SO(d) vs. paper RHT)
 
 tests/               Unit tests
 ```
@@ -83,6 +84,9 @@ python scripts/phase5_efficiency.py --all --max-docs 1000 \
 
 # Trade-off analysis (requires Phase 4 + Phase 5 results)
 python scripts/calculate_tradeoff_metrics.py
+
+# Verify the TurboQuant rotation equivalence (no model/dataset, runs in seconds)
+python scripts/verify_turboquant_equivalence.py
 ```
 
 ## Embedding Cache
@@ -112,3 +116,18 @@ Detailed documentation for each phase is in `docs/`:
 - **Datasets**: BEIR SciFact, FiQA, TREC-COVID
 - **Quantization**: Naive binary (1-bit), TurboQuant 2-bit, TurboQuant 4-bit
 - **Dimension Reduction**: PCA to d ∈ {64, 128, 256, 384, 512, 768, 1024}
+
+### TurboQuant rotation
+
+Our TurboQuant implementation follows the paper's principle (a data-independent
+orthogonal rotation followed by uniform scalar quantization) but uses a random
+`SO(d)` rotation instead of the paper's Randomized Hadamard Transform (RHT). The
+RHT is a fast (`O(d log d)`) approximation of a uniform random rotation; the
+`SO(d)` variant is the exact random rotation and is preferred here because the
+research question studies retrieval quality, not rotation runtime.
+
+`scripts/verify_turboquant_equivalence.py` confirms that this substitution is
+functionally sound: the `SO(d)` rotation preserves norms and distances exactly,
+equalizes the per-dimension variance like the RHT, and yields the same distance
+distortion and nearest-neighbor recall as an RHT reference (both clearly beating
+naive quantization).
