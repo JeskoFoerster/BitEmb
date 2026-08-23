@@ -4,7 +4,7 @@ Empirical analysis of quantization effects on embedding retrieval quality.
 
 ## Research Question
 
-Which semantic properties of a float embedding space are preserved under quantization, which are lost, and how does this loss affect retrieval quality?
+Which semantic properties of a float embedding space are preserved under quantization, which are lost, and how does this loss affect retrieval quality and storage footprint?
 
 ## Structure
 
@@ -13,7 +13,7 @@ bitemb/              Core library
 ├── config.py        Experiment parameters
 ├── engine.py        Embedding generation (BAAI/bge-large-en-v1.5)
 ├── cache.py         Deterministic embedding cache (corpus + queries)
-├── quantization.py  Binary + TurboQuant (2-bit, 4-bit) + PCA reduction
+├── quantization.py  Naive + TurboQuant (1/2/4/8-bit) + PCA reduction
 ├── dataset.py       BEIR data loading (SciFact, FiQA, TREC-COVID)
 ├── analysis.py      Phase 1: float space characterization
 ├── distance.py      Phase 2: pairwise distance & distortion analysis
@@ -28,6 +28,9 @@ scripts/             Experiment runners
 ├── phase3_neighborhood.py
 ├── phase4_retrieval.py
 ├── phase5_efficiency.py
+├── phase6_scenarios.py                Phase 6: application scenarios & AWS cost analysis
+├── calculate_tradeoff_metrics.py      Combined quality/compression trade-off metrics
+├── plot_quintessence.py               Central Phase 5 key-takeaway figure
 └── verify_turboquant_equivalence.py   Rotation equivalence check (SO(d) vs. paper RHT)
 
 tests/               Unit tests
@@ -85,6 +88,9 @@ python scripts/phase5_efficiency.py --all --max-docs 1000 \
 # Trade-off analysis (requires Phase 4 + Phase 5 results)
 python scripts/calculate_tradeoff_metrics.py
 
+# Phase 6 application scenarios & AWS cost analysis (requires Phase 4 + Phase 5 results)
+python scripts/phase6_scenarios.py
+
 # Verify the TurboQuant rotation equivalence (no model/dataset, runs in seconds)
 python scripts/verify_turboquant_equivalence.py
 ```
@@ -109,12 +115,13 @@ Detailed documentation for each phase is in `docs/`:
 | [`docs/phase3.md`](docs/phase3.md) | Neighborhood preservation: overlap, trustworthiness |
 | [`docs/phase4.md`](docs/phase4.md) | Retrieval evaluation: NDCG@10, Recall@10/100, MRR, Wilcoxon tests |
 | [`docs/phase5.md`](docs/phase5.md) | Runtime and memory efficiency: theoretical estimates and NumPy-vectorized measurements |
+| [`docs/phase6.md`](docs/phase6.md) | Application scenarios & scaling: memory extrapolation, mobile/edge, AWS hosting cost estimates |
 
 ## Methods
 
 - **Model**: `BAAI/bge-large-en-v1.5` (1024d, not Matryoshka-trained)
 - **Datasets**: BEIR SciFact, FiQA, TREC-COVID
-- **Quantization**: Naive binary (1-bit), TurboQuant 2-bit, TurboQuant 4-bit
+- **Quantization**: Naive and TurboQuant at 1/2/4/8-bit, plus Float16 as a low-precision float reference (naive variants serve as ablations to isolate the effect of rotation from pure bit reduction)
 - **Dimension Reduction**: PCA to d ∈ {64, 128, 256, 384, 512, 768, 1024}
 
 ### TurboQuant rotation
