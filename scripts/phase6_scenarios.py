@@ -74,12 +74,20 @@ _REP_LABELS = {
     "tq_1bit": "TurboQuant 1-bit",
 }
 
-# AWS EC2 On-Demand Instance Pricing (us-east-1 / eu-central-1 estimates)
+# AWS EC2 On-Demand Instance Pricing (Region: eu-central-1, Frankfurt).
+# Prices are Linux On-Demand list prices, converted to a monthly figure with the
+# common approximation of 730 hours per month (monthly_usd = hourly_usd * 730).
+# Source: https://aws.amazon.com/ec2/pricing/on-demand/ (retrieved 2026-08-23).
+# These are rounded order-of-magnitude estimates, not a procurement quote; list
+# prices change over time and exclude storage, network and reserved/spot discounts.
 # Footprints are reported as binary units (MiB/GiB), matching the calculations below.
-# Baseline (38.15 GiB RAM for 10M vecs): r6i.2xlarge (64 GiB RAM) -> ~$0.504/hr = ~$368/mo
-# Enterprise (4.92 GiB RAM): m6g.large / t4g.large (8 GiB RAM) -> ~$0.0672/hr = ~$49/mo
-# Business Sweet Spot (2.54 GiB RAM): t4g.medium (4 GiB RAM) -> ~$0.0336/hr = ~$24.50/mo
-# Edge / Mobile (0.89 GiB RAM): t4g.small (2 GiB RAM) -> ~$0.0168/hr = ~$12.25/mo
+# Baseline (38.15 GiB RAM for 10M vecs): r6i.2xlarge (64 GiB RAM) -> ~$0.504/hr * 730 ~= $368/mo
+# Enterprise (4.92 GiB RAM): m6g.large (8 GiB RAM) -> ~$0.0672/hr * 730 ~= $49/mo
+# Business Sweet Spot (2.54 GiB RAM): t4g.medium (4 GiB RAM) -> ~$0.0336/hr * 730 ~= $24.50/mo
+# Edge / Mobile (0.89 GiB RAM): t4g.small (2 GiB RAM) -> ~$0.0168/hr * 730 ~= $12.25/mo
+AWS_PRICING_REGION = "eu-central-1"
+AWS_PRICING_RETRIEVED = "2026-08-23"
+AWS_PRICING_HOURS_PER_MONTH = 730
 AWS_PRICING = {
     "baseline": {"instance": "r6i.2xlarge (64 GiB RAM)", "monthly_usd": 368.0},
     "enterprise": {"instance": "m6g.large (8 GiB RAM)", "monthly_usd": 49.0},
@@ -205,6 +213,8 @@ def main() -> None:
             "aws_annual_usd": aws_cost * 12,
             "aws_savings_monthly_usd": aws_savings_mo,
             "aws_savings_pct": aws_savings_pct,
+            "aws_pricing_region": AWS_PRICING_REGION,
+            "aws_pricing_retrieved": AWS_PRICING_RETRIEVED,
         }
 
     edge_bytes = results["Edge / Mobile"]["bytes_per_vector"]
@@ -417,7 +427,9 @@ def main() -> None:
         0.01,
         "* AWS EC2 Estimates for Cloud Hosting (10M Vector Index): "
         "Baseline (r6i.2xlarge, 368 USD/mo), Enterprise (m6g.large, 49 USD/mo), "
-        "Business (t4g.medium, 24.50 USD/mo).",
+        "Business (t4g.medium, 24.50 USD/mo). "
+        f"Linux On-Demand list prices, {AWS_PRICING_REGION}, retrieved {AWS_PRICING_RETRIEVED} "
+        f"({AWS_PRICING_HOURS_PER_MONTH} h/month).",
         ha="center",
         fontsize=6.0,
         color="dimgray",

@@ -90,6 +90,8 @@ Zusätzlich lohnt sich eine Betrachtung der Dimensionszahl. Bei `tq_1bit` wächs
 
 ## 3. Umrechnung: Wie viele PDF-Seiten entsprechen 10 Millionen Vektoren? (Detaillierte Analyse & Bounds)
 
+> **Hinweis zur Einordnung:** Dieser Abschnitt ist eine grobe Veranschaulichung zur Größenordnung und beruht auf frei gewählten, nicht empirisch belegten Annahmen zu Chunk-Größe, Überlappung und Textdichte pro Seite. Die genannten Wörter- und Chunk-pro-Seite-Werte sind Erfahrungswerte ohne Quelle und dienen nur der Intuition; sie sind nicht Teil der reproduzierbaren Kernauswertung (Skript und JSON) und fließen nicht in den wissenschaftlichen Bericht ein. Die Spannbreite der Ergebnisse (Faktor 16 zwischen unterer und oberer Grenze) spiegelt genau diese Annahmenunsicherheit wider.
+
 Die Umrechnung von Vektoren in PDF-Seiten hängt maßgeblich vom **Dokumententyp** und der verwendeten **Chunking-Strategie** (Passagengröße) ab:
 - **Standard RAG-Chunk-Größe:** 200 bis 400 Wörter (ca. 1.000 bis 2.000 Zeichen pro Vektor / Chunk).
 - **Chunk-Überlappung (Overlap):** Typischerweise 10%–15% (~30–50 Wörter Überlappung).
@@ -123,7 +125,7 @@ Die Umrechnung von Vektoren in PDF-Seiten hängt maßgeblich vom **Dokumententyp
 
 ## 4. AWS-Hosting-Kostenanalyse (Cloud-Server-Vergleich)
 
-Für den Serverbetrieb von In-Memory-Vektorindizes im Cloud-Hosting (AWS EC2 mit Memory-Optimized `r6i`- oder General-Purpose `t4g`/`m6g`-Instanzen) ergeben sich für **10 Millionen Vektoren (~2.5 bis 40 Mio. PDF-Seiten)** folgende monatliche Hosting-Kosten (On-Demand pricing, eu-central-1):
+Für den Serverbetrieb von In-Memory-Vektorindizes im Cloud-Hosting (AWS EC2 mit Memory-Optimized `r6i`- oder General-Purpose `t4g`/`m6g`-Instanzen) ergeben sich für **10 Millionen Vektoren (~2.5 bis 40 Mio. PDF-Seiten)** folgende monatliche Hosting-Kosten (On-Demand-Listenpreise, Linux, eu-central-1, abgerufen am 23.08.2026, 730 h/Monat):
 
 | Szenario | Benötigte AWS-Instanz | RAM-Kapazität | Monatl. Kosten (USD) | Ersparnis (monatl.) | Ersparnis (jährlich) | Prozentuale Ersparnis |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -134,7 +136,7 @@ Für den Serverbetrieb von In-Memory-Vektorindizes im Cloud-Hosting (AWS EC2 mit
 > **Hinweis:** *Szenario 1 (Edge / Mobile)* wird hier nicht aufgeführt, da der Vektorindex lokal auf Endgeräten (Smartphone/Laptop) betrieben wird und somit **0 USD Cloud-Hosting-Kosten** verursacht.
 
 > **Fußnote zur AWS-Kostenrechnung:**  
-> Die Berechnung basiert auf aktuellen AWS EC2 On-Demand-Tarifen (eu-central-1 / us-east-1). Unkomprimiertes Float32 (1024d) benötigt bei 10M Vektoren mindestens eine `r6i.2xlarge`-Instanz ($368.00 USD/Monat). Durch `tq_2bit` sinkt der RAM-Bedarf auf 2.54 GiB, was auf einer `t4g.medium`-Instanz ($24.50 USD/Monat) betrieben werden kann. Das entspricht einer **Betriebskostenersparnis von 93.3%** bei vernachlässigbarem Qualitätsverlust (1.9%).
+> Grundlage sind AWS EC2 On-Demand-Listenpreise (Linux) in der Region eu-central-1 (Frankfurt), abgerufen am 23.08.2026 von https://aws.amazon.com/ec2/pricing/on-demand/. Die Umrechnung auf Monatskosten erfolgt mit der üblichen Näherung von 730 Stunden pro Monat (Monatskosten = Stundenpreis x 730). Unkomprimiertes Float32 (1024d) benötigt bei 10M Vektoren mindestens eine `r6i.2xlarge`-Instanz ($368.00 USD/Monat). Durch `tq_2bit` sinkt der RAM-Bedarf auf 2.54 GiB, was auf einer `t4g.medium`-Instanz ($24.50 USD/Monat) betrieben werden kann. Das entspricht einer **Betriebskostenersparnis von 93.3%** bei vernachlässigbarem Qualitätsverlust (1.9%). Die Ersparnis speist sich aus zwei Quellen: dem geringeren Speicherbedarf und dem dadurch möglichen Wechsel von einer speicheroptimierten `r6i`-Instanz zu einer günstigeren Allzweck-/Graviton-Instanz (`t4g`/`m6g`); ein Teil der prozentualen Differenz geht also auf die andere Preisstruktur der Instanzfamilie zurück. Die Zuordnung der Float32-Baseline zur speicherstarken `r6i.2xlarge` ist eine bewusst konservative Annahme und markiert das obere Ende der darstellbaren Ersparnis. Die Werte sind gerundete Größenordnungen und ein Best-Case-Szenario, kein Beschaffungsangebot oder garantierter Mindestwert: Listenpreise ändern sich über die Zeit und enthalten weder Speicher-, Netzwerk- noch Reserved-/Spot-Rabatte.
 
 ---
 
