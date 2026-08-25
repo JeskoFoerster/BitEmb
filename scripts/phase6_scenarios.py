@@ -75,25 +75,30 @@ _REP_LABELS = {
 }
 
 # AWS EC2 On-Demand Instance Pricing (Region: eu-central-1, Frankfurt).
-# Prices are Linux On-Demand list prices, converted to a monthly figure with the
-# common approximation of 730 hours per month (monthly_usd = hourly_usd * 730).
-# Source: https://aws.amazon.com/ec2/pricing/on-demand/ (retrieved 2026-08-23).
+# Prices are Linux On-Demand list prices from the AWS Price List Bulk API
+# (AmazonEC2/current/eu-central-1/index.csv), converted with 730 hours/month.
+# Price list publication date: 2026-08-24T19:31:47Z; effective date: 2026-08-01.
 # These are rounded order-of-magnitude estimates, not a procurement quote; list
 # prices change over time and exclude storage, network and reserved/spot discounts.
 # Footprints are reported as binary units (MiB/GiB), matching the calculations below.
-# Baseline (38.15 GiB RAM for 10M vecs): r6i.2xlarge (64 GiB RAM) -> ~$0.504/hr * 730 ~= $368/mo
-# Enterprise (4.92 GiB RAM): m6g.large (8 GiB RAM) -> ~$0.0672/hr * 730 ~= $49/mo
-# Business Sweet Spot (2.54 GiB RAM): t4g.medium (4 GiB RAM) -> ~$0.0336/hr * 730 ~= $24.50/mo
-# Edge / Mobile (0.89 GiB RAM): t4g.small (2 GiB RAM) -> ~$0.0168/hr * 730 ~= $12.25/mo
+# Baseline (38.15 GiB RAM for 10M vecs): r6i.2xlarge (64 GiB RAM) -> $0.6080/hr
+# Enterprise (4.92 GiB RAM): m6g.large (8 GiB RAM) -> $0.0920/hr
+# Business Sweet Spot (2.54 GiB RAM): t4g.medium (4 GiB RAM) -> $0.0384/hr
+# Edge / Mobile (0.89 GiB RAM): t4g.small (2 GiB RAM) -> $0.0192/hr
 AWS_PRICING_REGION = "eu-central-1"
-AWS_PRICING_RETRIEVED = "2026-08-23"
+AWS_PRICING_RETRIEVED = "2026-08-25"
+AWS_PRICING_PUBLICATION_DATE = "2026-08-24T19:31:47Z"
+AWS_PRICING_EFFECTIVE_DATE = "2026-08-01"
 AWS_PRICING_HOURS_PER_MONTH = 730
 AWS_PRICING = {
-    "baseline": {"instance": "r6i.2xlarge (64 GiB RAM)", "monthly_usd": 368.0},
-    "enterprise": {"instance": "m6g.large (8 GiB RAM)", "monthly_usd": 49.0},
-    "business": {"instance": "t4g.medium (4 GiB RAM)", "monthly_usd": 24.50},
-    "edge": {"instance": "t4g.small (2 GiB RAM)", "monthly_usd": 12.25},
+    "baseline": {"instance": "r6i.2xlarge (64 GiB RAM)", "hourly_usd": 0.6080},
+    "enterprise": {"instance": "m6g.large (8 GiB RAM)", "hourly_usd": 0.0920},
+    "business": {"instance": "t4g.medium (4 GiB RAM)", "hourly_usd": 0.0384},
+    "edge": {"instance": "t4g.small (2 GiB RAM)", "hourly_usd": 0.0192},
 }
+
+for _pricing in AWS_PRICING.values():
+    _pricing["monthly_usd"] = _pricing["hourly_usd"] * AWS_PRICING_HOURS_PER_MONTH
 
 MOBILE_VECTOR_COUNTS = [
     10_000,
@@ -104,7 +109,6 @@ MOBILE_VECTOR_COUNTS = [
     1_000_000,
     5_000_000,
 ]
-
 MOBILE_DIMS = [64, 128, 256, 384, 512, 768, 1024]
 MOBILE_TQ_REPS = ["tq_1bit", "tq_2bit", "tq_4bit", "tq_8bit"]
 
@@ -209,12 +213,15 @@ def main() -> None:
             "ram_1m_gib": ram_1m_gib,
             "ram_10m_gib": ram_10m_gib,
             "aws_instance": s_info["aws"]["instance"],
+            "aws_hourly_usd": s_info["aws"]["hourly_usd"],
             "aws_monthly_usd": aws_cost,
             "aws_annual_usd": aws_cost * 12,
             "aws_savings_monthly_usd": aws_savings_mo,
             "aws_savings_pct": aws_savings_pct,
             "aws_pricing_region": AWS_PRICING_REGION,
             "aws_pricing_retrieved": AWS_PRICING_RETRIEVED,
+            "aws_pricing_publication_date": AWS_PRICING_PUBLICATION_DATE,
+            "aws_pricing_effective_date": AWS_PRICING_EFFECTIVE_DATE,
         }
 
     edge_bytes = results["Edge / Mobile"]["bytes_per_vector"]
@@ -404,7 +411,7 @@ def main() -> None:
     )
     ax.set_ylabel("Estimated Monthly AWS EC2 RAM Cost (USD)")
     ax.set_title("Monthly AWS Hosting Cost Comparison (10M Vector Index)")
-    ax.set_ylim(0, 430)
+    ax.set_ylim(0, max(cloud_costs) * 1.24)
 
     for bar, val, n in zip(bars, cloud_costs, cloud_names):
         height = bar.get_height()
@@ -426,8 +433,9 @@ def main() -> None:
         0.5,
         0.01,
         "* AWS EC2 Estimates for Cloud Hosting (10M Vector Index): "
-        "Baseline (r6i.2xlarge, 368 USD/mo), Enterprise (m6g.large, 49 USD/mo), "
-        "Business (t4g.medium, 24.50 USD/mo). "
+        f"Baseline (r6i.2xlarge, {results['Baseline']['aws_monthly_usd']:.2f} USD/mo), "
+        f"Enterprise (m6g.large, {results['Enterprise Precision']['aws_monthly_usd']:.2f} USD/mo), "
+        f"Business (t4g.medium, {results['Business Sweet Spot']['aws_monthly_usd']:.2f} USD/mo). "
         f"Linux On-Demand list prices, {AWS_PRICING_REGION}, retrieved {AWS_PRICING_RETRIEVED} "
         f"({AWS_PRICING_HOURS_PER_MONTH} h/month).",
         ha="center",
