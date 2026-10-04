@@ -945,12 +945,16 @@ def _phase5_series_label(entry: dict) -> str:
     return f"{entry['dataset']} (n={entry['n_vectors']})"
 
 
-def _phase5_legend_below(ax: plt.Axes, ncol: int = 4) -> float:
-    """Place a compact legend below a Phase 5 plot and return the needed bottom margin."""
+def _phase5_legend_below(ax: plt.Axes, ncol: int = 4, extra_offset: float = 0.0) -> float:
+    """Place a compact legend below a Phase 5 plot and return the needed bottom margin.
+
+    ``extra_offset`` shifts the legend further down (in axes fraction), e.g. to
+    make room for a footnote between x-axis label and legend.
+    """
     _, labels = ax.get_legend_handles_labels()
     rows = max(1, (len(labels) + ncol - 1) // ncol)
     bottom_margin = min(0.46, 0.18 + 0.06 * (rows - 1))
-    anchor_y = -0.24 - 0.08 * (rows - 1)
+    anchor_y = -0.24 - 0.08 * (rows - 1) - extra_offset
     ax.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, anchor_y),
@@ -1095,7 +1099,8 @@ def plot_phase5_memory_compression_by_dim(
     ax.set_yscale("log", base=2)
     ax.yaxis.set_major_formatter(_format_factor)
     ax.set_xticks(sorted({r["dim"] for r in results}))
-    bottom_margin = _phase5_legend_below(ax, ncol=4)
+    # Shift legend down by about one text line so it does not overlap the footnote
+    bottom_margin = _phase5_legend_below(ax, ncol=4, extra_offset=0.07)
 
     # Footnote: explain that TREC-COVID is plotted and other datasets
     # yield identical compression factors
